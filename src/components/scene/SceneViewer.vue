@@ -148,6 +148,7 @@
 
 <script>
 import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue';
+import * as THREE from 'three';
 import { useScene } from '../../composables/useScene.js';
 import { useObjectSelection } from '../../composables/useObjectSelection.js';
 import { useInputManager } from '../../core/InputManager.js';
@@ -185,7 +186,33 @@ export default {
         
         // 启动相机位置更新
         startCameraPositionUpdate();
+        
+        // 注释掉默认测试对象
+        // addTestObjects();
       }
+    }
+    
+    function addTestObjects() {
+      // 添加一个立方体作为测试对象
+      scene.createPrimitive('box', {
+        name: '测试立方体',
+        position: [0, 0, 0],
+        scale: [1, 1, 1]
+      });
+      
+      // 添加一个球体
+      scene.createPrimitive('sphere', {
+        name: '测试球体',
+        position: [2, 0, 0],
+        scale: [1, 1, 1]
+      });
+      
+      // 添加一个圆柱体
+      scene.createPrimitive('cylinder', {
+        name: '测试圆柱体',
+        position: [-2, 0, 0],
+        scale: [1, 1, 1]
+      });
     }
     
     function setupInputHandlers() {

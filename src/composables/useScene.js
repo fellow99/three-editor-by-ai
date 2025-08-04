@@ -146,6 +146,16 @@ export function useScene() {
   function updateCameraConfig(config) {
     Object.assign(cameraState, config);
     applyCameraConfig();
+    
+    // 如果有控制器，同时更新目标位置
+    if (sceneManager.controls && config.target) {
+      sceneManager.controls.target.set(
+        config.target.x,
+        config.target.y,
+        config.target.z
+      );
+      sceneManager.controls.update();
+    }
   }
   
   /**

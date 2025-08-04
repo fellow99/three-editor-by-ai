@@ -4,6 +4,7 @@
  */
 
 import * as THREE from 'three';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { reactive } from 'vue';
 
 class SceneManager {
@@ -11,6 +12,7 @@ class SceneManager {
     this.scene = null;
     this.renderer = null;
     this.camera = null;
+    this.controls = null;
     this.container = null;
     this.animationId = null;
     
@@ -114,6 +116,23 @@ class SceneManager {
     pointLight.position.set(-20, 20, 20);
     pointLight.castShadow = true;
     this.scene.add(pointLight);
+    
+    // 添加网格地面
+    this.setupGrid();
+  }
+  
+  /**
+   * 设置网格地面
+   */
+  setupGrid() {
+    const gridHelper = new THREE.GridHelper(20, 20, 0x888888, 0x444444);
+    gridHelper.name = 'grid_helper';
+    this.scene.add(gridHelper);
+    
+    // 添加坐标轴
+    const axesHelper = new THREE.AxesHelper(5);
+    axesHelper.name = 'axes_helper';
+    this.scene.add(axesHelper);
   }
   
   /**
@@ -124,9 +143,52 @@ class SceneManager {
     this.container = container;
     if (container && this.renderer) {
       container.appendChild(this.renderer.domElement);
+      this.setupControls();
       this.handleResize();
       window.addEventListener('resize', this.resizeHandler);
     }
+  }
+  
+  /**
+   * 设置OrbitControls
+   */
+  setupControls() {
+    if (!this.camera || !this.renderer) return;
+    
+    this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+    
+    // 配置控制器
+    this.controls.enableDamping = true;
+    this.controls.dampingFactor = 0.05;
+    this.controls.screenSpacePanning = false;
+    this.controls.minDistance = 1;
+    this.controls.maxDistance = 500;
+    this.controls.maxPolarAngle = Math.PI;
+    
+    // 设置控制器速度
+    this.controls.rotateSpeed = 1.0;
+    this.controls.zoomSpeed = 1.0;
+    this.controls.panSpeed = 1.0;
+    
+    // 设置目标点
+    this.controls.target.set(0, 0, 0);
+    this.controls.update();
+  }
+  
+  /**
+   * 更新控制器配置
+   * @param {object} config 控制器配置
+   */
+  updateControlsConfig(config) {
+    if (!this.controls) return;
+    
+    Object.entries(config).forEach(([key, value]) => {
+      if (this.controls.hasOwnProperty(key)) {
+        this.controls[key] = value;
+      }
+    });
+    
+    this.controls.update();
   }
   
   /**
@@ -190,6 +252,11 @@ class SceneManager {
    * 渲染场景
    */
   render() {
+    // 更新控制器（启用阻尼时需要）
+    if (this.controls) {
+      this.controls.update();
+    }
+    
     if (this.renderer && this.scene && this.camera) {
       this.renderer.render(this.scene, this.camera);
     }
@@ -313,6 +380,12 @@ class SceneManager {
     
     if (this.container && this.resizeHandler) {
       window.removeEventListener('resize', this.resizeHandler);
+    }
+    
+    // 清理控制器
+    if (this.controls) {
+      this.controls.dispose();
+      this.controls = null;
     }
     
     this.clearScene();

@@ -356,24 +356,26 @@ export default {
       scene.updateCameraConfig(cameraConfig);
     }
     
-    function updateControlSettings() {
-      if (scene.sceneManager?.controls) {
-        const controls = scene.sceneManager.controls;
-        controls.rotateSpeed = controlConfig.rotateSpeed;
-        controls.zoomSpeed = controlConfig.zoomSpeed;
-        controls.panSpeed = controlConfig.panSpeed;
-      }
+  function updateControlSettings() {
+    if (scene.sceneManager?.updateControlsConfig) {
+      scene.sceneManager.updateControlsConfig({
+        rotateSpeed: controlConfig.rotateSpeed,
+        zoomSpeed: controlConfig.zoomSpeed,
+        panSpeed: controlConfig.panSpeed
+      });
     }
-    
-    function updateAnimationSettings() {
-      if (scene.sceneManager?.controls) {
-        const controls = scene.sceneManager.controls;
-        controls.enableDamping = animationConfig.enableDamping;
-        controls.dampingFactor = animationConfig.dampingFactor;
-        controls.autoRotate = animationConfig.autoRotate;
-        controls.autoRotateSpeed = animationConfig.autoRotateSpeed;
-      }
+  }
+  
+  function updateAnimationSettings() {
+    if (scene.sceneManager?.updateControlsConfig) {
+      scene.sceneManager.updateControlsConfig({
+        enableDamping: animationConfig.enableDamping,
+        dampingFactor: animationConfig.dampingFactor,
+        autoRotate: animationConfig.autoRotate,
+        autoRotateSpeed: animationConfig.autoRotateSpeed
+      });
     }
+  }
     
     function setCameraMode(mode) {
       cameraMode.value = mode;
