@@ -340,7 +340,11 @@ export default {
     
     function deleteSelected() {
       if (confirm('确定要删除选中的对象吗？')) {
-        objectManager.deleteSelected();
+        const selectedIds = Array.from(objectSelection.selectedObjectIds.value);
+        selectedIds.forEach(id => {
+          scene.removeObjectFromScene(id);
+        });
+        objectSelection.clearSelection();
       }
     }
     

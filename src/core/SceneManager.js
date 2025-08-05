@@ -275,7 +275,19 @@ class SceneManager {
    * @param {THREE.Object3D} object 3D对象
    */
   removeObject(object) {
-    this.scene.remove(object);
+    console.log('Removing object:', object);
+    console.log(this.scene.children.includes);
+    let idx = this.scene.children.findIndex(child => child === object || child.uuid === object.uuid);
+    console.log('Removing object:', idx);
+    if (idx > -1) {
+      this.scene.remove(object);
+      
+      let idx2 = this.scene.children.findIndex(child => child === object || child.uuid === object.uuid);
+      // 如果常规移除失败，尝试强制移除
+      if (idx2 > -1) {
+          this.scene.children.splice(idx2, 1);
+      }
+    }
   }
   
   /**

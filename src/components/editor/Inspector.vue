@@ -259,7 +259,8 @@ export default {
     
     function deleteObject(object) {
       if (confirm('确定要删除这个对象吗？')) {
-        objectManager.removeObject(object);
+        scene.removeObjectFromScene(object);
+        objectSelection.clearSelection();
       }
       hideContextMenu();
     }

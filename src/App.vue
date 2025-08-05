@@ -73,7 +73,13 @@ function handleKeyboard(event) {
   switch (event.code) {
     case 'Delete':
       if (objectSelection.hasSelection.value) {
-        // TODO: 删除选中对象
+        if (confirm('确定要删除选中的对象吗？')) {
+          const selectedIds = Array.from(objectSelection.selectedObjectIds.value);
+          selectedIds.forEach(id => {
+            scene.removeObjectFromScene(id);
+          });
+          objectSelection.clearSelection();
+        }
       }
       break;
     case 'KeyF':

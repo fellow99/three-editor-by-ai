@@ -183,7 +183,7 @@
 </template>
 
 <script>
-import { ref, reactive, computed, watch } from 'vue';
+import { ref, reactive, computed, watch, inject } from 'vue';
 import { useObjectSelection } from '../../composables/useObjectSelection.js';
 import { useTransform } from '../../composables/useTransform.js';
 import { useObjectManager } from '../../core/ObjectManager.js';
@@ -195,6 +195,7 @@ export default {
     const objectSelection = useObjectSelection();
     const transformManager = useTransform();
     const objectManager = useObjectManager();
+    const scene = inject('scene');
     
     // 响应式数据
     const objectName = ref('');
@@ -317,7 +318,15 @@ export default {
     }
     
     function deleteObject() {
-      objectManager.deleteSelected();
+      if (confirm('确定要删除选中的对象吗？')) {
+        const selectedIds = Array.from(objectSelection.selectedObjectIds.value);
+        selectedIds.forEach(id => {
+          if (scene) {
+            scene.removeObjectFromScene(id);
+          }
+        });
+        objectSelection.clearSelection();
+      }
     }
     
     function clearSelection() {

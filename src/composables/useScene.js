@@ -181,7 +181,10 @@ export function useScene() {
     }
     
     if (object) {
+      // 先从Three.js场景中移除对象
       sceneManager.removeObject(object);
+      
+      // 再从对象管理器中移除
       objectManager.removeObject(objectOrId);
     }
   }
