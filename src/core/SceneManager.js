@@ -125,14 +125,31 @@ class SceneManager {
    * 设置网格地面
    */
   setupGrid() {
-    const gridHelper = new THREE.GridHelper(20, 20, 0x888888, 0x444444);
-    gridHelper.name = 'grid_helper';
-    this.scene.add(gridHelper);
-    
+    // 只创建一次
+    if (!this.gridHelper) {
+      this.gridHelper = new THREE.GridHelper(20, 20, 0x888888, 0x444444);
+      this.gridHelper.name = 'grid_helper';
+      this.scene.add(this.gridHelper);
+    }
     // 添加坐标轴
-    const axesHelper = new THREE.AxesHelper(5);
-    axesHelper.name = 'axes_helper';
-    this.scene.add(axesHelper);
+    if (!this.axesHelper) {
+      this.axesHelper = new THREE.AxesHelper(5);
+      this.axesHelper.name = 'axes_helper';
+      this.scene.add(this.axesHelper);
+    }
+  }
+
+  /**
+   * 控制网格和坐标轴显示/隐藏
+   * @param {boolean} visible
+   */
+  setGridVisible(visible) {
+    if (this.gridHelper) {
+      this.gridHelper.visible = visible;
+    }
+    if (this.axesHelper) {
+      this.axesHelper.visible = visible;
+    }
   }
   
   /**

@@ -45,9 +45,6 @@ export default {
     const showGrid = computed(() => props.showGrid);
     const cameraPosition = reactive({ x: 0, y: 0, z: 0 });
 
-    // 网格辅助对象
-    let gridHelper = null;
-    
     // 计算属性
     const isInitialized = computed(() => scene.isInitialized.value);
     const fps = computed(() => scene.fps.value);
@@ -65,12 +62,10 @@ export default {
         scene.initScene(containerRef.value);
         scene.startRender();
 
-        // 初始化网格辅助线
-        if (!gridHelper) {
-          gridHelper = new THREE.GridHelper(20, 20, 0x888888, 0x444444);
-          gridHelper.visible = showGrid.value;
-          scene.sceneManager.scene.add(gridHelper);
-        }
+        // 监听showGrid变化，动态切换SceneManager中的网格显示
+        watch(showGrid, (val) => {
+          scene.sceneManager.setGridVisible?.(val);
+        }, { immediate: true });
 
         // 初始化TransformControls
         initTransformControls();
@@ -80,33 +75,7 @@ export default {
         
         // 启动相机位置更新
         startCameraPositionUpdate();
-        
-        // 注释掉默认测试对象
-        // addTestObjects();
       }
-    }
-    
-    function addTestObjects() {
-      // 添加一个立方体作为测试对象
-      scene.createPrimitive('box', {
-        name: '测试立方体',
-        position: [0, 0, 0],
-        scale: [1, 1, 1]
-      });
-      
-      // 添加一个球体
-      scene.createPrimitive('sphere', {
-        name: '测试球体',
-        position: [2, 0, 0],
-        scale: [1, 1, 1]
-      });
-      
-      // 添加一个圆柱体
-      scene.createPrimitive('cylinder', {
-        name: '测试圆柱体',
-        position: [-2, 0, 0],
-        scale: [1, 1, 1]
-      });
     }
 
     // 初始化TransformControls
@@ -282,14 +251,7 @@ export default {
       // 线框模式由App.vue控制，这里不再处理
     }
     
-    function toggleGrid() {
-      showGrid.value = !showGrid.value;
-      if (!gridHelper) {
-        gridHelper = new THREE.GridHelper(20, 20, 0x888888, 0x444444);
-        scene.sceneManager.scene.add(gridHelper);
-      }
-      gridHelper.visible = showGrid.value;
-    }
+    // 网格显示由props控制，不再在本地切换
     
     function setViewAngle(angle) {
       const distance = 10;
