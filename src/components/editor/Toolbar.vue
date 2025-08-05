@@ -97,26 +97,7 @@
           </button>
         </div>
       </div>
-      <!-- 设置 -->
-      <div class="ribbon-group">
-        <div class="ribbon-group-title">设置</div>
-        <label class="toggle-label">
-          <input
-            v-model="snapToGrid"
-            type="checkbox"
-            @change="updateSnapToGrid"
-          />
-          <span class="toggle-text">网格吸附</span>
-        </label>
-        <label class="toggle-label">
-          <input
-            v-model="showWireframe"
-            type="checkbox"
-            @change="updateWireframe"
-          />
-          <span class="toggle-text">线框模式</span>
-        </label>
-      </div>
+      
     </div>
   </div>
 </template>
@@ -147,9 +128,7 @@ export default {
     const transform = useTransform();
     const objectManager = useObjectManager();
     
-    // 响应式状态
-    const snapToGrid = ref(false);
-    const showWireframe = ref(false);
+    
     
     // 计算属性
     const transformMode = computed(() => transform.transformMode.value);
@@ -243,14 +222,7 @@ export default {
       });
     }
     
-    function updateSnapToGrid() {
-      transform.transformConfig.snapToGrid = snapToGrid.value;
-    }
     
-    function updateWireframe() {
-      // TODO: 实现线框模式切换
-      console.log('线框模式:', showWireframe.value);
-    }
     
     return {
       // 状态
@@ -264,8 +236,6 @@ export default {
       objectCount,
       canUndo,
       canRedo,
-      snapToGrid,
-      showWireframe,
       
       // 方法
       newScene,
@@ -278,9 +248,7 @@ export default {
       duplicateSelected,
       deleteSelected,
       focusSelected,
-      resetCamera,
-      updateSnapToGrid,
-      updateWireframe
+      resetCamera
     };
   }
 };
