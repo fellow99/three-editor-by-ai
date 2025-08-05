@@ -163,21 +163,7 @@
         </div>
       </div>
       
-      <!-- 操作按钮 -->
-      <div class="property-section">
-        <h4>操作</h4>
-        <div class="action-buttons">
-          <button @click="duplicateObject" class="action-btn">
-            复制对象
-          </button>
-          <button @click="deleteObject" class="action-btn danger">
-            删除对象
-          </button>
-          <button @click="resetTransform" class="action-btn">
-            重置变换
-          </button>
-        </div>
-      </div>
+      
     </div>
   </div>
 </template>
@@ -314,29 +300,6 @@ export default {
       updateTransform();
     }
     
-    function resetTransform() {
-      if (selectedObject.value) {
-        transformManager.resetTransform(selectedObject.value);
-        updatePropertyValues(selectedObject.value);
-      }
-    }
-    
-    function duplicateObject() {
-      objectManager.duplicateSelected();
-    }
-    
-    function deleteObject() {
-      if (confirm('确定要删除选中的对象吗？')) {
-        const selectedIds = Array.from(objectSelection.selectedObjectIds.value);
-        selectedIds.forEach(id => {
-          if (scene) {
-            scene.removeObjectFromScene(id);
-          }
-        });
-        objectSelection.clearSelection();
-      }
-    }
-    
     function clearSelection() {
       objectSelection.clearSelection();
     }
@@ -359,9 +322,6 @@ export default {
       updateMaterialRoughness,
       updateMaterialMetalness,
       resetScale,
-      resetTransform,
-      duplicateObject,
-      deleteObject,
       clearSelection
     };
   }
@@ -472,7 +432,8 @@ export default {
 }
 
 .vector-input input {
-  flex: 1;
+  width: 33%;
+  flex: none;
   padding: 6px 8px;
   background: #333;
   border: 1px solid #555;

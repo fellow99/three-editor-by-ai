@@ -35,7 +35,7 @@ three-editor-by-ai/
 │   │   └── vue.svg
 │   ├── components/             # Vue 组件
 │   │   ├── editor/            # 编辑器 UI 组件
-│   │   │   ├── PropertyPanel.vue    # 属性面板
+│   │   │   ├── PropertyPanel.vue    # 属性面板（已移除操作相关功能，优化了变换输入框宽度）
 │   │   │   ├── Toolbar.vue          # 工具栏，对象未选中时移动/旋转/缩放按钮禁用，仅支持单选
 │   │   │   ├── AssetBrowser.vue     # 资源浏览器
 │   │   │   └── Inspector.vue        # 对象检查器
