@@ -21,43 +21,14 @@
     ></div>
 
     <!-- 视图控制面板 -->
-    <div class="viewport-controls">
-      <div class="control-group">
-        <button 
-          @click="resetView"
-          class="control-btn"
-          title="重置视图"
-        >
-          <span class="icon">🏠</span>
-        </button>
-        
-        <button 
-          @click="fitToScreen"
-          class="control-btn"
-          title="适应屏幕"
-        >
-          <span class="icon">🔍</span>
-        </button>
-        
-        <button 
-          @click="toggleWireframe"
-          class="control-btn"
-          :class="{ active: showWireframe }"
-          title="线框模式"
-        >
-          <span class="icon">🕸️</span>
-        </button>
-        
-        <button 
-          @click="toggleGrid"
-          class="control-btn"
-          :class="{ active: showGrid }"
-          title="网格"
-        >
-          <span class="icon">⚏</span>
-        </button>
-      </div>
-    </div>
+    <ViewportControls
+      :showWireframe="showWireframe"
+      :showGrid="showGrid"
+      :resetView="resetView"
+      :fitToScreen="fitToScreen"
+      :toggleWireframe="toggleWireframe"
+      :toggleGrid="toggleGrid"
+    />
 
     <!-- 立方体视角控件右下角 -->
     <CubeViewportControls
@@ -67,44 +38,15 @@
     />
 
     <!-- 性能监控 -->
-    <div class="performance-monitor">
-      <div class="monitor-item">
-        <span class="monitor-label">FPS:</span>
-        <span class="monitor-value">{{ fps }}</span>
-      </div>
-      <div class="monitor-item">
-        <span class="monitor-label">三角形:</span>
-        <span class="monitor-value">{{ formatNumber(sceneStats.triangles) }}</span>
-      </div>
-      <div class="monitor-item">
-        <span class="monitor-label">相机:</span>
-        <span class="monitor-value">
-          ({{ cameraPosition.x.toFixed(1) }}, 
-           {{ cameraPosition.y.toFixed(1) }}, 
-           {{ cameraPosition.z.toFixed(1) }})
-        </span>
-      </div>
-    </div>
+    <PerformanceMonitor
+      :fps="fps"
+      :sceneStats="sceneStats"
+      :cameraPosition="cameraPosition"
+      :formatNumber="formatNumber"
+    />
 
     <!-- 操作提示 -->
-    <div class="interaction-hints">
-      <div class="hint-item">
-        <span class="hint-key">左键</span>
-        <span class="hint-action">选择对象</span>
-      </div>
-      <div class="hint-item">
-        <span class="hint-key">右键</span>
-        <span class="hint-action">旋转视图</span>
-      </div>
-      <div class="hint-item">
-        <span class="hint-key">滚轮</span>
-        <span class="hint-action">缩放</span>
-      </div>
-      <div class="hint-item">
-        <span class="hint-key">中键</span>
-        <span class="hint-action">平移</span>
-      </div>
-    </div>
+    <InteractionHints />
   </div>
 </template>
 
@@ -117,10 +59,13 @@ import { useObjectSelection } from '../../composables/useObjectSelection.js';
 import { useInputManager } from '../../core/InputManager.js';
 import useTransform from '../../composables/useTransform.js';
 import CubeViewportControls from './CubeViewportControls.vue';
+import PerformanceMonitor from './PerformanceMonitor.vue';
+import InteractionHints from './InteractionHints.vue';
+import ViewportControls from './ViewportControls.vue';
 
 export default {
   name: 'SceneViewer',
-  components: { CubeViewportControls },
+  components: { CubeViewportControls, PerformanceMonitor, InteractionHints, ViewportControls },
   setup() {
     const containerRef = ref(null);
     const scene = useScene();

@@ -113,6 +113,30 @@ watch(
 </script>
 
 <style scoped>
+.cube-controls-bottomright {
+  position: absolute;
+  right: 20px;
+  bottom: 20px;
+  background: rgba(34, 38, 46, 0.92);
+  border-radius: 10px;
+  box-shadow: 0 4px 24px 0 rgba(0,0,0,0.18);
+  padding: 14px 14px 10px 14px;
+  backdrop-filter: blur(12px);
+  z-index: 300;
+  transition: box-shadow 0.2s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.cube-controls-bottomright:hover {
+  box-shadow: 0 8px 32px 0 rgba(0,0,0,0.28);
+}
+
+/* 可根据实际控件内容补充按钮等样式 */
+</style>
+
+<style scoped>
 .cube-viewport-controls {
   width: 80px;
   height: 80px;
