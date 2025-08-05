@@ -141,34 +141,6 @@ onUnmounted(() => {
     </div>
 
     <!-- 顶部工具栏 -->
-    <header class="editor-header">
-      <div class="header-left">
-        <button 
-          @click="toggleLeftPanel" 
-          class="panel-toggle-btn"
-          :class="{ active: !appState.leftPanelCollapsed }"
-          title="切换左侧面板"
-        >
-          ☰
-        </button>
-        <h1>3D 场景编辑器</h1>
-      </div>
-      
-      <div class="header-center">
-        <!-- 可以添加一些中央控制按钮 -->
-      </div>
-      
-      <div class="header-right">
-        <button 
-          @click="toggleRightPanel" 
-          class="panel-toggle-btn"
-          :class="{ active: !appState.rightPanelCollapsed }"
-          title="切换右侧面板"
-        >
-          ⚙️
-        </button>
-      </div>
-    </header>
     
     <!-- 主工具栏 -->
     <div class="main-toolbar">
@@ -198,13 +170,30 @@ onUnmounted(() => {
             🔍 层级
           </button>
         </div>
-        
         <!-- 标签页内容 -->
         <div class="panel-content">
           <AssetBrowser v-show="appState.activeLeftTab === 'assets'" />
           <Inspector v-show="appState.activeLeftTab === 'inspector'" />
         </div>
       </div>
+      <!-- 浮动切换按钮（不在sidebar内） -->
+      <button 
+        v-if="!appState.leftPanelCollapsed"
+        @click="toggleLeftPanel" 
+        class="panel-toggle-btn sidebar-toggle left"
+        :class="{ active: !appState.leftPanelCollapsed }"
+        title="切换左侧面板"
+      >
+        ☰
+      </button>
+      <button 
+        v-if="appState.leftPanelCollapsed" 
+        @click="toggleLeftPanel" 
+        class="panel-toggle-btn sidebar-toggle left collapsed"
+        title="展开左侧面板"
+      >
+        ☰
+      </button>
       
       <!-- 主场景视口 -->
       <div class="editor-viewport">
@@ -219,6 +208,24 @@ onUnmounted(() => {
       >
         <PropertyPanel />
       </div>
+      <!-- 浮动切换按钮（不在sidebar内） -->
+      <button 
+        v-if="!appState.rightPanelCollapsed"
+        @click="toggleRightPanel" 
+        class="panel-toggle-btn sidebar-toggle right"
+        :class="{ active: !appState.rightPanelCollapsed }"
+        title="切换右侧面板"
+      >
+        ⚙️
+      </button>
+      <button 
+        v-if="appState.rightPanelCollapsed" 
+        @click="toggleRightPanel" 
+        class="panel-toggle-btn sidebar-toggle right collapsed"
+        title="展开右侧面板"
+      >
+        ⚙️
+      </button>
     </main>
 
     <!-- 状态栏 -->
@@ -305,31 +312,6 @@ onUnmounted(() => {
 }
 
 /* 顶部标题栏 */
-.editor-header {
-  height: 48px;
-  background: #2a2a2a;
-  border-bottom: 1px solid #444;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 16px;
-  color: #fff;
-}
-
-.header-left,
-.header-center,
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.header-left h1 {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 600;
-  color: #fff;
-}
 
 .panel-toggle-btn {
   width: 32px;
@@ -368,6 +350,7 @@ onUnmounted(() => {
   flex: 1;
   display: flex;
   overflow: hidden;
+  position: relative;
 }
 
 /* 侧边栏 */
@@ -376,6 +359,18 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 10;
+}
+
+.left-panel {
+  left: 0;
+}
+
+.right-panel {
+  right: 0;
 }
 
 .left-panel {
@@ -384,6 +379,44 @@ onUnmounted(() => {
 
 .right-panel {
   border-left: 1px solid #444;
+}
+
+/* 浮动切换按钮样式 */
+.sidebar-toggle {
+  position: absolute;
+  top: 0;
+  z-index: 20;
+  background: #222;
+  border: 1px solid #555;
+  border-radius: 4px;
+  color: #aaa;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+}
+.sidebar-toggle.left {
+  left: 0;
+}
+.sidebar-toggle.right {
+  right: 0;
+}
+.sidebar-toggle.left.collapsed {
+  left: 0;
+  border-radius: 0 4px 4px 0;
+  background: #222;
+  border: 1px solid #555;
+  z-index: 30;
+}
+.sidebar-toggle.right.collapsed {
+  right: 0;
+  border-radius: 4px 0 0 4px;
+  background: #222;
+  border: 1px solid #555;
+  z-index: 30;
 }
 
 /* 面板标签页 */
@@ -426,10 +459,14 @@ onUnmounted(() => {
 
 /* 主视口 */
 .editor-viewport {
-  flex: 1;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
   background: #1a1a1a;
-  position: relative;
   overflow: hidden;
+  z-index: 1;
 }
 
 /* 状态栏 */
