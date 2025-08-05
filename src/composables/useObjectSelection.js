@@ -352,13 +352,14 @@ export function useObjectSelection() {
         if (!child.userData.originalMaterial) {
           child.userData.originalMaterial = child.material;
         }
-        
-        // 创建高亮材质
-        const highlightMaterial = child.material.clone();
-        highlightMaterial.emissive = new THREE.Color(selectionConfig.highlightColor);
-        highlightMaterial.emissiveIntensity = 0.3;
-        
-        child.material = highlightMaterial;
+        // 创建高亮材质并记录
+        if (!child.userData.selectionMaterial) {
+          const highlightMaterial = child.material.clone();
+          highlightMaterial.emissive = new THREE.Color(selectionConfig.highlightColor);
+          highlightMaterial.emissiveIntensity = 0.3;
+          child.userData.selectionMaterial = highlightMaterial;
+        }
+        child.material = child.userData.selectionMaterial;
       }
     });
   }
@@ -369,9 +370,14 @@ export function useObjectSelection() {
    */
   function removeSelectionHighlight(object) {
     object.traverse(child => {
-      if (child.isMesh && child.userData.originalMaterial) {
-        child.material = child.userData.originalMaterial;
-        delete child.userData.originalMaterial;
+      if (child.isMesh) {
+        if (child.userData.originalMaterial) {
+          child.material = child.userData.originalMaterial;
+          delete child.userData.originalMaterial;
+        }
+        if (child.userData.selectionMaterial) {
+          delete child.userData.selectionMaterial;
+        }
       }
     });
   }
@@ -387,13 +393,14 @@ export function useObjectSelection() {
         if (!child.userData.originalMaterial) {
           child.userData.originalMaterial = child.material;
         }
-        
-        // 创建悬停材质
-        const hoverMaterial = child.material.clone();
-        hoverMaterial.emissive = new THREE.Color(selectionConfig.hoverColor);
-        hoverMaterial.emissiveIntensity = 0.2;
-        
-        child.material = hoverMaterial;
+        // 创建悬停材质并记录
+        if (!child.userData.hoverMaterial) {
+          const hoverMaterial = child.material.clone();
+          hoverMaterial.emissive = new THREE.Color(selectionConfig.hoverColor);
+          hoverMaterial.emissiveIntensity = 0.2;
+          child.userData.hoverMaterial = hoverMaterial;
+        }
+        child.material = child.userData.hoverMaterial;
       }
     });
   }
@@ -404,9 +411,16 @@ export function useObjectSelection() {
    */
   function removeHoverHighlight(object) {
     object.traverse(child => {
-      if (child.isMesh && child.userData.originalMaterial) {
-        child.material = child.userData.originalMaterial;
-        delete child.userData.originalMaterial;
+      if (child.isMesh) {
+        // 如果对象被选中，恢复 selectionMaterial
+        if (child.userData.selectionMaterial) {
+          child.material = child.userData.selectionMaterial;
+        } else if (child.userData.originalMaterial) {
+          child.material = child.userData.originalMaterial;
+        }
+        if (child.userData.hoverMaterial) {
+          delete child.userData.hoverMaterial;
+        }
       }
     });
   }
