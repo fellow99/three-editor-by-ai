@@ -93,6 +93,12 @@
     <!-- 资源标签页 -->
     <div class="asset-tabs">
       <button 
+        @click="activeTab = 'primitives'" 
+        :class="['tab-btn', { active: activeTab === 'primitives' }]"
+      >
+        基础几何体
+      </button>
+      <button 
         @click="activeTab = 'models'" 
         :class="['tab-btn', { active: activeTab === 'models' }]"
       >
@@ -112,6 +118,89 @@
          @dragover.prevent
          @dragleave="handleDragLeave"
          @drop="handleDrop">
+      
+      <!-- 基础几何体 -->
+      <div v-if="activeTab === 'primitives'" class="primitives-grid">
+        <div class="primitives-section">
+          <h4 class="section-title">基础几何体</h4>
+          <div class="primitives-list">
+            <div 
+              v-for="primitive in basicPrimitives" 
+              :key="primitive.type"
+              class="primitive-item"
+              @click="addPrimitive(primitive.type)"
+              :title="primitive.description"
+            >
+              <div class="primitive-preview">
+                <span class="primitive-icon">{{ primitive.icon }}</span>
+              </div>
+              <div class="primitive-info">
+                <div class="primitive-name">{{ primitive.name }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="primitives-section">
+          <h4 class="section-title">扩展几何体</h4>
+          <div class="primitives-list">
+            <div 
+              v-for="primitive in extendedPrimitives" 
+              :key="primitive.type"
+              class="primitive-item"
+              @click="addPrimitive(primitive.type)"
+              :title="primitive.description"
+            >
+              <div class="primitive-preview">
+                <span class="primitive-icon">{{ primitive.icon }}</span>
+              </div>
+              <div class="primitive-info">
+                <div class="primitive-name">{{ primitive.name }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="primitives-section">
+          <h4 class="section-title">灯光</h4>
+          <div class="primitives-list">
+            <div 
+              v-for="light in lightPrimitives" 
+              :key="light.type"
+              class="primitive-item"
+              @click="addPrimitive(light.type)"
+              :title="light.description"
+            >
+              <div class="primitive-preview">
+                <span class="primitive-icon">{{ light.icon }}</span>
+              </div>
+              <div class="primitive-info">
+                <div class="primitive-name">{{ light.name }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="primitives-section">
+          <h4 class="section-title">其他对象</h4>
+          <div class="primitives-list">
+            <div 
+              v-for="other in otherPrimitives" 
+              :key="other.type"
+              class="primitive-item"
+              @click="addPrimitive(other.type)"
+              :title="other.description"
+            >
+              <div class="primitive-preview">
+                <span class="primitive-icon">{{ other.icon }}</span>
+              </div>
+              <div class="primitive-info">
+                <div class="primitive-name">{{ other.name }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
       
       <!-- 3D模型 -->
       <div v-if="activeTab === 'models'" class="models-grid">
@@ -248,16 +337,160 @@
 import { ref, computed } from 'vue';
 import { useAssets } from '../../composables/useAssets.js';
 import { useObjectSelection } from '../../composables/useObjectSelection.js';
+import { useScene } from '../../composables/useScene.js';
 
 export default {
   name: 'AssetBrowser',
   setup() {
     const assets = useAssets();
     const objectSelection = useObjectSelection();
+    const scene = useScene();
     
     // 本地状态
-    const activeTab = ref('models');
+    const activeTab = ref('primitives');
     const selectedAssetId = ref(null);
+    
+    // 基础几何体数据
+    const basicPrimitives = ref([
+      {
+        type: 'box',
+        name: '立方体',
+        icon: '⬜',
+        description: '创建一个立方体几何体'
+      },
+      {
+        type: 'sphere',
+        name: '球体',
+        icon: '⚪',
+        description: '创建一个球体几何体'
+      },
+      {
+        type: 'cylinder',
+        name: '圆柱体',
+        icon: '🥫',
+        description: '创建一个圆柱体几何体'
+      },
+      {
+        type: 'plane',
+        name: '平面',
+        icon: '▭',
+        description: '创建一个平面几何体'
+      },
+      {
+        type: 'cone',
+        name: '圆锥体',
+        icon: '🔺',
+        description: '创建一个圆锥体几何体'
+      },
+      {
+        type: 'torus',
+        name: '圆环体',
+        icon: '🍩',
+        description: '创建一个圆环体几何体'
+      }
+    ]);
+
+    // 扩展几何体数据
+    const extendedPrimitives = ref([
+      {
+        type: 'dodecahedron',
+        name: '十二面体',
+        icon: '🎲',
+        description: '创建一个十二面体几何体'
+      },
+      {
+        type: 'icosahedron',
+        name: '二十面体',
+        icon: '💎',
+        description: '创建一个二十面体几何体'
+      },
+      {
+        type: 'octahedron',
+        name: '八面体',
+        icon: '🔸',
+        description: '创建一个八面体几何体'
+      },
+      {
+        type: 'tetrahedron',
+        name: '四面体',
+        icon: '🔻',
+        description: '创建一个四面体几何体'
+      },
+      {
+        type: 'ring',
+        name: '环形',
+        icon: '⭕',
+        description: '创建一个环形几何体'
+      },
+      {
+        type: 'tube',
+        name: '管道',
+        icon: '🌀',
+        description: '创建一个管道几何体'
+      }
+    ]);
+
+    // 灯光数据
+    const lightPrimitives = ref([
+      {
+        type: 'directionalLight',
+        name: '方向光',
+        icon: '☀️',
+        description: '创建一个方向光源'
+      },
+      {
+        type: 'pointLight',
+        name: '点光源',
+        icon: '💡',
+        description: '创建一个点光源'
+      },
+      {
+        type: 'spotLight',
+        name: '聚光灯',
+        icon: '🔦',
+        description: '创建一个聚光灯'
+      },
+      {
+        type: 'ambientLight',
+        name: '环境光',
+        icon: '🌕',
+        description: '创建一个环境光'
+      },
+      {
+        type: 'hemisphereLight',
+        name: '半球光',
+        icon: '🌗',
+        description: '创建一个半球光'
+      }
+    ]);
+
+    // 其他对象数据
+    const otherPrimitives = ref([
+      {
+        type: 'camera',
+        name: '相机',
+        icon: '📷',
+        description: '创建一个透视相机'
+      },
+      {
+        type: 'group',
+        name: '空对象',
+        icon: '📦',
+        description: '创建一个空的组对象'
+      },
+      {
+        type: 'text',
+        name: '文本',
+        icon: '📝',
+        description: '创建一个3D文本对象'
+      },
+      {
+        type: 'sprite',
+        name: '精灵',
+        icon: '🎭',
+        description: '创建一个精灵对象'
+      }
+    ]);
     
     // 从assets composable获取状态
     const {
@@ -335,6 +568,17 @@ export default {
       };
       return statusMap[status] || status;
     }
+
+    // 添加几何体到场景
+    function addPrimitive(type) {
+      const position = [
+        Math.random() * 4 - 2,
+        Math.random() * 2,
+        Math.random() * 4 - 2
+      ];
+      
+      scene.createPrimitive(type, { position });
+    }
     
     return {
       // 状态
@@ -350,6 +594,10 @@ export default {
       filteredModels,
       filteredTextures,
       categories,
+      basicPrimitives,
+      extendedPrimitives,
+      lightPrimitives,
+      otherPrimitives,
       
       // 方法
       toggleSortOrder,
@@ -366,7 +614,8 @@ export default {
       handleDragEnter,
       handleDragLeave,
       handleDrop,
-      clearAssetLibrary
+      clearAssetLibrary,
+      addPrimitive
     };
   }
 };
@@ -752,5 +1001,103 @@ export default {
 
 .upload-hint-btn:hover {
   background: #0088dd;
+}
+
+/* 几何体样式 */
+.primitives-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.primitives-section {
+  margin-bottom: 16px;
+}
+
+.section-title {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  border-bottom: 1px solid #555;
+  padding-bottom: 8px;
+}
+
+.primitives-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 8px;
+}
+
+.primitive-item {
+  background: #333;
+  border: 1px solid #555;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  overflow: hidden;
+}
+
+.primitive-item:hover {
+  background: #444;
+  border-color: #777;
+  transform: translateY(-1px);
+}
+
+.primitive-item:active {
+  transform: translateY(0);
+  background: #007acc;
+  border-color: #0088dd;
+}
+
+.primitive-preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 60px;
+  background: #2a2a2a;
+}
+
+.primitive-icon {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.primitive-info {
+  padding: 8px 6px;
+  text-align: center;
+}
+
+.primitive-name {
+  font-size: 10px;
+  font-weight: 500;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 移动端响应式 */
+@media (max-width: 768px) {
+  .primitives-list {
+    grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+    gap: 6px;
+  }
+  
+  .primitive-preview {
+    height: 50px;
+  }
+  
+  .primitive-icon {
+    font-size: 20px;
+  }
+  
+  .primitive-name {
+    font-size: 9px;
+  }
+  
+  .section-title {
+    font-size: 12px;
+  }
 }
 </style>

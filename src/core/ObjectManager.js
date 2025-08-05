@@ -39,45 +39,204 @@ class ObjectManager {
    * 创建基础几何体对象
    * @param {string} type 几何体类型
    * @param {object} options 选项参数
-   * @returns {THREE.Mesh} 创建的网格对象
+   * @returns {THREE.Mesh|THREE.Light|THREE.Camera|THREE.Group} 创建的对象
    */
   createPrimitive(type, options = {}) {
-    let geometry;
+    let object;
     
-    switch (type) {
-      case 'box':
-        geometry = createBoxGeometry(
-          options.width || 1,
-          options.height || 1,
-          options.depth || 1
-        );
-        break;
-      case 'sphere':
-        geometry = createSphereGeometry(
-          options.radius || 0.5,
-          options.widthSegments || 32,
-          options.heightSegments || 16
-        );
-        break;
-      case 'cylinder':
-        geometry = createCylinderGeometry(
-          options.radiusTop || 0.5,
-          options.radiusBottom || 0.5,
-          options.height || 1,
-          options.radialSegments || 32
-        );
-        break;
-      default:
-        geometry = createBoxGeometry();
+    // 几何体类型
+    if (['box', 'sphere', 'cylinder', 'plane', 'cone', 'torus', 'dodecahedron', 'icosahedron', 'octahedron', 'tetrahedron', 'ring', 'tube'].includes(type)) {
+      let geometry;
+      
+      switch (type) {
+        case 'box':
+          geometry = createBoxGeometry(
+            options.width || 1,
+            options.height || 1,
+            options.depth || 1
+          );
+          break;
+        case 'sphere':
+          geometry = createSphereGeometry(
+            options.radius || 0.5,
+            options.widthSegments || 32,
+            options.heightSegments || 16
+          );
+          break;
+        case 'cylinder':
+          geometry = createCylinderGeometry(
+            options.radiusTop || 0.5,
+            options.radiusBottom || 0.5,
+            options.height || 1,
+            options.radialSegments || 32
+          );
+          break;
+        case 'plane':
+          geometry = new THREE.PlaneGeometry(
+            options.width || 1,
+            options.height || 1,
+            options.widthSegments || 1,
+            options.heightSegments || 1
+          );
+          break;
+        case 'cone':
+          geometry = new THREE.ConeGeometry(
+            options.radius || 0.5,
+            options.height || 1,
+            options.radialSegments || 32
+          );
+          break;
+        case 'torus':
+          geometry = new THREE.TorusGeometry(
+            options.radius || 0.5,
+            options.tube || 0.2,
+            options.radialSegments || 16,
+            options.tubularSegments || 100
+          );
+          break;
+        case 'dodecahedron':
+          geometry = new THREE.DodecahedronGeometry(
+            options.radius || 0.5,
+            options.detail || 0
+          );
+          break;
+        case 'icosahedron':
+          geometry = new THREE.IcosahedronGeometry(
+            options.radius || 0.5,
+            options.detail || 0
+          );
+          break;
+        case 'octahedron':
+          geometry = new THREE.OctahedronGeometry(
+            options.radius || 0.5,
+            options.detail || 0
+          );
+          break;
+        case 'tetrahedron':
+          geometry = new THREE.TetrahedronGeometry(
+            options.radius || 0.5,
+            options.detail || 0
+          );
+          break;
+        case 'ring':
+          geometry = new THREE.RingGeometry(
+            options.innerRadius || 0.2,
+            options.outerRadius || 0.5,
+            options.thetaSegments || 32,
+            options.phiSegments || 8
+          );
+          break;
+        case 'tube':
+          // 创建一个简单的管道路径
+          const path = new THREE.CatmullRomCurve3([
+            new THREE.Vector3(-1, 0, 0),
+            new THREE.Vector3(-0.5, 0.5, 0),
+            new THREE.Vector3(0.5, -0.5, 0),
+            new THREE.Vector3(1, 0, 0)
+          ]);
+          geometry = new THREE.TubeGeometry(
+            path,
+            options.tubularSegments || 64,
+            options.radius || 0.1,
+            options.radialSegments || 8
+          );
+          break;
+        default:
+          geometry = createBoxGeometry();
+      }
+      
+      const material = options.material || this.defaultMaterial.clone();
+      object = new THREE.Mesh(geometry, material);
+      object.castShadow = true;
+      object.receiveShadow = true;
+      
+    } else if (['directionalLight', 'pointLight', 'spotLight', 'ambientLight', 'hemisphereLight'].includes(type)) {
+      // 灯光类型
+      switch (type) {
+        case 'directionalLight':
+          object = new THREE.DirectionalLight(
+            options.color || 0xffffff,
+            options.intensity || 1
+          );
+          object.position.set(options.x || 5, options.y || 5, options.z || 5);
+          object.castShadow = true;
+          break;
+        case 'pointLight':
+          object = new THREE.PointLight(
+            options.color || 0xffffff,
+            options.intensity || 1,
+            options.distance || 0,
+            options.decay || 2
+          );
+          object.position.set(options.x || 0, options.y || 2, options.z || 0);
+          object.castShadow = true;
+          break;
+        case 'spotLight':
+          object = new THREE.SpotLight(
+            options.color || 0xffffff,
+            options.intensity || 1,
+            options.distance || 0,
+            options.angle || Math.PI / 3,
+            options.penumbra || 0,
+            options.decay || 2
+          );
+          object.position.set(options.x || 0, options.y || 3, options.z || 0);
+          object.castShadow = true;
+          break;
+        case 'ambientLight':
+          object = new THREE.AmbientLight(
+            options.color || 0x404040,
+            options.intensity || 0.5
+          );
+          break;
+        case 'hemisphereLight':
+          object = new THREE.HemisphereLight(
+            options.skyColor || 0xffffbb,
+            options.groundColor || 0x080820,
+            options.intensity || 1
+          );
+          break;
+      }
+      
+    } else if (['camera', 'group', 'text', 'sprite'].includes(type)) {
+      // 其他对象类型
+      switch (type) {
+        case 'camera':
+          object = new THREE.PerspectiveCamera(
+            options.fov || 75,
+            options.aspect || window.innerWidth / window.innerHeight,
+            options.near || 0.1,
+            options.far || 1000
+          );
+          object.position.set(options.x || 0, options.y || 0, options.z || 5);
+          break;
+        case 'group':
+          object = new THREE.Group();
+          break;
+        case 'text':
+          // 创建简单的文本几何体（需要字体文件，这里创建占位符）
+          const textGeometry = new THREE.BoxGeometry(1, 0.2, 0.1);
+          const textMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+          object = new THREE.Mesh(textGeometry, textMaterial);
+          break;
+        case 'sprite':
+          const spriteMaterial = new THREE.SpriteMaterial({ 
+            color: options.color || 0xffffff 
+          });
+          object = new THREE.Sprite(spriteMaterial);
+          break;
+      }
+    } else {
+      // 默认创建立方体
+      const geometry = createBoxGeometry();
+      const material = options.material || this.defaultMaterial.clone();
+      object = new THREE.Mesh(geometry, material);
+      object.castShadow = true;
+      object.receiveShadow = true;
     }
     
-    const material = options.material || this.defaultMaterial.clone();
-    const mesh = new THREE.Mesh(geometry, material);
-    
     // 设置基本属性
-    mesh.castShadow = true;
-    mesh.receiveShadow = true;
-    mesh.userData = {
+    object.userData = {
       id: generateId(),
       type: 'primitive',
       primitiveType: type,
@@ -85,24 +244,24 @@ class ObjectManager {
     };
     
     if (options.name) {
-      mesh.name = options.name;
+      object.name = options.name;
     } else {
-      mesh.name = `${type}_${Date.now()}`;
+      object.name = `${type}_${Date.now()}`;
     }
     
     // 设置位置、旋转、缩放
     if (options.position) {
-      mesh.position.set(...options.position);
+      object.position.set(...options.position);
     }
     if (options.rotation) {
-      mesh.rotation.set(...options.rotation);
+      object.rotation.set(...options.rotation);
     }
     if (options.scale) {
-      mesh.scale.set(...options.scale);
+      object.scale.set(...options.scale);
     }
     
-    this.addObject(mesh);
-    return mesh;
+    this.addObject(object);
+    return object;
   }
   
   /**

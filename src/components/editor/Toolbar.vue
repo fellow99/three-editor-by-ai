@@ -30,45 +30,6 @@
 
     <div class="toolbar-divider"></div>
 
-    <!-- 基础几何体 -->
-    <div class="toolbar-section">
-      <span class="section-label">添加:</span>
-      <button 
-        @click="addPrimitive('box')" 
-        class="toolbar-btn primitive-btn"
-        title="添加立方体"
-      >
-        <span class="icon">⬜</span>
-        立方体
-      </button>
-      <button 
-        @click="addPrimitive('sphere')" 
-        class="toolbar-btn primitive-btn"
-        title="添加球体"
-      >
-        <span class="icon">⚪</span>
-        球体
-      </button>
-      <button 
-        @click="addPrimitive('cylinder')" 
-        class="toolbar-btn primitive-btn"
-        title="添加圆柱体"
-      >
-        <span class="icon">🥫</span>
-        圆柱体
-      </button>
-      <button 
-        @click="addPrimitive('plane')" 
-        class="toolbar-btn primitive-btn"
-        title="添加平面"
-      >
-        <span class="icon">▭</span>
-        平面
-      </button>
-    </div>
-
-    <div class="toolbar-divider"></div>
-
     <!-- 变换工具 -->
     <div class="toolbar-section">
       <span class="section-label">工具:</span>
@@ -308,16 +269,6 @@ export default {
       input.click();
     }
     
-    function addPrimitive(type) {
-      const position = [
-        Math.random() * 4 - 2,
-        Math.random() * 2,
-        Math.random() * 4 - 2
-      ];
-      
-      scene.createPrimitive(type, { position });
-    }
-    
     function setTransformMode(mode) {
       transform.transformMode.value = mode;
     }
@@ -388,7 +339,6 @@ export default {
       newScene,
       saveScene,
       loadScene,
-      addPrimitive,
       setTransformMode,
       setSelectionMode,
       undo,
