@@ -1,197 +1,122 @@
 <template>
-  <div class="toolbar">
-    <!-- 文件操作 -->
-    <div class="toolbar-section">
-      <button 
-        @click="newScene" 
-        class="toolbar-btn"
-        title="新建场景"
-      >
-        <span class="icon">📄</span>
-        新建
-      </button>
-      <button 
-        @click="saveScene" 
-        class="toolbar-btn"
-        title="保存场景"
-      >
-        <span class="icon">💾</span>
-        保存
-      </button>
-      <button 
-        @click="loadScene" 
-        class="toolbar-btn"
-        title="加载场景"
-      >
-        <span class="icon">📂</span>
-        加载
-      </button>
-    </div>
-
-    <div class="toolbar-divider"></div>
-
-    <!-- 变换工具 -->
-    <div class="toolbar-section">
-      <span class="section-label">工具:</span>
-      <button 
-        @click="setTransformMode('translate')" 
-        :class="['toolbar-btn', 'tool-btn', { active: transformMode === 'translate' }]"
-        :disabled="!hasSelection"
-        title="移动工具 (G)"
-      >
-        <span class="icon">↔️</span>
-        移动
-      </button>
-      <button 
-        @click="setTransformMode('rotate')" 
-        :class="['toolbar-btn', 'tool-btn', { active: transformMode === 'rotate' }]"
-        :disabled="!hasSelection"
-        title="旋转工具 (R)"
-      >
-        <span class="icon">🔄</span>
-        旋转
-      </button>
-      <button 
-        @click="setTransformMode('scale')" 
-        :class="['toolbar-btn', 'tool-btn', { active: transformMode === 'scale' }]"
-        :disabled="!hasSelection"
-        title="缩放工具 (S)"
-      >
-        <span class="icon">📏</span>
-        缩放
-      </button>
-    </div>
-
-    <div class="toolbar-divider"></div>
-
-    <!-- 选择工具 -->
-    <div class="toolbar-section">
-      <span class="section-label">选择:</span>
-      <button 
-        @click="setSelectionMode('single')" 
-        :class="['toolbar-btn', 'selection-btn', { active: selectionMode === 'single' }]"
-        title="单选模式"
-      >
-        <span class="icon">👆</span>
-        单选
-      </button>
-      <button 
-        @click="setSelectionMode('multiple')" 
-        :class="['toolbar-btn', 'selection-btn', { active: selectionMode === 'multiple' }]"
-        title="多选模式"
-      >
-        <span class="icon">👇</span>
-        多选
-      </button>
-      <button 
-        @click="setSelectionMode('box')" 
-        :class="['toolbar-btn', 'selection-btn', { active: selectionMode === 'box' }]"
-        title="框选模式"
-      >
-        <span class="icon">⬚</span>
-        框选
-      </button>
-    </div>
-
-    <div class="toolbar-divider"></div>
-
-    <!-- 编辑操作 -->
-    <div class="toolbar-section">
-      <button 
-        @click="undo" 
-        :disabled="!canUndo"
-        class="toolbar-btn"
-        title="撤销 (Ctrl+Z)"
-      >
-        <span class="icon">↶</span>
-        撤销
-      </button>
-      <button 
-        @click="redo" 
-        :disabled="!canRedo"
-        class="toolbar-btn"
-        title="重做 (Ctrl+Y)"
-      >
-        <span class="icon">↷</span>
-        重做
-      </button>
-      <button 
-        @click="duplicateSelected" 
-        :disabled="!hasSelection"
-        class="toolbar-btn"
-        title="复制 (Ctrl+D)"
-      >
-        <span class="icon">📋</span>
-        复制
-      </button>
-      <button 
-        @click="deleteSelected" 
-        :disabled="!hasSelection"
-        class="toolbar-btn danger"
-        title="删除 (Delete)"
-      >
-        <span class="icon">🗑️</span>
-        删除
-      </button>
-    </div>
-
-    <div class="toolbar-divider"></div>
-
-    <!-- 视图控制 -->
-    <div class="toolbar-section">
-      <span class="section-label">视图:</span>
-      <button 
-        @click="focusSelected" 
-        :disabled="!hasSelection"
-        class="toolbar-btn"
-        title="聚焦到选中对象 (F)"
-      >
-        <span class="icon">🎯</span>
-        聚焦
-      </button>
-      <button 
-        @click="resetCamera" 
-        class="toolbar-btn"
-        title="重置相机"
-      >
-        <span class="icon">📷</span>
-        重置相机
-      </button>
-    </div>
-
-    <div class="toolbar-divider"></div>
-
-    <!-- 设置 -->
-    <div class="toolbar-section">
-      <label class="toggle-label">
-        <input 
-          v-model="snapToGrid" 
-          type="checkbox"
-          @change="updateSnapToGrid"
-        >
-        <span class="toggle-text">网格吸附</span>
-      </label>
-      <label class="toggle-label">
-        <input 
-          v-model="showWireframe" 
-          type="checkbox"
-          @change="updateWireframe"
-        >
-        <span class="toggle-text">线框模式</span>
-      </label>
-    </div>
-
-    <!-- 右侧状态信息 -->
-    <div class="toolbar-status">
-      <span class="status-item">
-        选中: {{ selectionCount }}
-      </span>
-      <span class="status-item">
-        FPS: {{ fps }}
-      </span>
-      <span class="status-item">
-        对象: {{ objectCount }}
-      </span>
+  <div class="ribbon-toolbar dark">
+    <div class="ribbon-content">
+      <!-- 文件 -->
+      <div class="ribbon-group">
+        <div class="ribbon-group-title">文件</div>
+        <div class="ribbon-group-buttons">
+          <button @click="newScene" class="ribbon-btn" title="新建场景">
+            <span class="icon">📄</span>
+            <div>新建</div>
+          </button>
+          <button @click="saveScene" class="ribbon-btn" title="保存场景">
+            <span class="icon">💾</span>
+            <div>保存</div>
+          </button>
+          <button @click="loadScene" class="ribbon-btn" title="加载场景">
+            <span class="icon">📂</span>
+            <div>加载</div>
+          </button>
+        </div>
+      </div>
+      <!-- 编辑 -->
+      <div class="ribbon-group">
+        <div class="ribbon-group-title">编辑</div>
+        <div class="ribbon-group-buttons">
+          <button @click="undo" :disabled="!canUndo" class="ribbon-btn" title="撤销 (Ctrl+Z)">
+            <span class="icon">↶</span>
+            <div>撤销</div>
+          </button>
+          <button @click="redo" :disabled="!canRedo" class="ribbon-btn" title="重做 (Ctrl+Y)">
+            <span class="icon">↷</span>
+            <div>重做</div>
+          </button>
+          <button @click="duplicateSelected" :disabled="!hasSelection" class="ribbon-btn" title="复制 (Ctrl+D)">
+            <span class="icon">📋</span>
+            <div>复制</div>
+          </button>
+          <button @click="deleteSelected" :disabled="!hasSelection" class="ribbon-btn danger" title="删除 (Delete)">
+            <span class="icon">🗑️</span>
+            <div>删除</div>
+          </button>
+        </div>
+      </div>
+      <!-- 对象变换 -->
+      <div class="ribbon-group">
+        <div class="ribbon-group-title">对象变换</div>
+        <div class="ribbon-group-buttons">
+          <button
+            @click="setTransformMode('translate')"
+            :class="['ribbon-btn', { active: transformMode === 'translate' }]"
+            :disabled="!hasSelection"
+            title="移动工具 (G)"
+          >
+            <span class="icon">↔️</span>
+            <div>移动</div>
+          </button>
+          <button
+            @click="setTransformMode('rotate')"
+            :class="['ribbon-btn', { active: transformMode === 'rotate' }]"
+            :disabled="!hasSelection"
+            title="旋转工具 (R)"
+          >
+            <span class="icon">🔄</span>
+            <div>旋转</div>
+          </button>
+          <button
+            @click="setTransformMode('scale')"
+            :class="['ribbon-btn', { active: transformMode === 'scale' }]"
+            :disabled="!hasSelection"
+            title="缩放工具 (S)"
+          >
+            <span class="icon">📏</span>
+            <div>缩放</div>
+          </button>
+        </div>
+      </div>
+      <!-- 视图 -->
+      <div class="ribbon-group">
+        <div class="ribbon-group-title">视图</div>
+        <div class="ribbon-group-buttons">
+          <button
+            @click="focusSelected"
+            :disabled="!hasSelection"
+            class="ribbon-btn"
+            title="聚焦到选中对象 (F)"
+          >
+            <span class="icon">🎯</span>
+            <div>聚焦</div>
+          </button>
+          <button
+            @click="resetCamera"
+            class="ribbon-btn"
+            title="重置相机"
+          >
+            <span class="icon">📷</span>
+            <div>重置相机</div>
+          </button>
+        </div>
+      </div>
+      <!-- 设置 -->
+      <div class="ribbon-group">
+        <div class="ribbon-group-title">设置</div>
+        <label class="toggle-label">
+          <input
+            v-model="snapToGrid"
+            type="checkbox"
+            @change="updateSnapToGrid"
+          />
+          <span class="toggle-text">网格吸附</span>
+        </label>
+        <label class="toggle-label">
+          <input
+            v-model="showWireframe"
+            type="checkbox"
+            @change="updateWireframe"
+          />
+          <span class="toggle-text">线框模式</span>
+        </label>
+      </div>
     </div>
   </div>
 </template>
@@ -207,6 +132,15 @@ import { exportJSON } from '../../utils/fileUtils.js';
 export default {
   name: 'Toolbar',
   setup() {
+    // Ribbon tab 配置
+    const tabs = [
+      { key: 'file', label: '文件' },
+      { key: 'edit', label: '编辑' },
+      { key: 'tools', label: '工具' },
+      { key: 'view', label: '视图' },
+      { key: 'settings', label: '设置' }
+    ];
+    const activeTab = ref('file');
     const scene = useScene();
     const objectSelection = useObjectSelection();
     const transform = useTransform();
@@ -218,7 +152,7 @@ export default {
     
     // 计算属性
     const transformMode = computed(() => transform.transformMode.value);
-    const selectionMode = computed(() => objectSelection.selectionMode.value);
+    // 只保留单选模式，移除 selectionMode 相关
     const hasSelection = computed(() => objectSelection.hasSelection.value);
     const selectionCount = computed(() => objectSelection.selectionCount.value);
     const fps = computed(() => scene.fps.value);
@@ -233,7 +167,7 @@ export default {
         scene.resetScene();
         objectSelection.clearSelection();
         transform.clearHistory();
-      }
+}
     }
     
     function saveScene() {
@@ -276,9 +210,7 @@ export default {
       transform.transformMode.value = mode;
     }
     
-    function setSelectionMode(mode) {
-      objectSelection.selectionMode.value = mode;
-    }
+    // 移除 setSelectionMode 方法
     
     function undo() {
       transform.undo();
@@ -327,8 +259,10 @@ export default {
     
     return {
       // 状态
+      tabs,
+      activeTab,
       transformMode,
-      selectionMode,
+      // selectionMode, // 移除
       hasSelection,
       selectionCount,
       fps,
@@ -343,7 +277,7 @@ export default {
       saveScene,
       loadScene,
       setTransformMode,
-      setSelectionMode,
+      // setSelectionMode, // 移除
       undo,
       redo,
       duplicateSelected,
@@ -358,140 +292,156 @@ export default {
 </script>
 
 <style scoped>
-.toolbar {
-  height: 60px;
-  background: #2a2a2a;
-  border-bottom: 1px solid #444;
+.ribbon-toolbar.dark {
+  background: #23272e;
+  color: #f3f3f3;
+  border-bottom: 1.5px solid #2d323a;
+  padding: 0 12px;
+  box-shadow: 0 2px 8px #0006;
   display: flex;
-  align-items: center;
-  padding: 0 16px;
-  gap: 16px;
-  color: #fff;
-  overflow-x: auto;
+  flex-direction: column;
+  width: 100%;
 }
 
-.toolbar-section {
+.ribbon-content {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  white-space: nowrap;
+  flex-direction: row;
+  gap: 4px;
+  align-items: flex-end;
+  padding: 4px;
+  width: 100%;
+  flex-wrap: wrap;
 }
 
-.section-label {
-  font-size: 12px;
-  color: #aaa;
-  margin-right: 4px;
+.ribbon-group {
+  background: #282c34;
+  border-radius: 8px 8px 0 0;
+  border: 1.5px solid #353a42;
+  box-shadow: 0 2px 8px #0003;
+  padding: 4px;
+  margin-right: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 120px;
+  height: 80px;
+  position: relative;
+  box-sizing: border-box;
 }
 
-.toolbar-btn {
+.ribbon-group-title {
+  font-size: 13px;
+  font-weight: bold;
+  color: #7ecfff;
+  margin-bottom: 4px;
+  letter-spacing: 1px;
+  text-shadow: 0 1px 2px #0008;
+  width: 100%;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.ribbon-group-buttons {
+  display: flex;
+  flex-direction: row;
+  gap: 4px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: flex-start;
+}
+
+.ribbon-btn {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
-  padding: 6px 8px;
-  background: #333;
-  border: 1px solid #555;
-  border-radius: 4px;
-  color: #fff;
-  font-size: 10px;
+  gap: 4px;
+  padding: 4px 7px;
+  background: #23272e;
+  border: 1px solid #353a42;
+  border-radius: 5px;
+  color: #f3f3f3;
+  font-size: 11px;
   cursor: pointer;
-  transition: all 0.2s;
-  min-width: 50px;
+  margin-bottom: 6px;
+  min-width: 48px;
+  transition: background 0.2s, border 0.2s, color 0.2s;
 }
 
-.toolbar-btn:hover:not(:disabled) {
-  background: #444;
-  border-color: #666;
+.ribbon-btn:hover:not(:disabled) {
+  background: #2d323a;
+  border-color: #7ecfff;
+  color: #fff;
 }
 
-.toolbar-btn:disabled {
+.ribbon-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-.toolbar-btn.active {
+.ribbon-btn.active {
   background: #007acc;
   border-color: #0088dd;
+  color: #fff;
 }
 
-.toolbar-btn.danger {
+.ribbon-btn.danger {
   background: #d73a49;
   border-color: #e85662;
+  color: #fff;
 }
 
-.toolbar-btn.danger:hover:not(:disabled) {
+.ribbon-btn.danger:hover:not(:disabled) {
   background: #e85662;
 }
 
 .icon {
-  font-size: 16px;
+  font-size: 18px;
   line-height: 1;
-}
-
-.toolbar-divider {
-  width: 1px;
-  height: 30px;
-  background: #555;
-  margin: 0 8px;
 }
 
 .toggle-label {
   display: flex;
   align-items: center;
-  gap: 4px;
-  font-size: 12px;
+  gap: 6px;
+  font-size: 13px;
   cursor: pointer;
+  margin-bottom: 6px;
+  color: #b3cfff;
 }
 
 .toggle-text {
   user-select: none;
 }
 
-.toolbar-status {
+.ribbon-status {
   margin-left: auto;
   display: flex;
-  gap: 16px;
+  gap: 18px;
+  padding: 6px 0 8px 0;
 }
 
-.status-item {
-  font-size: 12px;
-  color: #aaa;
-  padding: 4px 8px;
-  background: #333;
-  border-radius: 4px;
-}
 
 /* 移动端响应式 */
-@media (max-width: 768px) {
-  .toolbar {
-    height: auto;
+@media (max-width: 900px) {
+  .ribbon-content {
     flex-wrap: wrap;
-    padding: 8px;
-    gap: 8px;
+    gap: 12px;
   }
-  
-  .toolbar-section {
-    gap: 4px;
+  .ribbon-group {
+    min-width: 90px;
+    padding: 8px 8px 10px 8px;
   }
-  
-  .toolbar-btn {
+  .ribbon-group-title {
+    font-size: 12px;
+    margin-bottom: 6px;
+  }
+  .ribbon-btn {
     min-width: 40px;
-    padding: 4px 6px;
-    font-size: 9px;
+    font-size: 10px;
+    padding: 5px 6px;
   }
-  
   .icon {
-    font-size: 14px;
-  }
-  
-  .toolbar-status {
-    width: 100%;
-    margin-left: 0;
-    justify-content: space-around;
-  }
-  
-  .section-label {
-    display: none;
+    font-size: 15px;
   }
 }
 </style>
