@@ -517,6 +517,9 @@ export default {
       
       scene.createPrimitive(type, { position });
     }
+
+    // 解构 selectAndUploadFiles 以便 setup 内和模板都能直接用
+    const { selectAndUploadFiles } = assets;
     
     return {
       // 状态
@@ -545,7 +548,8 @@ export default {
       handleDragEnter,
       handleDragLeave,
       handleDrop,
-      addPrimitive
+      addPrimitive,
+      selectAndUploadFiles
     };
   }
 };
