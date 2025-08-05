@@ -64,7 +64,8 @@ three-editor-by-ai/
 │   │   ├── mathUtils.js      # 数学工具
 │   │   ├── geometryUtils.js  # 几何工具
 │   │   └── fileUtils.js      # 文件处理工具
-│   ├── App.vue               # 根组件（负责渲染所有浮动面板：视图控制、立方体视角、性能监控、操作提示）
+│   ├── App.vue               # 根组件（仅负责引入Editor.vue）
+│   ├── Editor.vue            # 主编辑器组件（包含全部业务与UI）
 │   ├── main.js               # 应用入口
 │   └── style.css             # 全局样式
 ├── .gitignore                # Git 忽略文件
@@ -97,10 +98,11 @@ three-editor-by-ai/
 ### 组件层次
 
 1. **UI 层** (`components/editor/`): 负责用户界面和交互
-2. **3D 渲染层** (`components/scene/`): 处理 3D 场景渲染和显示
-3. **逻辑层** (`composables/`, `core/`): 业务逻辑和状态管理
-4. **API层** (`api/`): 数据请求和外部接口
-5. **工具层** (`utils/`): 通用工具函数
+2. **主编辑器组件** (`Editor.vue`): 负责所有业务逻辑和UI的集成
+3. **3D 渲染层** (`components/scene/`): 处理 3D 场景渲染和显示
+4. **逻辑层** (`composables/`, `core/`): 业务逻辑和状态管理
+5. **API层** (`api/`): 数据请求和外部接口
+6. **工具层** (`utils/`): 通用工具函数
 
 ### 技术特点
 
