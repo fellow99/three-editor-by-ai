@@ -229,28 +229,6 @@ export default {
         }
       });
       
-      // 框选
-      inputManager.on('dragstart', (event) => {
-        if (objectSelection.selectionMode.value === 'box') {
-          objectSelection.startBoxSelection(event.mouse.x, event.mouse.y);
-        }
-      });
-      
-      inputManager.on('drag', (event) => {
-        if (objectSelection.selectionMode.value === 'box') {
-          objectSelection.updateBoxSelection(event.mouse.x, event.mouse.y);
-        }
-      });
-      
-      inputManager.on('dragend', (event) => {
-        if (objectSelection.selectionMode.value === 'box') {
-          objectSelection.endBoxSelection(
-            scene.sceneManager.camera, 
-            scene.sceneManager.renderer.domElement
-          );
-        }
-      });
-      
       // 键盘快捷键
       inputManager.on('keydown', (event) => {
         handleKeyboardShortcuts(event);
@@ -266,18 +244,16 @@ export default {
           }
           break;
         case 'KeyG':
-          // TODO: 切换到移动模式
+          // 切换到移动模式
+          transform.transformMode.value = 'translate';
           break;
         case 'KeyR':
-          // TODO: 切换到旋转模式
+          // 切换到旋转模式
+          transform.transformMode.value = 'rotate';
           break;
         case 'KeyS':
-          // TODO: 切换到缩放模式
-          break;
-        case 'Delete':
-          if (objectSelection.hasSelection.value) {
-            // TODO: 删除选中对象
-          }
+          // 切换到缩放模式
+          transform.transformMode.value = 'scale';
           break;
       }
     }

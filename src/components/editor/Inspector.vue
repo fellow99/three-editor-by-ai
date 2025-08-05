@@ -138,7 +138,8 @@ export default {
   components: {
     ObjectItem
   },
-  setup() {
+  emits: ['delete-selected'],
+  setup(props, { emit }) {
     const scene = useScene();
     const objectSelection = useObjectSelection();
     const objectManager = useObjectManager();
@@ -258,10 +259,7 @@ export default {
     }
     
     function deleteObject(object) {
-      if (confirm('确定要删除这个对象吗？')) {
-        scene.removeObjectFromScene(object);
-        objectSelection.clearSelection();
-      }
+      emit('delete-selected', object);
       hideContextMenu();
     }
     

@@ -131,7 +131,8 @@ import { exportJSON } from '../../utils/fileUtils.js';
 
 export default {
   name: 'Toolbar',
-  setup() {
+  emits: ['delete-selected'],
+  setup(props, { emit }) {
     // Ribbon tab 配置
     const tabs = [
       { key: 'file', label: '文件' },
@@ -225,13 +226,7 @@ export default {
     }
     
     function deleteSelected() {
-      if (confirm('确定要删除选中的对象吗？')) {
-        const selectedIds = Array.from(objectSelection.selectedObjectIds.value);
-        selectedIds.forEach(id => {
-          scene.removeObjectFromScene(id);
-        });
-        objectSelection.clearSelection();
-      }
+        emit('delete-selected');
     }
     
     function focusSelected() {

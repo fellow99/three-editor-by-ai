@@ -112,6 +112,18 @@ function setActiveLeftTab(tab) {
   }
 }
 
+function handleDeleteSelected() {
+  if (objectSelection.hasSelection.value) {
+    if (confirm('确定要删除选中的对象吗？')) {
+        const selectedIds = Array.from(objectSelection.selectedObjectIds.value);
+        selectedIds.forEach(id => {
+          scene.removeObjectFromScene(id);
+        });
+        objectSelection.clearSelection();
+    }
+  }
+}
+
 // 生命周期
 onMounted(() => {
   // 添加键盘事件监听
@@ -144,7 +156,7 @@ onUnmounted(() => {
     
     <!-- 主工具栏 -->
     <div class="main-toolbar">
-      <Toolbar />
+      <Toolbar @delete-selected="handleDeleteSelected" />
     </div>
     
     <!-- 主编辑区域 -->
@@ -173,7 +185,7 @@ onUnmounted(() => {
         <!-- 标签页内容 -->
         <div class="panel-content">
           <AssetBrowser v-show="appState.activeLeftTab === 'assets'" />
-          <Inspector v-show="appState.activeLeftTab === 'inspector'" />
+          <Inspector v-show="appState.activeLeftTab === 'inspector'" @delete-selected="handleDeleteSelected" />
         </div>
       </div>
       <!-- 浮动切换按钮（不在sidebar内） -->
@@ -197,7 +209,7 @@ onUnmounted(() => {
       
       <!-- 主场景视口 -->
       <div class="editor-viewport">
-        <SceneViewer />
+        <SceneViewer @delete-selected="handleDeleteSelected" />
       </div>
       
       <!-- 右侧属性面板 -->
