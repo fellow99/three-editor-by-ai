@@ -57,52 +57,14 @@
           <span class="icon">⚏</span>
         </button>
       </div>
-      
-      <div class="control-group">
-        <button 
-          @click="setViewAngle('front')"
-          class="control-btn view-btn"
-          title="前视图"
-        >
-          前
-        </button>
-        <button 
-          @click="setViewAngle('back')"
-          class="control-btn view-btn"
-          title="后视图"
-        >
-          后
-        </button>
-        <button 
-          @click="setViewAngle('left')"
-          class="control-btn view-btn"
-          title="左视图"
-        >
-          左
-        </button>
-        <button 
-          @click="setViewAngle('right')"
-          class="control-btn view-btn"
-          title="右视图"
-        >
-          右
-        </button>
-        <button 
-          @click="setViewAngle('top')"
-          class="control-btn view-btn"
-          title="顶视图"
-        >
-          顶
-        </button>
-        <button 
-          @click="setViewAngle('bottom')"
-          class="control-btn view-btn"
-          title="底视图"
-        >
-          底
-        </button>
-      </div>
     </div>
+
+    <!-- 立方体视角控件右下角 -->
+    <CubeViewportControls
+      class="cube-controls-bottomright"
+      :cameraQuaternion="cameraQuaternion"
+      @viewChange="setViewAngle"
+    />
 
     <!-- 性能监控 -->
     <div class="performance-monitor">
@@ -154,9 +116,11 @@ import { useScene } from '../../composables/useScene.js';
 import { useObjectSelection } from '../../composables/useObjectSelection.js';
 import { useInputManager } from '../../core/InputManager.js';
 import useTransform from '../../composables/useTransform.js';
+import CubeViewportControls from './CubeViewportControls.vue';
 
 export default {
   name: 'SceneViewer',
+  components: { CubeViewportControls },
   setup() {
     const containerRef = ref(null);
     const scene = useScene();
@@ -179,6 +143,9 @@ export default {
     const fps = computed(() => scene.fps.value);
     const sceneStats = computed(() => scene.getSceneStats());
     const boxSelection = computed(() => objectSelection.boxSelection);
+
+    // 相机四元数，传递给CubeViewportControls
+    const cameraQuaternionRef = ref({ x: 0, y: 0, z: 0, w: 1 });
     
     // 监听器
     let animationId = null;
@@ -367,6 +334,16 @@ export default {
           cameraPosition.x = pos.x;
           cameraPosition.y = pos.y;
           cameraPosition.z = pos.z;
+          // 同步相机四元数
+          const q = scene.sceneManager.camera.quaternion;
+          if (q) {
+            cameraQuaternionRef.value = {
+              x: q.x,
+              y: q.y,
+              z: q.z,
+              w: q.w
+            }
+          }
         }
         animationId = requestAnimationFrame(updateCameraPosition);
       }
@@ -512,7 +489,8 @@ export default {
       toggleWireframe,
       toggleGrid,
       setViewAngle,
-      formatNumber
+      formatNumber,
+      cameraQuaternion: cameraQuaternionRef
     };
   }
 };
@@ -710,5 +688,11 @@ export default {
   .interaction-hints {
     display: none;
   }
+}
+.cube-controls-bottomright {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  z-index: 300;
 }
 </style>
