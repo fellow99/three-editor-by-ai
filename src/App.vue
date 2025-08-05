@@ -201,8 +201,8 @@ onUnmounted(() => {
         
         <!-- 标签页内容 -->
         <div class="panel-content">
-          <AssetBrowser v-if="appState.activeLeftTab === 'assets'" />
-          <Inspector v-if="appState.activeLeftTab === 'inspector'" />
+          <AssetBrowser v-show="appState.activeLeftTab === 'assets'" />
+          <Inspector v-show="appState.activeLeftTab === 'inspector'" />
         </div>
       </div>
       
