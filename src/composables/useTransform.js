@@ -8,6 +8,7 @@ import * as THREE from 'three';
 import { useObjectManager } from '../core/ObjectManager.js';
 import { degToRad, radToDeg, clamp } from '../utils/mathUtils.js';
 
+let _instance = null;
 export function useTransform() {
   const objectManager = useObjectManager();
   
@@ -536,4 +537,12 @@ export function useTransform() {
     redo,
     clearHistory
   };
+}
+
+// 单例导出
+export default function getTransformInstance() {
+  if (!_instance) {
+    _instance = useTransform();
+  }
+  return _instance;
 }

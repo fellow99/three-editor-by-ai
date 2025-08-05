@@ -2,7 +2,7 @@
 
 一个基于 Vue 3 + Three.js 的现代化3D场景编辑器，支持三维模型的拖放、调整和属性配置。
 
-## 功能体系
+## ✅ 功能体系
 - 3D场景渲染和管理
 - 多种基础几何体创建
 - 完整的对象变换系统（移动、旋转、缩放）
@@ -36,14 +36,13 @@ three-editor-by-ai/
 │   ├── components/             # Vue 组件
 │   │   ├── editor/            # 编辑器 UI 组件
 │   │   │   ├── PropertyPanel.vue    # 属性面板
-│   │   │   ├── Toolbar.vue          # 工具栏
+│   │   │   ├── Toolbar.vue          # 工具栏，对象未选中时移动/旋转/缩放按钮禁用，支持编辑模式切换
 │   │   │   ├── AssetBrowser.vue     # 资源浏览器
 │   │   │   └── Inspector.vue        # 对象检查器
 │   │   ├── scene/             # 3D 场景组件
-│   │   │   ├── SceneViewer.vue      # 主场景视图
+│   │   │   ├── SceneViewer.vue      # 主场景视图，集成TransformControls，支持对象选中后变换操作
 │   │   │   ├── ObjectGizmo.vue      # 对象操作控制器
 │   │   │   └── Camera.vue           # 相机控制
-│   │   └── HelloWorld.vue     # 默认组件 (待移除)
 │   ├── composables/           # Vue Composition API 可组合函数
 │   │   ├── useScene.js        # 场景管理
 │   │   ├── useObjectSelection.js  # 对象选择

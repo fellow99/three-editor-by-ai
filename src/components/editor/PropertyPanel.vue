@@ -225,6 +225,14 @@ export default {
     watch(selectedObject, (newObject) => {
       if (newObject) {
         updatePropertyValues(newObject);
+        // 监听对象属性变化，实时刷新面板
+        watch(() => [
+          newObject.position.x, newObject.position.y, newObject.position.z,
+          newObject.rotation.x, newObject.rotation.y, newObject.rotation.z,
+          newObject.scale.x, newObject.scale.y, newObject.scale.z
+        ], () => {
+          updatePropertyValues(newObject);
+        }, { immediate: false });
       }
     }, { immediate: true });
     

@@ -149,9 +149,11 @@
 <script>
 import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue';
 import * as THREE from 'three';
+import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js';
 import { useScene } from '../../composables/useScene.js';
 import { useObjectSelection } from '../../composables/useObjectSelection.js';
 import { useInputManager } from '../../core/InputManager.js';
+import useTransform from '../../composables/useTransform.js';
 
 export default {
   name: 'SceneViewer',
@@ -160,6 +162,12 @@ export default {
     const scene = useScene();
     const objectSelection = useObjectSelection();
     const inputManager = useInputManager();
+    const transform = useTransform();
+    
+    // TransformControls相关
+    let transformControls = null;
+    let helper = null;
+    let currentObject = null;
     
     // 本地状态
     const showWireframe = ref(false);
@@ -180,7 +188,10 @@ export default {
       if (containerRef.value) {
         scene.initScene(containerRef.value);
         scene.startRender();
-        
+
+        // 初始化TransformControls
+        initTransformControls();
+
         // 设置输入事件监听
         setupInputHandlers();
         
@@ -213,6 +224,72 @@ export default {
         position: [-2, 0, 0],
         scale: [1, 1, 1]
       });
+    }
+
+    // 初始化TransformControls
+    function initTransformControls() {
+      if (!scene.sceneManager.camera || !scene.sceneManager.renderer) return;
+      transformControls = new TransformControls(scene.sceneManager.camera, scene.sceneManager.renderer.domElement);
+
+      // 监听变换事件，同步属性
+      transformControls.addEventListener('objectChange', () => {
+        if (currentObject) {
+          // 变换已自动作用于对象，无需额外同步
+          // 触发对象属性同步，确保属性面板等响应式刷新
+          if (scene.objectManager && scene.objectManager.setObjectTransform) {
+            scene.objectManager.setObjectTransform(
+              currentObject.userData.id,
+              {
+                position: [currentObject.position.x, currentObject.position.y, currentObject.position.z],
+                rotation: [currentObject.rotation.x, currentObject.rotation.y, currentObject.rotation.z],
+                scale: [currentObject.scale.x, currentObject.scale.y, currentObject.scale.z]
+              }
+            );
+          }
+        }
+      });
+
+      // 拖拽时禁用OrbitControls
+      transformControls.addEventListener('dragging-changed', function (event) {
+        if (scene.sceneManager.controls) {
+          scene.sceneManager.controls.enabled = !event.value;
+        }
+      });
+
+      // 禁止TransformControls事件冒泡到OrbitControls等
+      transformControls.addEventListener('mouseDown', function (event) {
+        event.stopPropagation?.();
+      });
+
+      // 添加辅助对象到场景
+      helper = transformControls.getHelper ? transformControls.getHelper() : null;
+      if (helper) {
+        scene.sceneManager.scene.add(helper);
+      }
+
+      // 监听transformMode变化
+      watch(() => transform.transformMode.value, (mode) => {
+        if (transformControls) {
+          transformControls.setMode(mode);
+          // 切换模式时重新attach对象，确保控件刷新
+          if (currentObject) {
+            transformControls.attach(currentObject);
+            transformControls.visible = true;
+          }
+        }
+      }, { immediate: true });
+
+      // 监听选中对象变化
+      watch(() => objectSelection.selectedObjects.value, (objs) => {
+        if (objs.length === 1) {
+          currentObject = objs[0];
+          transformControls.attach(currentObject);
+          transformControls.visible = true;
+        } else {
+          transformControls.detach();
+          transformControls.visible = false;
+        }
+      }, { immediate: true });
     }
     
     function setupInputHandlers() {
@@ -408,6 +485,12 @@ export default {
       }
       scene.stopRender();
       inputManager.dispose();
+      // 移除TransformControls
+      if (transformControls) {
+        scene.sceneManager.scene.remove(transformControls);
+        if (helper) scene.sceneManager.scene.remove(helper);
+        transformControls.dispose?.();
+      }
     });
     
     return {

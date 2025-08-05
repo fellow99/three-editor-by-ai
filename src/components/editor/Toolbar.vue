@@ -36,6 +36,7 @@
       <button 
         @click="setTransformMode('translate')" 
         :class="['toolbar-btn', 'tool-btn', { active: transformMode === 'translate' }]"
+        :disabled="!hasSelection"
         title="移动工具 (G)"
       >
         <span class="icon">↔️</span>
@@ -44,6 +45,7 @@
       <button 
         @click="setTransformMode('rotate')" 
         :class="['toolbar-btn', 'tool-btn', { active: transformMode === 'rotate' }]"
+        :disabled="!hasSelection"
         title="旋转工具 (R)"
       >
         <span class="icon">🔄</span>
@@ -52,6 +54,7 @@
       <button 
         @click="setTransformMode('scale')" 
         :class="['toolbar-btn', 'tool-btn', { active: transformMode === 'scale' }]"
+        :disabled="!hasSelection"
         title="缩放工具 (S)"
       >
         <span class="icon">📏</span>
@@ -197,7 +200,7 @@
 import { ref, computed } from 'vue';
 import { useScene } from '../../composables/useScene.js';
 import { useObjectSelection } from '../../composables/useObjectSelection.js';
-import { useTransform } from '../../composables/useTransform.js';
+import useTransform from '../../composables/useTransform.js';
 import { useObjectManager } from '../../core/ObjectManager.js';
 import { exportJSON } from '../../utils/fileUtils.js';
 
