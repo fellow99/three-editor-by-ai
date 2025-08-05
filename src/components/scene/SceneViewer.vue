@@ -82,6 +82,9 @@ export default {
     const showWireframe = ref(false);
     const showGrid = ref(true);
     const cameraPosition = reactive({ x: 0, y: 0, z: 0 });
+
+    // 网格辅助对象
+    let gridHelper = null;
     
     // 计算属性
     const isInitialized = computed(() => scene.isInitialized.value);
@@ -100,6 +103,13 @@ export default {
       if (containerRef.value) {
         scene.initScene(containerRef.value);
         scene.startRender();
+
+        // 初始化网格辅助线
+        if (!gridHelper) {
+          gridHelper = new THREE.GridHelper(20, 20, 0x888888, 0x444444);
+          gridHelper.visible = showGrid.value;
+          scene.sceneManager.scene.add(gridHelper);
+        }
 
         // 初始化TransformControls
         initTransformControls();
@@ -351,7 +361,11 @@ export default {
     
     function toggleGrid() {
       showGrid.value = !showGrid.value;
-      // TODO: 实现网格显示/隐藏
+      if (!gridHelper) {
+        gridHelper = new THREE.GridHelper(20, 20, 0x888888, 0x444444);
+        scene.sceneManager.scene.add(gridHelper);
+      }
+      gridHelper.visible = showGrid.value;
     }
     
     function setViewAngle(angle) {
@@ -412,6 +426,11 @@ export default {
         scene.sceneManager.scene.remove(transformControls);
         if (helper) scene.sceneManager.scene.remove(helper);
         transformControls.dispose?.();
+      }
+      // 移除网格辅助线
+      if (gridHelper) {
+        scene.sceneManager.scene.remove(gridHelper);
+        gridHelper = null;
       }
     });
     

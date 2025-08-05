@@ -40,7 +40,7 @@ three-editor-by-ai/
 │   │   │   ├── AssetBrowser.vue     # 资源浏览器
 │   │   │   └── Inspector.vue        # 对象检查器
 │   │   ├── scene/             # 3D 场景组件
-│   │   │   ├── SceneViewer.vue      # 主场景视图，集成TransformControls，支持对象选中后变换操作
+│   │   │   ├── SceneViewer.vue      # 主场景视图，集成TransformControls，支持对象选中后变换操作，支持网格辅助线显示/隐藏
 │   │   │   ├── PerformanceMonitor.vue   # 性能监控组件
 │   │   │   ├── InteractionHints.vue     # 操作提示组件
 │   │   │   ├── ViewportControls.vue     # 视图控制面板组件
