@@ -40,11 +40,10 @@ three-editor-by-ai/
 │   │   │   ├── AssetBrowser.vue     # 资源浏览器
 │   │   │   └── Inspector.vue        # 对象检查器
 │   │   ├── scene/             # 3D 场景组件
-│   │   │   ├── SceneViewer.vue      # 主场景视图
-│   │   │   ├── PerformanceMonitor.vue   # 性能监控组件
-│   │   │   ├── InteractionHints.vue     # 操作提示组件
-│   │   │   ├── ViewportControls.vue     # 视图控制面板组件
-│   │   │   ├── CubeViewportControls.vue # 立方体视角控件，6面点击切换视角，镜头联动
+│   │   │   ├── SceneViewer.vue      # 主场景视图（仅3D画布与框选指示器，浮动面板已迁移至App.vue）
+│   │   │   ├── InteractionHints.vue     # 操作提示组件（由App.vue统一渲染为浮动面板）
+│   │   │   ├── ViewportControls.vue     # 视图控制面板组件（由App.vue统一渲染为浮动面板）
+│   │   │   ├── CubeViewportControls.vue # 立方体视角控件（由App.vue统一渲染为浮动面板）
 │   │   │   ├── ObjectGizmo.vue      # 对象操作控制器
 │   │   │   └── Camera.vue           # 相机控制
 │   ├── composables/           # Vue Composition API 可组合函数
@@ -63,7 +62,7 @@ three-editor-by-ai/
 │   │   ├── mathUtils.js      # 数学工具
 │   │   ├── geometryUtils.js  # 几何工具
 │   │   └── fileUtils.js      # 文件处理工具
-│   ├── App.vue               # 根组件
+│   ├── App.vue               # 根组件（负责渲染所有浮动面板：视图控制、立方体视角、性能监控、操作提示）
 │   ├── main.js               # 应用入口
 │   └── style.css             # 全局样式
 ├── .gitignore                # Git 忽略文件

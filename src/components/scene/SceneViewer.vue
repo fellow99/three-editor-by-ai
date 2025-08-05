@@ -8,45 +8,7 @@
       </div>
     </div>
 
-    <!-- 框选指示器 -->
-    <div 
-      v-if="boxSelection.isActive"
-      class="selection-box"
-      :style="{
-        left: Math.min(boxSelection.startX, boxSelection.endX) + 'px',
-        top: Math.min(boxSelection.startY, boxSelection.endY) + 'px',
-        width: Math.abs(boxSelection.endX - boxSelection.startX) + 'px',
-        height: Math.abs(boxSelection.endY - boxSelection.startY) + 'px'
-      }"
-    ></div>
-
-    <!-- 视图控制面板 -->
-    <ViewportControls
-      :showWireframe="showWireframe"
-      :showGrid="showGrid"
-      :resetView="resetView"
-      :fitToScreen="fitToScreen"
-      :toggleWireframe="toggleWireframe"
-      :toggleGrid="toggleGrid"
-    />
-
-    <!-- 立方体视角控件右下角 -->
-    <CubeViewportControls
-      class="cube-controls-bottomright"
-      :cameraQuaternion="cameraQuaternion"
-      @viewChange="setViewAngle"
-    />
-
-    <!-- 性能监控 -->
-    <PerformanceMonitor
-      :fps="fps"
-      :sceneStats="sceneStats"
-      :cameraPosition="cameraPosition"
-      :formatNumber="formatNumber"
-    />
-
-    <!-- 操作提示 -->
-    <InteractionHints />
+    
   </div>
 </template>
 
@@ -58,15 +20,14 @@ import { useScene } from '../../composables/useScene.js';
 import { useObjectSelection } from '../../composables/useObjectSelection.js';
 import { useInputManager } from '../../core/InputManager.js';
 import useTransform from '../../composables/useTransform.js';
-import CubeViewportControls from './CubeViewportControls.vue';
-import PerformanceMonitor from './PerformanceMonitor.vue';
-import InteractionHints from './InteractionHints.vue';
-import ViewportControls from './ViewportControls.vue';
 
 export default {
   name: 'SceneViewer',
-  components: { CubeViewportControls, PerformanceMonitor, InteractionHints, ViewportControls },
-  setup() {
+  props: {
+    showWireframe: { type: Boolean, default: false },
+    showGrid: { type: Boolean, default: true }
+  },
+  setup(props) {
     const containerRef = ref(null);
     const scene = useScene();
     const objectSelection = useObjectSelection();
@@ -79,8 +40,9 @@ export default {
     let currentObject = null;
     
     // 本地状态
-    const showWireframe = ref(false);
-    const showGrid = ref(true);
+    // 由props控制
+    const showWireframe = computed(() => props.showWireframe);
+    const showGrid = computed(() => props.showGrid);
     const cameraPosition = reactive({ x: 0, y: 0, z: 0 });
 
     // 网格辅助对象
@@ -90,7 +52,6 @@ export default {
     const isInitialized = computed(() => scene.isInitialized.value);
     const fps = computed(() => scene.fps.value);
     const sceneStats = computed(() => scene.getSceneStats());
-    const boxSelection = computed(() => objectSelection.boxSelection);
 
     // 相机四元数，传递给CubeViewportControls
     const cameraQuaternionRef = ref({ x: 0, y: 0, z: 0, w: 1 });
@@ -318,21 +279,7 @@ export default {
     function toggleWireframe() {
       showWireframe.value = !showWireframe.value;
       
-      // 应用线框模式到所有对象
-      const objects = scene.objectManager.getAllObjects();
-      objects.forEach(object => {
-        object.traverse(child => {
-          if (child.material) {
-            if (Array.isArray(child.material)) {
-              child.material.forEach(mat => {
-                mat.wireframe = showWireframe.value;
-              });
-            } else {
-              child.material.wireframe = showWireframe.value;
-            }
-          }
-        });
-      });
+      // 线框模式由App.vue控制，这里不再处理
     }
     
     function toggleGrid() {
@@ -418,19 +365,9 @@ export default {
       isInitialized,
       fps,
       sceneStats,
-      boxSelection,
       showWireframe,
       showGrid,
-      cameraPosition,
-      
-      // 方法
-      resetView,
-      fitToScreen,
-      toggleWireframe,
-      toggleGrid,
-      setViewAngle,
-      formatNumber,
-      cameraQuaternion: cameraQuaternionRef
+      cameraPosition
     };
   }
 };

@@ -12,6 +12,12 @@ import AssetBrowser from './components/editor/AssetBrowser.vue';
 import Inspector from './components/editor/Inspector.vue';
 import SceneViewer from './components/scene/SceneViewer.vue';
 import PropertyPanel from './components/editor/PropertyPanel.vue';
+import EditorFooter from './components/editor/EditorFooter.vue';
+
+// 浮动面板组件
+import ViewportControls from './components/scene/ViewportControls.vue';
+import CubeViewportControls from './components/scene/CubeViewportControls.vue';
+import InteractionHints from './components/scene/InteractionHints.vue';
 
 // 应用状态管理
 const appState = reactive({
@@ -27,11 +33,15 @@ const appState = reactive({
   }
 });
 
+import { computed } from 'vue';
+
 // 使用各种 composables
 const scene = useScene();
 const objectSelection = useObjectSelection();
 const transform = useTransform();
 const assets = useAssets();
+
+import * as THREE from 'three';
 
 // 提供给子组件使用
 provide('scene', scene);
@@ -39,6 +49,144 @@ provide('objectSelection', objectSelection);
 provide('transform', transform);
 provide('assets', assets);
 provide('appState', appState);
+
+// ====== 以下为浮动面板迁移相关状态和方法 ======
+
+// 线框/网格显示
+const showWireframe = ref(false);
+const showGrid = ref(true);
+
+// 相机位置与四元数
+const cameraPosition = reactive({ x: 0, y: 0, z: 0 });
+const cameraQuaternion = ref({ x: 0, y: 0, z: 0, w: 1 });
+
+// 性能监控
+const fps = computed(() => scene.fps.value);
+const sceneStats = computed(() => scene.getSceneStats());
+
+// 定时更新相机状态
+let animationId = null;
+function updateCameraState() {
+  if (scene.sceneManager?.camera) {
+    const pos = scene.sceneManager.camera.position;
+    cameraPosition.x = pos.x;
+    cameraPosition.y = pos.y;
+    cameraPosition.z = pos.z;
+    const q = scene.sceneManager.camera.quaternion;
+    if (q) {
+      cameraQuaternion.value = { x: q.x, y: q.y, z: q.z, w: q.w };
+    }
+  }
+  animationId = requestAnimationFrame(updateCameraState);
+}
+
+// 控制方法
+function resetView() {
+  scene.updateCameraConfig({
+    position: { x: 5, y: 5, z: 5 },
+    target: { x: 0, y: 0, z: 0 }
+  });
+}
+
+function fitToScreen() {
+  const objects = scene.objectManager.getAllObjects();
+  if (objects.length > 0) {
+    const box = new THREE.Box3();
+    objects.forEach(obj => {
+      box.expandByObject(obj);
+    });
+    if (!box.isEmpty()) {
+      const center = box.getCenter(new THREE.Vector3());
+      const size = box.getSize(new THREE.Vector3());
+      const maxSize = Math.max(size.x, size.y, size.z);
+      const distance = maxSize * 2;
+      scene.updateCameraConfig({
+        position: { 
+          x: center.x + distance, 
+          y: center.y + distance, 
+          z: center.z + distance 
+        },
+        target: { x: center.x, y: center.y, z: center.z }
+      });
+    }
+  }
+}
+
+function toggleWireframe() {
+  showWireframe.value = !showWireframe.value;
+  const objects = scene.objectManager.getAllObjects();
+  objects.forEach(object => {
+    object.traverse(child => {
+      if (child.material) {
+        if (Array.isArray(child.material)) {
+          child.material.forEach(mat => {
+            mat.wireframe = showWireframe.value;
+          });
+        } else {
+          child.material.wireframe = showWireframe.value;
+        }
+      }
+    });
+  });
+}
+
+function toggleGrid() {
+  showGrid.value = !showGrid.value;
+  // 由SceneViewer负责网格辅助线的添加/显示
+}
+
+function setViewAngle(angle) {
+  const distance = 10;
+  let position;
+  switch (angle) {
+    case 'front':
+      position = { x: 0, y: 0, z: distance };
+      break;
+    case 'back':
+      position = { x: 0, y: 0, z: -distance };
+      break;
+    case 'left':
+      position = { x: -distance, y: 0, z: 0 };
+      break;
+    case 'right':
+      position = { x: distance, y: 0, z: 0 };
+      break;
+    case 'top':
+      position = { x: 0, y: distance, z: 0 };
+      break;
+    case 'bottom':
+      position = { x: 0, y: -distance, z: 0 };
+      break;
+    default:
+      return;
+  }
+  scene.updateCameraConfig({
+    position,
+    target: { x: 0, y: 0, z: 0 }
+  });
+}
+
+function formatNumber(num) {
+  if (num >= 1000000) {
+    return (num / 1000000).toFixed(1) + 'M';
+  } else if (num >= 1000) {
+    return (num / 1000).toFixed(1) + 'K';
+  }
+  return num.toString();
+}
+
+// 生命周期挂载/卸载
+onMounted(() => {
+  document.addEventListener('keydown', handleKeyboard);
+  setTimeout(() => {
+    appState.isLoading = false;
+  }, 1000);
+  updateCameraState();
+});
+onUnmounted(() => {
+  document.removeEventListener('keydown', handleKeyboard);
+  if (animationId) cancelAnimationFrame(animationId);
+});
 
 // 键盘快捷键处理
 function handleKeyboard(event) {
@@ -163,7 +311,7 @@ onUnmounted(() => {
     <main class="editor-main">
       <!-- 左侧面板 -->
       <div 
-        v-if="!appState.leftPanelCollapsed" 
+        v-show="!appState.leftPanelCollapsed" 
         class="editor-sidebar left-panel"
         :style="{ width: appState.panels.leftWidth + 'px' }"
       >
@@ -209,12 +357,45 @@ onUnmounted(() => {
       
       <!-- 主场景视口 -->
       <div class="editor-viewport">
-        <SceneViewer @delete-selected="handleDeleteSelected" />
+        <!-- 浮动面板：右上 -->
+        <ViewportControls
+          :showWireframe="showWireframe"
+          :showGrid="showGrid"
+          :resetView="resetView"
+          :fitToScreen="fitToScreen"
+          :toggleWireframe="toggleWireframe"
+          :toggleGrid="toggleGrid"
+          :class="[
+            'viewport-controls',
+            { 'with-right': !appState.rightPanelCollapsed }
+          ]"
+        />
+        <!-- 浮动面板：右下 -->
+        <CubeViewportControls
+          :class="[
+            'cube-controls-bottomright',
+            { 'with-right': !appState.rightPanelCollapsed }
+          ]"
+          :cameraQuaternion="cameraQuaternion"
+          @viewChange="setViewAngle"
+        />
+        <!-- 浮动面板：左下 -->
+        <InteractionHints
+          :class="[
+            'interaction-hints',
+            { 'with-left': !appState.leftPanelCollapsed }
+          ]"
+        />
+        <SceneViewer
+          @delete-selected="handleDeleteSelected"
+          :showWireframe="showWireframe"
+          :showGrid="showGrid"
+        />
       </div>
       
       <!-- 右侧属性面板 -->
       <div 
-        v-if="!appState.rightPanelCollapsed" 
+        v-show="!appState.rightPanelCollapsed" 
         class="editor-sidebar right-panel"
         :style="{ width: appState.panels.rightWidth + 'px' }"
       >
@@ -241,28 +422,11 @@ onUnmounted(() => {
     </main>
 
     <!-- 状态栏 -->
-    <footer class="editor-footer">
-      <div class="footer-left">
-        <span class="status-item">
-          {{ objectSelection?.hasSelection?.value ? `已选中 ${objectSelection?.selectionCount?.value || 0} 个对象` : '未选中对象' }}
-        </span>
-      </div>
-      
-      <div class="footer-center">
-        <span class="status-item">
-          相机: {{ scene?.cameraState?.fov || 75 }}° FOV
-        </span>
-      </div>
-      
-      <div class="footer-right">
-        <span class="status-item">
-          FPS: {{ scene?.fps?.value || 0 }}
-        </span>
-        <span class="status-item">
-          对象数: {{ scene?.getSceneStats?.()?.objects || 0 }}
-        </span>
-      </div>
-    </footer>
+    <EditorFooter
+      :objectSelection="objectSelection"
+      :scene="scene"
+      :cameraPosition="cameraPosition"
+    />
   </div>
 </template>
 
@@ -594,4 +758,45 @@ onUnmounted(() => {
   background: #007acc;
   color: #fff;
 }
+/* 浮动面板自适应侧边栏 */
+.viewport-controls {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 200;
+  transition: right 0.2s, left 0.2s;
+}
+.viewport-controls.with-right {
+  right: 316px; /* 300px面板+16px间距 */
+}
+.viewport-controls.with-left {
+  left: 316px;
+}
+.viewport-controls.with-left.with-right {
+  left: 316px;
+  right: 316px;
+}
+
+.cube-controls-bottomright {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  z-index: 300;
+  transition: right 0.2s, bottom 0.2s;
+}
+.cube-controls-bottomright.with-right {
+  right: 316px;
+}
+
+.interaction-hints {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  z-index: 200;
+  transition: left 0.2s;
+}
+.interaction-hints.with-left {
+  left: 316px;
+}
+
 </style>
