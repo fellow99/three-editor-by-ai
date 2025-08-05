@@ -1,19 +1,6 @@
 <template>
   <div class="inspector">
-    <div class="inspector-header">
-      <h3>场景检查器</h3>
-      <div class="header-actions">
-        <button @click="refreshHierarchy" class="refresh-btn" title="刷新层级">
-          <span class="icon">🔄</span>
-        </button>
-        <button @click="expandAll" class="expand-btn" title="展开所有">
-          <span class="icon">📂</span>
-        </button>
-        <button @click="collapseAll" class="collapse-btn" title="折叠所有">
-          <span class="icon">📁</span>
-        </button>
-      </div>
-    </div>
+<!-- inspector-header已移除 -->
 
     <!-- 场景统计 -->
     <div class="scene-stats">
@@ -46,16 +33,22 @@
         >
         <span class="search-icon">🔍</span>
       </div>
-      
-      <div class="filter-options">
-        <label class="filter-checkbox">
-          <input v-model="showOnlyVisible" type="checkbox">
-          <span>仅显示可见对象</span>
-        </label>
-        <label class="filter-checkbox">
-          <input v-model="showOnlySelected" type="checkbox">
-          <span>仅显示选中对象</span>
-        </label>
+      <div class="toolbar-row">
+        <button @click="refreshHierarchy" class="toolbar-btn" title="刷新层级">
+          <span class="icon">🔄</span>
+        </button>
+        <button @click="expandAll" class="toolbar-btn" title="展开所有">
+          <span class="icon">📂</span>
+        </button>
+        <button @click="collapseAll" class="toolbar-btn" title="折叠所有">
+          <span class="icon">📁</span>
+        </button>
+        <button @click="showOnlyVisible = !showOnlyVisible" :class="['toolbar-btn', { active: showOnlyVisible }]" title="仅显示可见对象">
+          <span class="icon">👁️</span>
+        </button>
+        <button @click="showOnlySelected = !showOnlySelected" :class="['toolbar-btn', { active: showOnlySelected }]" title="仅显示选中对象">
+          <span class="icon">✅</span>
+        </button>
       </div>
     </div>
 
@@ -343,7 +336,7 @@ export default {
 
 <style scoped>
 .inspector {
-  width: 250px;
+  width: 100%;
   height: 100%;
   background: #2a2a2a;
   border-right: 1px solid #444;
@@ -352,41 +345,32 @@ export default {
   color: #fff;
 }
 
-.inspector-header {
-  padding: 16px;
-  border-bottom: 1px solid #444;
+.toolbar-row {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  gap: 8px;
+  margin-bottom: 0;
+  margin-top: 0;
 }
 
-.inspector-header h3 {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 600;
-}
-
-.header-actions {
-  display: flex;
-  gap: 4px;
-}
-
-.refresh-btn,
-.expand-btn,
-.collapse-btn {
-  padding: 4px 6px;
-  background: #555;
+.toolbar-btn {
+  padding: 4px 10px;
+  background: #444;
   border: none;
   border-radius: 4px;
   color: #fff;
   font-size: 12px;
   cursor: pointer;
+  transition: background 0.2s, color 0.2s;
 }
 
-.refresh-btn:hover,
-.expand-btn:hover,
-.collapse-btn:hover {
-  background: #666;
+.toolbar-btn.active {
+  background: #007acc;
+  color: #fff;
+}
+
+.toolbar-btn:hover {
+  background: #0088dd;
+  color: #fff;
 }
 
 .scene-stats {
@@ -446,23 +430,7 @@ export default {
   font-size: 12px;
 }
 
-.filter-options {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.filter-checkbox {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11px;
-  cursor: pointer;
-}
-
-.filter-checkbox input {
-  margin: 0;
-}
+/* filter-options和filter-checkbox相关样式已移除 */
 
 .hierarchy-tree {
   flex: 1;

@@ -1,56 +1,5 @@
 <template>
   <div class="asset-browser">
-    <div class="browser-header">
-      <h3>资源浏览器</h3>
-      <div class="header-actions">
-        <button @click="selectAndUploadFiles" class="upload-btn">
-          <span class="icon">📁</span>
-          选择文件
-        </button>
-        <button @click="clearAssetLibrary" class="clear-btn" title="清空资源库">
-          <span class="icon">🗑️</span>
-        </button>
-      </div>
-    </div>
-
-    <!-- 搜索和过滤 -->
-    <div class="browser-filters">
-      <div class="search-box">
-        <input 
-          v-model="searchQuery" 
-          type="text" 
-          placeholder="搜索资源..."
-          class="search-input"
-        >
-        <span class="search-icon">🔍</span>
-      </div>
-      
-      <div class="filter-controls">
-        <select v-model="selectedCategory" class="category-select">
-          <option value="all">所有分类</option>
-          <option value="uncategorized">未分类</option>
-          <option v-for="[category, count] in categories" :key="category" :value="category">
-            {{ category }} ({{ count }})
-          </option>
-        </select>
-        
-        <select v-model="sortBy" class="sort-select">
-          <option value="name">按名称</option>
-          <option value="date">按日期</option>
-          <option value="size">按大小</option>
-          <option value="type">按类型</option>
-        </select>
-        
-        <button 
-          @click="toggleSortOrder" 
-          class="sort-order-btn"
-          :title="sortOrder === 'asc' ? '升序' : '降序'"
-        >
-          {{ sortOrder === 'asc' ? '↑' : '↓' }}
-        </button>
-      </div>
-    </div>
-
     <!-- 拖拽上传区域 -->
     <div 
       v-if="dragState.isDragOver"
@@ -497,31 +446,20 @@ export default {
       assetLibrary,
       uploadState,
       dragState,
-      searchQuery,
-      selectedCategory,
-      sortBy,
-      sortOrder,
       filteredModels,
       filteredTextures,
       
       // 方法
-      selectAndUploadFiles,
       addModelToScene,
       deleteAsset,
       toggleFavorite,
       handleDragEnter,
       handleDragLeave,
-      handleDrop,
-      clearAssetLibrary
+      handleDrop
     } = assets;
     
     // 计算属性
-    const categories = computed(() => Array.from(assetLibrary.categories.entries()));
-    
-    // 方法
-    function toggleSortOrder() {
-      sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc';
-    }
+    // categories、toggleSortOrder等已移除
     
     function selectModel(model) {
       selectedAssetId.value = model.id;
@@ -587,34 +525,26 @@ export default {
       assetLibrary,
       uploadState,
       dragState,
-      searchQuery,
-      selectedCategory,
-      sortBy,
-      sortOrder,
       filteredModels,
       filteredTextures,
-      categories,
       basicPrimitives,
       extendedPrimitives,
       lightPrimitives,
       otherPrimitives,
       
       // 方法
-      toggleSortOrder,
       selectModel,
       selectTexture,
       showModelOptions,
       applyTextureToSelected,
       formatFileSize,
       getStatusText,
-      selectAndUploadFiles,
       addModelToScene,
       deleteAsset,
       toggleFavorite,
       handleDragEnter,
       handleDragLeave,
       handleDrop,
-      clearAssetLibrary,
       addPrimitive
     };
   }
@@ -623,7 +553,7 @@ export default {
 
 <style scoped>
 .asset-browser {
-  width: 300px;
+  width: 100%;
   height: 100%;
   background: #2a2a2a;
   border-right: 1px solid #444;
