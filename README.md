@@ -26,8 +26,6 @@
 
 ## 📁 项目结构
 
-> 2025-08-05：Toolbar.vue 已移除“设置”分组及“网格吸附、线框模式”相关功能。
-
 ```
 three-editor-by-ai/
 ├── public/                     # 静态资源
@@ -42,7 +40,7 @@ three-editor-by-ai/
 │   │   │   ├── AssetBrowser.vue     # 资源浏览器
 │   │   │   └── Inspector.vue        # 对象检查器
 │   │   ├── scene/             # 3D 场景组件
-│   │   │   ├── SceneViewer.vue      # 主场景视图
+│   │   │   ├── SceneViewer.vue      # 主场景视图（支持灯光、相机helper自动可视化）
 │   │   │   ├── InteractionHints.vue     # 操作提示组件
 │   │   │   ├── ViewportControls.vue     # 视图控制面板组件
 │   │   │   ├── CubeViewportControls.vue # 立方体视角控件
@@ -85,7 +83,7 @@ three-editor-by-ai/
 
 ## 🎯 主要功能
 
-- **3D场景渲染**: 基于 Three.js 的高性能 3D 渲染
+- **3D场景渲染**: 基于 Three.js 的高性能 3D 渲染，支持灯光、相机helper自动可视化
 - **几何体创建**: 支持多种基础和扩展几何体创建
   - 基础几何体: 立方体、球体、圆柱体、平面、圆锥体、圆环体
   - 扩展几何体: 十二面体、二十面体、八面体、四面体、环形、管道

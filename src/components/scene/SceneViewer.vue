@@ -16,6 +16,7 @@
 import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue';
 import * as THREE from 'three';
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js';
+import { DirectionalLightHelper, PointLightHelper, SpotLightHelper, HemisphereLightHelper, CameraHelper } from 'three';
 import { useScene } from '../../composables/useScene.js';
 import { useObjectSelection } from '../../composables/useObjectSelection.js';
 import { useInputManager } from '../../core/InputManager.js';
@@ -38,6 +39,9 @@ export default {
     let transformControls = null;
     let helper = null;
     let currentObject = null;
+
+    // 灯光/相机helper管理
+    let currentHelper = null;
     
     // 本地状态
     // 由props控制
@@ -70,11 +74,40 @@ export default {
         // 初始化TransformControls
         initTransformControls();
 
+        // 不再全量添加灯光/相机helper
+
         // 设置输入事件监听
         setupInputHandlers();
         
         // 启动相机位置更新
         startCameraPositionUpdate();
+      }
+    }
+
+    // 选中对象时动态添加helper
+    function updateSelectedHelper(selected) {
+      // 移除旧helper
+      if (currentHelper) {
+        scene.sceneManager.scene.remove(currentHelper);
+        if (currentHelper.dispose) currentHelper.dispose();
+        currentHelper = null;
+      }
+      if (!selected) return;
+      let helper = null;
+      if (selected.isDirectionalLight) {
+        helper = new DirectionalLightHelper(selected, 5, 0xffaa00);
+      } else if (selected.isPointLight) {
+        helper = new PointLightHelper(selected, 2, 0x00aaff);
+      } else if (selected.isSpotLight) {
+        helper = new SpotLightHelper(selected, 2, 0xaaff00);
+      } else if (selected.isHemisphereLight) {
+        helper = new HemisphereLightHelper(selected, 2);
+      } else if (selected.isCamera) {
+        helper = new CameraHelper(selected);
+      }
+      if (helper) {
+        scene.sceneManager.scene.add(helper);
+        currentHelper = helper;
       }
     }
 
@@ -137,9 +170,11 @@ export default {
           currentObject = objs[0];
           transformControls.attach(currentObject);
           transformControls.visible = true;
+          updateSelectedHelper(currentObject);
         } else {
           transformControls.detach();
           transformControls.visible = false;
+          updateSelectedHelper(null);
         }
       }, { immediate: true });
     }
@@ -301,6 +336,8 @@ export default {
     onMounted(() => {
       initializeScene();
     });
+
+    // 不再监听场景对象变化自动刷新helper
     
     onUnmounted(() => {
       if (animationId) {
@@ -313,6 +350,12 @@ export default {
         scene.sceneManager.scene.remove(transformControls);
         if (helper) scene.sceneManager.scene.remove(helper);
         transformControls.dispose?.();
+      }
+      // 移除灯光/相机helper
+      if (currentHelper) {
+        scene.sceneManager.scene.remove(currentHelper);
+        if (currentHelper.dispose) currentHelper.dispose();
+        currentHelper = null;
       }
       // 移除网格辅助线
       if (gridHelper) {
