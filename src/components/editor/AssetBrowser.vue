@@ -152,7 +152,21 @@
       </div>
       
       <!-- 3D模型 -->
-      <div v-if="activeTab === 'models'" class="models-grid">
+<div v-if="activeTab === 'models'" class="models-grid">
+        <!-- 固定上传模型按钮 -->
+<div class="asset-item model-item upload-item-fixed"
+     @click="selectAndUploadFiles(['.gltf', '.glb', '.obj', '.fbx'])"
+     title="上传模型文件">
+  <div class="asset-preview">
+    <div class="preview-placeholder">
+      <span class="placeholder-icon">⬆️</span>
+    </div>
+  </div>
+  <div class="asset-info">
+    <div class="asset-name">上传模型文件</div>
+  </div>
+</div>
+        <!-- 渲染模型列表 -->
         <div 
           v-for="model in filteredModels" 
           :key="model.id"
@@ -212,17 +226,27 @@
             </div>
           </div>
         </div>
-        
         <div v-if="filteredModels.length === 0" class="empty-state">
           <p>没有找到3D模型</p>
-          <button @click="selectAndUploadFiles(['.gltf', '.glb', '.obj', '.fbx'])" class="upload-hint-btn">
-            上传模型文件
-          </button>
         </div>
       </div>
 
       <!-- 纹理 -->
-      <div v-if="activeTab === 'textures'" class="textures-grid">
+<div v-if="activeTab === 'textures'" class="textures-grid">
+        <!-- 固定上传纹理按钮 -->
+<div class="asset-item texture-item upload-item-fixed"
+     @click="selectAndUploadFiles(['.jpg', '.jpeg', '.png', '.bmp', '.gif'])"
+     title="上传纹理文件">
+  <div class="asset-preview">
+    <div class="preview-placeholder">
+      <span class="placeholder-icon">⬆️</span>
+    </div>
+  </div>
+  <div class="asset-info">
+    <div class="asset-name">上传纹理文件</div>
+  </div>
+</div>
+        <!-- 渲染纹理列表 -->
         <div 
           v-for="texture in filteredTextures" 
           :key="texture.id"
@@ -270,12 +294,8 @@
             </div>
           </div>
         </div>
-        
         <div v-if="filteredTextures.length === 0" class="empty-state">
           <p>没有找到纹理</p>
-          <button @click="selectAndUploadFiles(['.jpg', '.jpeg', '.png', '.bmp', '.gif'])" class="upload-hint-btn">
-            上传纹理文件
-          </button>
         </div>
       </div>
     </div>
@@ -893,6 +913,16 @@ export default {
 
 .asset-info {
   padding: 8px;
+}
+.upload-item-fixed .asset-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.upload-item-fixed .asset-name {
+  text-align: center;
+  width: 100%;
 }
 
 .asset-name {
