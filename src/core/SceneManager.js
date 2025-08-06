@@ -5,6 +5,8 @@
 
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { reactive } from 'vue';
 
 class SceneManager {
@@ -15,7 +17,11 @@ class SceneManager {
     this.controls = null;
     this.container = null;
     this.animationId = null;
-    
+
+    // 后处理
+    this.composer = null;
+    this.passes = [];
+
     // 响应式状态
     this.state = reactive({
       isInitialized: false,
@@ -42,7 +48,10 @@ class SceneManager {
     this.createRenderer();
     this.createCamera();
     this.setupLights();
-    
+
+    // 初始化后处理
+    this.initComposer();
+
     this.state.isInitialized = true;
   }
   
@@ -64,7 +73,7 @@ class SceneManager {
       alpha: true,
       powerPreference: 'high-performance'
     });
-    
+
     this.renderer.setSize(800, 600);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.shadowMap.enabled = true;
@@ -72,6 +81,62 @@ class SceneManager {
     this.renderer.outputEncoding = THREE.sRGBEncoding;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1;
+  }
+
+  /**
+   * 初始化后处理
+   */
+  initComposer() {
+    if (this.renderer && this.scene && this.camera) {
+      this.composer = new EffectComposer(this.renderer);
+      const renderPass = new RenderPass(this.scene, this.camera);
+      this.composer.addPass(renderPass);
+      this.passes = [renderPass];
+    }
+  }
+
+  /**
+   * 添加后处理Pass
+   * @param {Pass} pass
+   * @param {number} index
+   */
+  addPass(pass, index) {
+    if (!this.composer) return;
+    if (typeof index === 'number' && index >= 0 && index < this.composer.passes.length) {
+      this.composer.passes.splice(index, 0, pass);
+      this.composer.addPass(pass);
+      this.passes.splice(index, 0, pass);
+    } else {
+      this.composer.addPass(pass);
+      this.passes.push(pass);
+    }
+  }
+
+  /**
+   * 移除后处理Pass
+   * @param {Pass} pass
+   */
+  removePass(pass) {
+    if (!this.composer) return;
+    const idx = this.composer.passes.indexOf(pass);
+    if (idx > -1) {
+      this.composer.passes.splice(idx, 1);
+      this.passes.splice(idx, 1);
+    }
+  }
+
+  /**
+   * 修改指定Pass参数
+   * @param {Pass} pass
+   * @param {object} params
+   */
+  setPassParams(pass, params) {
+    if (!pass || !params) return;
+    Object.entries(params).forEach(([key, value]) => {
+      if (key in pass) {
+        pass[key] = value;
+      }
+    });
   }
   
   /**
@@ -213,14 +278,17 @@ class SceneManager {
    */
   handleResize() {
     if (!this.container || !this.renderer || !this.camera) return;
-    
+
     const width = this.container.clientWidth;
     const height = this.container.clientHeight;
-    
+
     this.camera.aspect = width / height;
     this.camera.updateProjectionMatrix();
-    
+
     this.renderer.setSize(width, height);
+    if (this.composer) {
+      this.composer.setSize(width, height);
+    }
   }
   
   /**
@@ -273,8 +341,10 @@ class SceneManager {
     if (this.controls) {
       this.controls.update();
     }
-    
-    if (this.renderer && this.scene && this.camera) {
+
+    if (this.composer) {
+      this.composer.render();
+    } else if (this.renderer && this.scene && this.camera) {
       this.renderer.render(this.scene, this.camera);
     }
   }
@@ -418,7 +488,12 @@ class SceneManager {
     }
     
     this.clearScene();
-    
+
+    if (this.composer) {
+      this.composer = null;
+      this.passes = [];
+    }
+
     if (this.renderer) {
       this.renderer.dispose();
     }
