@@ -76,6 +76,13 @@ three-editor-by-ai/
 └── README.md                 # 项目说明
 ```
 
+**注意：**
+- vite.config.js中，配置vite-plugin-static-copy，把几个js库的复制到目标路径：
+  > 如需加载Draco压缩的glTF模型，请将node_modules/three/examples/jsm/libs/draco/目录中的文件复制到 /draco/ 目录下。
+  > 如需加载KTX2纹理，请将node_modules/three/examples/jsm/libs/basis目录中的文件放入 /basis/ 目录下。
+  > 如需加载Meshopt压缩的glTF模型，请将node_modules/three/examples/jsm/libs/meshopt_decoder.module.js文件放入 public/meshopt/ 目录下。
+
+
 ## 🎯 主要功能
 
 - **3D场景渲染**: 基于 Three.js 的高性能 3D 渲染

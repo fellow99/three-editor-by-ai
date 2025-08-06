@@ -5,6 +5,9 @@
 
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
+import { KTX2Loader } from 'three/examples/jsm/loaders/KTX2Loader.js';
+import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
 import { reactive } from 'vue';
@@ -20,6 +23,14 @@ class AssetLoader {
       loadingQueue: []
     });
     
+    // DRACO 解码器
+    this.dracoLoader = new DRACOLoader();
+    this.dracoLoader.setDecoderPath('./draco/');
+
+    // KTX2 纹理解码器
+    this.ktx2Loader = new KTX2Loader();
+    this.ktx2Loader.setTranscoderPath('./basis/');
+
     // 加载器实例
     this.loaders = {
       gltf: new GLTFLoader(),
@@ -27,6 +38,11 @@ class AssetLoader {
       fbx: new FBXLoader(),
       texture: new THREE.TextureLoader()
     };
+
+    // 给 GLTFLoader 设置 DRACOLoader、KTX2Loader 和 MeshoptDecoder
+    this.loaders.gltf.setDRACOLoader(this.dracoLoader);
+    this.loaders.gltf.setKTX2Loader(this.ktx2Loader);
+    this.loaders.gltf.setMeshoptDecoder(MeshoptDecoder);
     
     // 加载管理器
     this.loadingManager = new THREE.LoadingManager();
