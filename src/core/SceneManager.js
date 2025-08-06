@@ -9,6 +9,10 @@ import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { reactive } from 'vue';
 
+/**
+ * SceneManager
+ * Three.js场景、渲染器、相机、控制器、后处理等统一管理类
+ */
 class SceneManager {
   constructor() {
     this.scene = null;

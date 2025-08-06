@@ -19,6 +19,10 @@
   </div>
 </template>
 
+<!--
+  交互操作提示组件
+  固定显示在视口，提示用户常用鼠标操作说明
+-->
 <script>
 export default {
   name: 'InteractionHints'

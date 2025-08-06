@@ -13,6 +13,10 @@ import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
 import { reactive } from 'vue';
 import { getFileExtension, isSupported3DFormat, isTextureFormat } from '../utils/fileUtils.js';
 
+/**
+ * AssetLoader
+ * 统一的3D资源加载与缓存管理类，支持模型、纹理等多格式加载
+ */
 class AssetLoader {
   constructor() {
     // 响应式状态

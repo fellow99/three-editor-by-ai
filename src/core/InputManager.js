@@ -6,6 +6,10 @@
 import * as THREE from 'three';
 import { reactive } from 'vue';
 
+/**
+ * InputManager
+ * 统一的输入事件管理类，处理鼠标、键盘、拖拽等交互，支持事件订阅
+ */
 class InputManager {
   constructor() {
     // 响应式状态

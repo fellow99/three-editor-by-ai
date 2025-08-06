@@ -24,6 +24,10 @@
   </footer>
 </template>
 
+<!--
+  编辑器底部状态栏组件
+  展示选中对象、相机参数、FPS等实时信息
+-->
 <script setup>
 defineProps({
   objectSelection: { type: Object, required: true },

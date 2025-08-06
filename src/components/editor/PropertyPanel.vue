@@ -177,6 +177,10 @@ import { radToDeg, degToRad } from '../../utils/mathUtils.js';
 
 export default {
   name: 'PropertyPanel',
+  /**
+   * 属性面板组件
+   * 提供对象属性的展示与编辑功能
+   */
   setup() {
     const objectSelection = useObjectSelection();
     const transformManager = useTransform();
@@ -223,6 +227,11 @@ export default {
     }, { immediate: true });
     
     // 方法
+
+    /**
+     * 更新属性面板的显示数据
+     * @param {Object} object 选中的对象
+     */
     function updatePropertyValues(object) {
       objectName.value = object.name || '';
       
@@ -247,12 +256,18 @@ export default {
       }
     }
     
+    /**
+     * 更新对象名称
+     */
     function updateObjectName() {
       if (selectedObject.value) {
         selectedObject.value.name = objectName.value;
       }
     }
     
+    /**
+     * 更新对象的变换属性（位置、旋转、缩放）
+     */
     function updateTransform() {
       if (!selectedObject.value) return;
       
@@ -275,24 +290,36 @@ export default {
       ]);
     }
     
+    /**
+     * 更新材质颜色
+     */
     function updateMaterialColor() {
       if (selectedObject.value && selectedObject.value.material) {
         selectedObject.value.material.color.setHex(materialColor.value.replace('#', '0x'));
       }
     }
     
+    /**
+     * 更新材质粗糙度
+     */
     function updateMaterialRoughness() {
       if (selectedObject.value && selectedObject.value.material) {
         selectedObject.value.material.roughness = materialRoughness.value;
       }
     }
     
+    /**
+     * 更新材质金属度
+     */
     function updateMaterialMetalness() {
       if (selectedObject.value && selectedObject.value.material) {
         selectedObject.value.material.metalness = materialMetalness.value;
       }
     }
     
+    /**
+     * 重置缩放为1
+     */
     function resetScale() {
       transform.scale.x = 1;
       transform.scale.y = 1;
@@ -300,6 +327,9 @@ export default {
       updateTransform();
     }
     
+    /**
+     * 清除当前选择
+     */
     function clearSelection() {
       objectSelection.clearSelection();
     }

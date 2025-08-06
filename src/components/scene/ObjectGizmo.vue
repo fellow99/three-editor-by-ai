@@ -243,6 +243,10 @@
   </div>
 </template>
 
+<!--
+  对象变换控制器组件（Gizmo）
+  提供移动、旋转、缩放等变换模式切换、轴约束、精确输入、吸附设置和历史操作
+-->
 <script>
 import { ref, reactive, computed, watch } from 'vue';
 import { useTransform } from '../../composables/useTransform.js';
@@ -293,12 +297,20 @@ export default {
     }, { deep: true });
     
     // 方法
+    /**
+     * 切换变换模式
+     * @param {string} newMode 模式名
+     */
     function setMode(newMode) {
       mode.value = newMode;
       transform.transformMode.value = newMode;
       clearDeltaTransform();
     }
     
+    /**
+     * 切换轴约束
+     * @param {string} axis 轴名
+     */
     function toggleAxisConstraint(axis) {
       // 如果已经激活了这个轴，则取消；否则设置为唯一激活的轴
       if (axisConstraints[axis]) {
@@ -314,6 +326,9 @@ export default {
       transform.transformConfig.axisConstraint = getActiveAxis();
     }
     
+    /**
+     * 清除所有轴约束
+     */
     function clearAxisConstraints() {
       Object.keys(axisConstraints).forEach(key => {
         axisConstraints[key] = false;
@@ -321,11 +336,18 @@ export default {
       transform.transformConfig.axisConstraint = null;
     }
     
+    /**
+     * 获取当前激活的轴
+     * @returns {string|null}
+     */
     function getActiveAxis() {
       const activeAxes = Object.keys(axisConstraints).filter(axis => axisConstraints[axis]);
       return activeAxes.length === 1 ? activeAxes[0] : null;
     }
     
+    /**
+     * 应用精确变换输入
+     */
     function applyDeltaTransform() {
       const selectedObjects = objectSelection.selectedObjects.value;
       if (selectedObjects.length === 0) return;
@@ -357,6 +379,11 @@ export default {
       });
     }
     
+    /**
+     * 应用平移变换
+     * @param {Object} object 目标对象
+     * @param {string|null} activeAxis 约束轴
+     */
     function applyTranslation(object, activeAxis) {
       const delta = { ...deltaTransform };
       
@@ -370,6 +397,11 @@ export default {
       transform.translate(object, [delta.x, delta.y, delta.z]);
     }
     
+    /**
+     * 应用旋转变换
+     * @param {Object} object 目标对象
+     * @param {string|null} activeAxis 约束轴
+     */
     function applyRotation(object, activeAxis) {
       const delta = { ...deltaTransform };
       
@@ -388,6 +420,11 @@ export default {
       transform.rotate(object, [delta.x, delta.y, delta.z]);
     }
     
+    /**
+     * 应用缩放变换
+     * @param {Object} object 目标对象
+     * @param {string|null} activeAxis 约束轴
+     */
     function applyScaling(object, activeAxis) {
       let scaleVector;
       
@@ -410,6 +447,9 @@ export default {
       transform.scale(object, scaleVector);
     }
     
+    /**
+     * 清空精确变换输入
+     */
     function clearDeltaTransform() {
       deltaTransform.x = 0;
       deltaTransform.y = 0;
@@ -417,6 +457,10 @@ export default {
       deltaTransform.uniform = 1;
     }
     
+    /**
+     * 获取当前操作名称（用于历史记录）
+     * @returns {string}
+     */
     function getActionName() {
       const modeNames = {
         translate: '移动',
@@ -430,14 +474,25 @@ export default {
       return `${modeNames[mode.value]}${axisName}`;
     }
     
+    /**
+     * 撤销上一步操作
+     */
     function undo() {
       transform.undo();
     }
     
+    /**
+     * 重做操作
+     */
     function redo() {
       transform.redo();
     }
     
+    /**
+     * 格式化历史记录时间显示
+     * @param {number} timestamp
+     * @returns {string}
+     */
     function formatTime(timestamp) {
       const now = Date.now();
       const diff = now - timestamp;

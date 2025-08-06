@@ -5,7 +5,10 @@
 
 import * as THREE from 'three';
 import { reactive } from 'vue';
-// 简单的UUID生成器
+/**
+ * 简单的UUID生成器
+ * @returns {string} 生成的唯一ID
+ */
 function generateId() {
   return 'xxxx-xxxx-4xxx-yxxx'.replace(/[xy]/g, function(c) {
     const r = Math.random() * 16 | 0;
@@ -15,6 +18,10 @@ function generateId() {
 }
 import { createBoxGeometry, createSphereGeometry, createCylinderGeometry } from '../utils/geometryUtils.js';
 
+/**
+ * ObjectManager
+ * 统一的3D对象创建、管理、变换、选择与批量操作管理类
+ */
 class ObjectManager {
   constructor() {
     // 响应式状态

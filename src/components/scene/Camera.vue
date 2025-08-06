@@ -304,6 +304,10 @@ import { useScene } from '../../composables/useScene.js';
 
 export default {
   name: 'Camera',
+  /**
+   * 相机控制面板组件
+   * 提供相机参数调整、模式切换、预设视角等功能
+   */
   setup() {
     const scene = useScene();
     
@@ -352,37 +356,54 @@ export default {
     });
     
     // 方法
+    /**
+     * 更新相机参数（FOV、近远裁剪面等）
+     */
     function updateCameraSettings() {
       scene.updateCameraConfig(cameraConfig);
     }
     
-  function updateControlSettings() {
-    if (scene.sceneManager?.updateControlsConfig) {
-      scene.sceneManager.updateControlsConfig({
-        rotateSpeed: controlConfig.rotateSpeed,
-        zoomSpeed: controlConfig.zoomSpeed,
-        panSpeed: controlConfig.panSpeed
-      });
+    /**
+     * 更新控制器参数（旋转、缩放、平移速度）
+     */
+    function updateControlSettings() {
+      if (scene.sceneManager?.updateControlsConfig) {
+        scene.sceneManager.updateControlsConfig({
+          rotateSpeed: controlConfig.rotateSpeed,
+          zoomSpeed: controlConfig.zoomSpeed,
+          panSpeed: controlConfig.panSpeed
+        });
+      }
     }
-  }
-  
-  function updateAnimationSettings() {
-    if (scene.sceneManager?.updateControlsConfig) {
-      scene.sceneManager.updateControlsConfig({
-        enableDamping: animationConfig.enableDamping,
-        dampingFactor: animationConfig.dampingFactor,
-        autoRotate: animationConfig.autoRotate,
-        autoRotateSpeed: animationConfig.autoRotateSpeed
-      });
-    }
-  }
     
+    /**
+     * 更新动画相关参数（阻尼、自动旋转等）
+     */
+    function updateAnimationSettings() {
+      if (scene.sceneManager?.updateControlsConfig) {
+        scene.sceneManager.updateControlsConfig({
+          enableDamping: animationConfig.enableDamping,
+          dampingFactor: animationConfig.dampingFactor,
+          autoRotate: animationConfig.autoRotate,
+          autoRotateSpeed: animationConfig.autoRotateSpeed
+        });
+      }
+    }
+    
+    /**
+     * 切换相机模式（透视/正交）
+     * @param {string} mode 模式
+     */
     function setCameraMode(mode) {
       cameraMode.value = mode;
       // TODO: 实现相机模式切换
       console.log('切换相机模式:', mode);
     }
     
+    /**
+     * 设置预设视角
+     * @param {string} preset 视角类型
+     */
     function setPresetView(preset) {
       const distance = 10;
       let position;
@@ -417,6 +438,9 @@ export default {
       scene.updateCameraConfig({ position, target });
     }
     
+    /**
+     * 重置相机到默认参数
+     */
     function resetCamera() {
       scene.updateCameraConfig({
         position: { x: 5, y: 5, z: 5 },
@@ -444,6 +468,9 @@ export default {
       updateAnimationSettings();
     }
     
+    /**
+     * 保存当前视角到本地
+     */
     function saveCurrentView() {
       const name = prompt('请输入视角名称:');
       if (!name) return;
@@ -461,6 +488,10 @@ export default {
       saveSavedViewsToStorage();
     }
     
+    /**
+     * 应用已保存的视角
+     * @param {Object} view 视角对象
+     */
     function applySavedView(view) {
       scene.updateCameraConfig({
         position: view.position,
@@ -472,6 +503,10 @@ export default {
       cameraMode.value = view.mode;
     }
     
+    /**
+     * 删除已保存的视角
+     * @param {number} index 视角索引
+     */
     function deleteSavedView(index) {
       if (confirm('确定要删除这个保存的视角吗？')) {
         savedViews.value.splice(index, 1);
@@ -479,6 +514,9 @@ export default {
       }
     }
     
+    /**
+     * 加载本地保存的视角列表
+     */
     function loadSavedViews() {
       const saved = localStorage.getItem('tres-editor-saved-views');
       if (saved) {
@@ -490,6 +528,9 @@ export default {
       }
     }
     
+    /**
+     * 保存视角列表到本地存储
+     */
     function saveSavedViewsToStorage() {
       localStorage.setItem('tres-editor-saved-views', JSON.stringify(savedViews.value));
     }

@@ -4,6 +4,10 @@
   </div>
 </template>
 
+<!--
+  立方体视角控件组件
+  提供3D立方体交互，点击不同面可切换主视图方向，支持与主相机联动
+-->
 <script setup>
 import { ref, onMounted, onUnmounted, watch, defineProps, defineEmits } from 'vue'
 import * as THREE from 'three'
@@ -26,6 +30,9 @@ const faceToDirection = [
   { face: 2,  dir: 'bottom',vector: new THREE.Vector3(0, -1, 0) }   // Y-
 ]
 
+/**
+ * 初始化立方体场景
+ */
 function initCubeScene() {
   const width = 80
   const height = 80
@@ -57,11 +64,17 @@ function initCubeScene() {
   animate()
 }
 
+/**
+ * 渲染循环
+ */
 function animate() {
   renderer.render(scene, camera)
   animationId = requestAnimationFrame(animate)
 }
 
+/**
+ * 释放Three.js相关资源
+ */
 function dispose() {
   cancelAnimationFrame(animationId)
   renderer && renderer.dispose()
@@ -70,6 +83,10 @@ function dispose() {
   cube = null
 }
 
+/**
+ * 处理立方体canvas点击事件，根据点击面切换视角
+ * @param {MouseEvent} e
+ */
 function onCanvasClick(e) {
   if (!cube || !renderer) return
   const rect = cubeCanvas.value.getBoundingClientRect()

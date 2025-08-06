@@ -290,6 +290,10 @@ import { useScene } from '../../composables/useScene.js';
 
 export default {
   name: 'AssetBrowser',
+  /**
+   * 资源浏览器组件
+   * 提供模型、纹理、几何体的浏览与管理功能
+   */
   setup() {
     const assets = useAssets();
     const objectSelection = useObjectSelection();
@@ -461,19 +465,35 @@ export default {
     // 计算属性
     // categories、toggleSortOrder等已移除
     
+    /**
+     * 选中模型
+     * @param {Object} model 模型对象
+     */
     function selectModel(model) {
       selectedAssetId.value = model.id;
     }
     
+    /**
+     * 选中纹理
+     * @param {Object} texture 纹理对象
+     */
     function selectTexture(texture) {
       selectedAssetId.value = texture.id;
     }
     
+    /**
+     * 显示模型更多选项（待实现）
+     * @param {Object} model 模型对象
+     */
     function showModelOptions(model) {
       // TODO: 显示模型选项对话框
       console.log('显示模型选项:', model);
     }
     
+    /**
+     * 将纹理应用到选中的对象
+     * @param {Object} texture 纹理对象
+     */
     function applyTextureToSelected(texture) {
       const selectedObjects = objectSelection.selectedObjects.value;
       if (selectedObjects.length === 0) {
@@ -489,6 +509,11 @@ export default {
       });
     }
     
+    /**
+     * 格式化文件大小
+     * @param {number} bytes 字节数
+     * @returns {string} 格式化结果
+     */
     function formatFileSize(bytes) {
       if (bytes === 0) return '0 B';
       const k = 1024;
@@ -497,6 +522,11 @@ export default {
       return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     }
     
+    /**
+     * 获取上传状态文本
+     * @param {string} status 状态码
+     * @returns {string} 状态文本
+     */
     function getStatusText(status) {
       const statusMap = {
         pending: '等待中',
@@ -508,6 +538,10 @@ export default {
     }
 
     // 添加几何体到场景
+    /**
+     * 添加几何体到场景
+     * @param {string} type 几何体类型
+     */
     function addPrimitive(type) {
       const position = [
         Math.random() * 4 - 2,

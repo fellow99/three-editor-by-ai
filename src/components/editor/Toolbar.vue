@@ -113,6 +113,10 @@ import { exportJSON } from '../../utils/fileUtils.js';
 export default {
   name: 'Toolbar',
   emits: ['delete-selected'],
+  /**
+   * 工具栏组件
+   * 提供场景文件、编辑、对象变换等操作入口
+   */
   setup(props, { emit }) {
     // Ribbon tab 配置
     const tabs = [
@@ -141,6 +145,9 @@ export default {
     const canRedo = computed(() => transform.transformHistory.redoStack.length > 0);
     
     // 方法
+    /**
+     * 新建场景，清空所有内容
+     */
     function newScene() {
       if (confirm('确定要新建场景吗？这将清除当前所有内容。')) {
         scene.clearScene();
@@ -150,6 +157,9 @@ export default {
 }
     }
     
+    /**
+     * 保存当前场景为JSON文件
+     */
     function saveScene() {
       try {
         const sceneData = scene.exportScene();
@@ -161,6 +171,9 @@ export default {
       }
     }
     
+    /**
+     * 加载场景文件（功能待实现）
+     */
     function loadScene() {
       const input = document.createElement('input');
       input.type = 'file';
@@ -186,28 +199,47 @@ export default {
       input.click();
     }
     
+    /**
+     * 设置对象变换模式
+     * @param {string} mode 变换模式
+     */
     function setTransformMode(mode) {
       transform.transformMode.value = mode;
     }
     
     // 移除 setSelectionMode 方法
     
+    /**
+     * 撤销上一步操作
+     */
     function undo() {
       transform.undo();
     }
     
+    /**
+     * 重做操作
+     */
     function redo() {
       transform.redo();
     }
     
+    /**
+     * 复制选中的对象
+     */
     function duplicateSelected() {
       objectManager.duplicateSelected();
     }
     
+    /**
+     * 删除选中的对象
+     */
     function deleteSelected() {
         emit('delete-selected');
     }
     
+    /**
+     * 聚焦到选中对象
+     */
     function focusSelected() {
       const selectedObjects = objectSelection.selectedObjects.value;
       if (selectedObjects.length > 0) {
@@ -215,6 +247,9 @@ export default {
       }
     }
     
+    /**
+     * 重置相机位置
+     */
     function resetCamera() {
       scene.updateCameraConfig({
         position: { x: 5, y: 5, z: 5 },

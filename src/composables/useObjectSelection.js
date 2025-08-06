@@ -8,6 +8,11 @@ import * as THREE from 'three';
 import { useObjectManager } from '../core/ObjectManager.js';
 import { useInputManager } from '../core/InputManager.js';
 
+/**
+ * useObjectSelection
+ * 3D对象选择管理的组合式函数，提供响应式选择状态和多种选择操作
+ * @returns {object} 选择相关状态与方法
+ */
 export function useObjectSelection() {
   const objectManager = useObjectManager();
   const inputManager = useInputManager();

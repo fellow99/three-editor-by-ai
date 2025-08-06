@@ -89,6 +89,10 @@ export default {
       default: ''
     }
   },
+  /**
+   * 对象树节点组件
+   * 递归渲染场景对象层级，支持选择、展开、可见性切换等
+   */
   setup(props, { emit }) {
     // 计算属性
     const isSelected = computed(() => 
@@ -133,6 +137,11 @@ export default {
     });
     
     // 方法
+    /**
+     * 获取对象类型对应的图标
+     * @param {Object} object Three.js对象
+     * @returns {string} 图标
+     */
     function getObjectIcon(object) {
       if (object.userData.primitiveType) {
         switch (object.userData.primitiveType) {
@@ -161,20 +170,34 @@ export default {
       return '🔸';
     }
     
+    /**
+     * 处理节点点击，触发选择
+     * @param {Event} event 鼠标事件
+     */
     function handleClick(event) {
       emit('select', props.object, event);
     }
     
+    /**
+     * 处理右键菜单事件
+     * @param {Event} event 鼠标事件
+     */
     function handleContextMenu(event) {
       emit('context-menu', props.object, event);
     }
     
+    /**
+     * 展开/折叠子节点
+     */
     function toggleExpand() {
       if (hasChildren.value) {
         emit('toggle-expand', props.object.userData.id);
       }
     }
     
+    /**
+     * 切换对象可见性
+     */
     function toggleVisibility() {
       emit('toggle-visibility', props.object);
     }

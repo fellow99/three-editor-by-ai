@@ -132,6 +132,10 @@ export default {
     ObjectItem
   },
   emits: ['delete-selected'],
+  /**
+   * 对象检查器组件
+   * 展示场景对象层级、属性统计及对象操作
+   */
   setup(props, { emit }) {
     const scene = useScene();
     const objectSelection = useObjectSelection();
@@ -182,6 +186,9 @@ export default {
     });
     
     // 方法
+    /**
+     * 强制刷新层级树展开状态
+     */
     function refreshHierarchy() {
       // 强制更新层级树
       const currentExpanded = Array.from(expandedIds);
@@ -191,6 +198,9 @@ export default {
       }, 0);
     }
     
+    /**
+     * 展开所有对象
+     */
     function expandAll() {
       allObjects.value.forEach(obj => {
         if (obj.userData.id) {
@@ -199,10 +209,18 @@ export default {
       });
     }
     
+    /**
+     * 折叠所有对象
+     */
     function collapseAll() {
       expandedIds.clear();
     }
     
+    /**
+     * 处理对象选择（支持多选、范围选）
+     * @param {Object} object 选中对象
+     * @param {Event} event 事件对象
+     */
     function handleObjectSelect(object, event) {
       const isMultiSelect = event.ctrlKey || event.metaKey;
       const isRangeSelect = event.shiftKey;
@@ -217,6 +235,10 @@ export default {
       }
     }
     
+    /**
+     * 展开/折叠对象
+     * @param {string} objectId 对象ID
+     */
     function handleToggleExpand(objectId) {
       if (expandedIds.has(objectId)) {
         expandedIds.delete(objectId);
@@ -225,10 +247,19 @@ export default {
       }
     }
     
+    /**
+     * 切换对象可见性
+     * @param {Object} object 目标对象
+     */
     function handleToggleVisibility(object) {
       object.visible = !object.visible;
     }
     
+    /**
+     * 显示右键菜单
+     * @param {Object} object 目标对象
+     * @param {Event} event 鼠标事件
+     */
     function handleContextMenu(object, event) {
       event.preventDefault();
       contextMenu.visible = true;
@@ -237,11 +268,18 @@ export default {
       contextMenu.object = object;
     }
     
+    /**
+     * 隐藏右键菜单
+     */
     function hideContextMenu() {
       contextMenu.visible = false;
       contextMenu.object = null;
     }
     
+    /**
+     * 复制对象
+     * @param {Object} object 目标对象
+     */
     function duplicateObject(object) {
       objectManager.copyObjects([object.userData.id]);
       const duplicated = objectManager.pasteObjects();
@@ -251,11 +289,19 @@ export default {
       hideContextMenu();
     }
     
+    /**
+     * 删除对象
+     * @param {Object} object 目标对象
+     */
     function deleteObject(object) {
       emit('delete-selected', object);
       hideContextMenu();
     }
     
+    /**
+     * 隔离显示对象（只显示该对象）
+     * @param {Object} object 目标对象
+     */
     function isolateObject(object) {
       // 隐藏其他所有对象，只显示选中的对象
       allObjects.value.forEach(obj => {
@@ -264,12 +310,20 @@ export default {
       hideContextMenu();
     }
     
+    /**
+     * 聚焦对象
+     * @param {Object} object 目标对象
+     */
     function focusObject(object) {
       scene.focusOnObject(object);
       objectSelection.selectObject(object);
       hideContextMenu();
     }
     
+    /**
+     * 重命名对象
+     * @param {Object} object 目标对象
+     */
     function renameObject(object) {
       const newName = prompt('请输入新名称:', object.name);
       if (newName && newName.trim()) {
@@ -278,6 +332,11 @@ export default {
       hideContextMenu();
     }
     
+    /**
+     * 格式化数字显示
+     * @param {number} num 数值
+     * @returns {string} 格式化结果
+     */
     function formatNumber(num) {
       if (num >= 1000000) {
         return (num / 1000000).toFixed(1) + 'M';
@@ -288,6 +347,9 @@ export default {
     }
     
     // 监听全局点击事件来隐藏右键菜单
+    /**
+     * 监听全局点击事件，隐藏右键菜单
+     */
     function handleGlobalClick() {
       if (contextMenu.visible) {
         hideContextMenu();
