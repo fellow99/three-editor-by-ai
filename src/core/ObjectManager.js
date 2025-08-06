@@ -17,6 +17,8 @@ function generateId() {
   });
 }
 import { createBoxGeometry, createSphereGeometry, createCylinderGeometry } from '../utils/geometryUtils.js';
+import { useSceneManager } from './SceneManager.js';
+import { useObjectSelection } from '../composables/useObjectSelection.js';
 
 /**
  * ObjectManager
@@ -279,8 +281,13 @@ class ObjectManager {
     if (!object.userData.id) {
       object.userData.id = generateId();
     }
-    
     this.state.objects.set(object.userData.id, object);
+
+    // 同步添加到three.js场景
+    const sceneManager = useSceneManager();
+    if (sceneManager && typeof sceneManager.addObject === 'function') {
+      sceneManager.addObject(object);
+    }
   }
   
   /**
@@ -392,14 +399,56 @@ class ObjectManager {
   }
   
   /**
+   * 深度克隆对象，确保材质为标准three.js材质实例
+   * @param {THREE.Object3D} source
+   * @returns {THREE.Object3D}
+   */
+  deepCloneObject(source) {
+    const clone = source.clone(true);
+    clone.traverse((child, idx) => {
+      if (child.isMesh) {
+        // 处理 material 为数组或单个材质
+        const fixMaterial = (mat) => {
+          let fixed = mat && typeof mat.clone === 'function'
+            ? mat.clone()
+            : this.defaultMaterial.clone();
+          // 保证材质类型为 MeshStandardMaterial
+          if (!(fixed instanceof THREE.MeshStandardMaterial)) {
+            fixed = new THREE.MeshStandardMaterial({ color: 0x888888 });
+          }
+          // 保证 color 字段为 THREE.Color 实例
+          if (!fixed.color || !(fixed.color instanceof THREE.Color)) {
+            fixed.color = new THREE.Color(0x888888);
+          }
+          return fixed;
+        };
+        if (child.material) {
+          if (Array.isArray(child.material)) {
+            // 只保留第一个材质，转为单一材质，避免属性面板访问数组
+            child.material = fixMaterial(child.material[0]);
+          } else {
+            child.material = fixMaterial(child.material);
+          }
+        }
+        // 兜底：如果 material 仍无效，强制赋默认材质
+        if (!child.material || typeof child.material !== 'object' || !('color' in child.material)) {
+          child.material = this.defaultMaterial.clone();
+        }
+      }
+    });
+    
+    return clone;
+  }
+
+  /**
    * 复制对象
    * @param {string|string[]} objectIds 对象ID或ID数组
    */
   copyObjects(objectIds) {
     const ids = Array.isArray(objectIds) ? objectIds : [objectIds];
     const objects = ids.map(id => this.state.objects.get(id)).filter(Boolean);
-    
-    this.state.clipboard = objects.map(obj => obj.clone());
+
+    this.state.clipboard = objects.map(obj => this.deepCloneObject(obj));
   }
   
   /**
@@ -411,33 +460,25 @@ class ObjectManager {
     if (!this.state.clipboard || this.state.clipboard.length === 0) {
       return [];
     }
-    
+
     const pastedObjects = [];
-    
+
     this.state.clipboard.forEach((clipboardObj, index) => {
-      const clone = clipboardObj.clone();
+      // 使用 deepCloneObject，确保材质和 color 字段类型正确
+      const clone = this.deepCloneObject(clipboardObj);
       
       // 重新生成ID
       clone.userData.id = generateId();
       clone.name = `${clone.name}_copy`;
-      
-      // 设置位置偏移
+
+      // 随机新位置
       clone.position.copy(position);
-      clone.position.x += index * 1.1;
-      
+
       this.addObject(clone);
       pastedObjects.push(clone);
     });
-    
+
     return pastedObjects;
-  }
-  
-  /**
-   * 删除选中的对象
-   */
-  deleteSelected() {
-    const selectedIds = Array.from(this.state.selectedObjects);
-    selectedIds.forEach(id => this.removeObject(id));
   }
   
   /**
@@ -445,12 +486,20 @@ class ObjectManager {
    */
   duplicateSelected() {
     const selectedIds = Array.from(this.state.selectedObjects);
+
+    // 用 useObjectSelection 的 deselectObject 取消选择，确保高亮和 userData 恢复
+    const { deselectObject } = useObjectSelection();
+    selectedIds.forEach(id => {
+      const obj = this.getObject(id);
+      if (obj) deselectObject(obj);
+    });
+
     this.copyObjects(selectedIds);
-    
-    const duplicated = this.pasteObjects(new THREE.Vector3(1, 0, 0));
+
+    const duplicated = this.pasteObjects(new THREE.Vector3(Math.random(), Math.random(), Math.random()));
     const duplicatedIds = duplicated.map(obj => obj.userData.id);
     this.selectObjects(duplicatedIds);
-    
+
     return duplicated;
   }
   
