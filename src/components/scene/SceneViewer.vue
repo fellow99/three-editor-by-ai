@@ -152,12 +152,14 @@ export default {
         }
       });
       
-      // 鼠标悬停
-      inputManager.on('mousemove', (event) => {
-        if (scene.sceneManager.camera) {
-          objectSelection.handleHover(event, scene.sceneManager.camera);
-        }
-      });
+      /*
+      // 鼠标悬停（性能太差，已禁用）
+      // inputManager.on('mousemove', (event) => {
+      //   if (scene.sceneManager.camera) {
+      //     objectSelection.handleHover(event, scene.sceneManager.camera);
+      //   }
+      // });
+      */
       
       // 键盘快捷键
       inputManager.on('keydown', (event) => {
