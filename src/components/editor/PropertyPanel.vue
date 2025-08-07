@@ -229,23 +229,111 @@
             class="color-input"
           >
         </div>
-        <!-- 纹理相关 -->
+        <!-- 纹理相关（多种类型） -->
         <div class="property-group">
-          <label>纹理:</label>
+          <label>颜色贴图(map):</label>
           <div v-if="selectedObject.material.map">
             <img :src="getTexturePreviewSrc(selectedObject.material.map.image)" alt="纹理预览" style="width:64px;height:64px;border:1px solid #555;">
-            <button @click="clearTexture" class="action-btn danger" style="margin-left:8px;">清除纹理</button>
+            <button @click="clearTexture('map')" class="action-btn danger" style="margin-left:8px;">清除</button>
           </div>
           <div v-else>
-            <span style="color:#aaa;">无纹理</span>
+            <span style="color:#aaa;">无</span>
           </div>
-          <button @click="showTextureDialog = true" class="action-btn" style="margin-top:8px;">选择纹理</button>
-          <TextureSelectDialog
-            :visible="showTextureDialog"
-            @close="showTextureDialog = false"
-            @select="onTextureSelected"
-          />
+          <button @click="showTextureDialogType = 'map'; showTextureDialog = true" class="action-btn" style="margin-top:8px;">选择</button>
         </div>
+        <div v-if="materialType==='MeshStandardMaterial' || materialType==='MeshPhysicalMaterial'" class="property-group">
+          <label>环境光遮蔽贴图(aoMap):</label>
+          <div v-if="selectedObject.material.aoMap">
+            <img :src="getTexturePreviewSrc(selectedObject.material.aoMap.image)" alt="纹理预览" style="width:64px;height:64px;border:1px solid #555;">
+            <button @click="clearTexture('aoMap')" class="action-btn danger" style="margin-left:8px;">清除</button>
+          </div>
+          <div v-else>
+            <span style="color:#aaa;">无</span>
+          </div>
+          <button @click="showTextureDialogType = 'aoMap'; showTextureDialog = true" class="action-btn" style="margin-top:8px;">选择</button>
+        </div>
+        <div v-if="materialType==='MeshStandardMaterial' || materialType==='MeshPhysicalMaterial'" class="property-group">
+          <label>位移贴图(displacementMap):</label>
+          <div v-if="selectedObject.material.displacementMap">
+            <img :src="getTexturePreviewSrc(selectedObject.material.displacementMap.image)" alt="纹理预览" style="width:64px;height:64px;border:1px solid #555;">
+            <button @click="clearTexture('displacementMap')" class="action-btn danger" style="margin-left:8px;">清除</button>
+          </div>
+          <div v-else>
+            <span style="color:#aaa;">无</span>
+          </div>
+          <button @click="showTextureDialogType = 'displacementMap'; showTextureDialog = true" class="action-btn" style="margin-top:8px;">选择</button>
+        </div>
+        <div v-if="materialType==='MeshStandardMaterial' || materialType==='MeshPhysicalMaterial'" class="property-group">
+          <label>法线贴图(normalMap):</label>
+          <div v-if="selectedObject.material.normalMap">
+            <img :src="getTexturePreviewSrc(selectedObject.material.normalMap.image)" alt="纹理预览" style="width:64px;height:64px;border:1px solid #555;">
+            <button @click="clearTexture('normalMap')" class="action-btn danger" style="margin-left:8px;">清除</button>
+          </div>
+          <div v-else>
+            <span style="color:#aaa;">无</span>
+          </div>
+          <button @click="showTextureDialogType = 'normalMap'; showTextureDialog = true" class="action-btn" style="margin-top:8px;">选择</button>
+        </div>
+        <div v-if="materialType==='MeshStandardMaterial' || materialType==='MeshPhysicalMaterial'" class="property-group">
+          <label>金属度贴图(metalnessMap):</label>
+          <div v-if="selectedObject.material.metalnessMap">
+            <img :src="getTexturePreviewSrc(selectedObject.material.metalnessMap.image)" alt="纹理预览" style="width:64px;height:64px;border:1px solid #555;">
+            <button @click="clearTexture('metalnessMap')" class="action-btn danger" style="margin-left:8px;">清除</button>
+          </div>
+          <div v-else>
+            <span style="color:#aaa;">无</span>
+          </div>
+          <button @click="showTextureDialogType = 'metalnessMap'; showTextureDialog = true" class="action-btn" style="margin-top:8px;">选择</button>
+        </div>
+        <div v-if="materialType==='MeshStandardMaterial' || materialType==='MeshPhysicalMaterial'" class="property-group">
+          <label>粗糙度贴图(roughnessMap):</label>
+          <div v-if="selectedObject.material.roughnessMap">
+            <img :src="getTexturePreviewSrc(selectedObject.material.roughnessMap.image)" alt="纹理预览" style="width:64px;height:64px;border:1px solid #555;">
+            <button @click="clearTexture('roughnessMap')" class="action-btn danger" style="margin-left:8px;">清除</button>
+          </div>
+          <div v-else>
+            <span style="color:#aaa;">无</span>
+          </div>
+          <button @click="showTextureDialogType = 'roughnessMap'; showTextureDialog = true" class="action-btn" style="margin-top:8px;">选择</button>
+        </div>
+        <div v-if="materialType==='MeshStandardMaterial' || materialType==='MeshPhysicalMaterial'" class="property-group">
+          <label>环境映射贴图(envMap):</label>
+          <div v-if="selectedObject.material.envMap">
+            <img :src="getTexturePreviewSrc(selectedObject.material.envMap.image)" alt="纹理预览" style="width:64px;height:64px;border:1px solid #555;">
+            <button @click="clearTexture('envMap')" class="action-btn danger" style="margin-left:8px;">清除</button>
+          </div>
+          <div v-else>
+            <span style="color:#aaa;">无</span>
+          </div>
+          <button @click="showTextureDialogType = 'envMap'; showTextureDialog = true" class="action-btn" style="margin-top:8px;">选择</button>
+        </div>
+        <div v-if="materialType==='MeshToonMaterial'" class="property-group">
+          <label>渐变贴图(gradientMap):</label>
+          <div v-if="selectedObject.material.gradientMap">
+            <img :src="getTexturePreviewSrc(selectedObject.material.gradientMap.image)" alt="纹理预览" style="width:64px;height:64px;border:1px solid #555;">
+            <button @click="clearTexture('gradientMap')" class="action-btn danger" style="margin-left:8px;">清除</button>
+          </div>
+          <div v-else>
+            <span style="color:#aaa;">无</span>
+          </div>
+          <button @click="showTextureDialogType = 'gradientMap'; showTextureDialog = true" class="action-btn" style="margin-top:8px;">选择</button>
+        </div>
+        <div v-if="materialType==='MeshMatcapMaterial'" class="property-group">
+          <label>Matcap贴图(matcap):</label>
+          <div v-if="selectedObject.material.matcap">
+            <img :src="getTexturePreviewSrc(selectedObject.material.matcap.image)" alt="纹理预览" style="width:64px;height:64px;border:1px solid #555;">
+            <button @click="clearTexture('matcap')" class="action-btn danger" style="margin-left:8px;">清除</button>
+          </div>
+          <div v-else>
+            <span style="color:#aaa;">无</span>
+          </div>
+          <button @click="showTextureDialogType = 'matcap'; showTextureDialog = true" class="action-btn" style="margin-top:8px;">选择</button>
+        </div>
+        <TextureSelectDialog
+          :visible="showTextureDialog"
+          @close="showTextureDialog = false"
+          @select="onTextureSelected"
+        />
       </div>
       
       
@@ -525,10 +613,13 @@ export default {
     
     /**
      * 清除当前对象材质的纹理
+     * @param {string} type 纹理类型
      */
-    function clearTexture() {
+    function clearTexture(type) {
       if (selectedObject.value && selectedObject.value.material) {
-        objectManager.setObjectMaterial(selectedObject.value.userData.id, { map: null });
+        let update = {};
+        update[type] = null;
+        objectManager.setObjectMaterial(selectedObject.value.userData.id, update);
       }
     }
 
@@ -536,6 +627,7 @@ export default {
      * 选择纹理弹窗状态
      */
     const showTextureDialog = ref(false);
+    const showTextureDialogType = ref('map');
 
     /**
      * 处理纹理选择回调
@@ -544,7 +636,9 @@ export default {
     function onTextureSelected(textureInfo) {
       showTextureDialog.value = false;
       if (selectedObject.value && selectedObject.value.material && textureInfo?.texture) {
-        objectManager.setObjectMaterial(selectedObject.value.userData.id, { map: textureInfo.texture });
+        let update = {};
+        update[showTextureDialogType.value] = textureInfo.texture;
+        objectManager.setObjectMaterial(selectedObject.value.userData.id, update);
       }
     }
 
@@ -597,6 +691,7 @@ export default {
       clearTexture,
       getTexturePreviewSrc,
       showTextureDialog,
+      showTextureDialogType,
       onTextureSelected
     };
   }
