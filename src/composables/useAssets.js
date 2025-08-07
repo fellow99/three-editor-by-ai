@@ -16,7 +16,13 @@ import {
   handleDragFiles
 } from '../utils/fileUtils.js';
 
+/**
+ * 单例模式，确保所有组件共享同一个资源库
+ */
+let _assetsInstance = null;
+
 export function useAssets() {
+  if (_assetsInstance) return _assetsInstance;
   const assetLoader = useAssetLoader();
   const { addObjectToScene } = useScene();
   
@@ -531,7 +537,7 @@ export function useAssets() {
     };
   }
   
-  return {
+  const instance = {
     // 状态
     assetLibrary,
     uploadState,
@@ -561,4 +567,6 @@ export function useAssets() {
     clearAssetLibrary,
     exportAssetLibrary
   };
+  _assetsInstance = instance;
+  return instance;
 }

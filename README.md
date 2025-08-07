@@ -35,6 +35,7 @@ three-editor-by-ai/
 │   ├── components/             # Vue 组件
 │   │   ├── editor/            # 编辑器 UI 组件
 │   │   │   ├── PropertyPanel.vue    # 属性面板（支持多种材质类型选择与参数动态配置，材质和纹理修改通过 ObjectManager 统一接口）
+│   │   │   ├── TextureSelectDialog.vue # 纹理选择对话框（弹窗选择已加载纹理资源）
 │   │   │   ├── Toolbar.vue          # 工具栏
 │   │   │   ├── AssetBrowser.vue     # 资源浏览器（纹理应用支持调用 ObjectManager 接口）
 │   │   │   └── Inspector.vue        # 对象检查器

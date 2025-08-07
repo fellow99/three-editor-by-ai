@@ -239,6 +239,12 @@
           <div v-else>
             <span style="color:#aaa;">无纹理</span>
           </div>
+          <button @click="showTextureDialog = true" class="action-btn" style="margin-top:8px;">选择纹理</button>
+          <TextureSelectDialog
+            :visible="showTextureDialog"
+            @close="showTextureDialog = false"
+            @select="onTextureSelected"
+          />
         </div>
       </div>
       
@@ -249,6 +255,7 @@
 
 <script>
 import { ref, reactive, computed, watch, inject } from 'vue';
+import TextureSelectDialog from './TextureSelectDialog.vue';
 import { useObjectSelection } from '../../composables/useObjectSelection.js';
 import { useTransform } from '../../composables/useTransform.js';
 import { useObjectManager } from '../../core/ObjectManager.js';
@@ -256,6 +263,9 @@ import { radToDeg, degToRad } from '../../utils/mathUtils.js';
 
 export default {
   name: 'PropertyPanel',
+  components: {
+    TextureSelectDialog
+  },
   /**
    * 属性面板组件
    * 提供对象属性的展示与编辑功能
@@ -513,14 +523,36 @@ export default {
       objectSelection.clearSelection();
     }
     
-    // 选择纹理相关逻辑已移除
+    /**
+     * 清除当前对象材质的纹理
+     */
     function clearTexture() {
       if (selectedObject.value && selectedObject.value.material) {
         objectManager.setObjectMaterial(selectedObject.value.userData.id, { map: null });
       }
     }
 
-    // 纹理预览 src 处理
+    /**
+     * 选择纹理弹窗状态
+     */
+    const showTextureDialog = ref(false);
+
+    /**
+     * 处理纹理选择回调
+     * @param {object} textureInfo 选中的纹理信息
+     */
+    function onTextureSelected(textureInfo) {
+      showTextureDialog.value = false;
+      if (selectedObject.value && selectedObject.value.material && textureInfo?.texture) {
+        objectManager.setObjectMaterial(selectedObject.value.userData.id, { map: textureInfo.texture });
+      }
+    }
+
+    /**
+     * 纹理预览 src 处理
+     * @param {HTMLImageElement} image 纹理图片对象
+     * @returns {string} 预览图数据URL
+     */
     function getTexturePreviewSrc(image) {
         // 创建临时canvas
         const canvas = document.createElement('canvas');
@@ -563,7 +595,9 @@ export default {
       resetScale,
       clearSelection,
       clearTexture,
-      getTexturePreviewSrc
+      getTexturePreviewSrc,
+      showTextureDialog,
+      onTextureSelected
     };
   }
 };
