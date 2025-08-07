@@ -1,25 +1,30 @@
 <template>
   <footer class="editor-footer">
     <div class="footer-left">
-      <span class="status-item">
+      <el-tag size="small" type="info" effect="dark">
+        <el-icon><Box /></el-icon>
         {{ objectSelection?.hasSelection?.value ? `已选中 ${objectSelection?.selectionCount?.value || 0} 个对象` : '未选中对象' }}
-      </span>
+      </el-tag>
     </div>
     <div class="footer-center">
-      <span class="status-item">
+      <el-tag size="small" type="info" effect="dark">
+        <el-icon><Camera /></el-icon>
         相机: {{ scene?.cameraState?.fov || 75 }}° FOV
-      </span>
-      <span class="status-item">
+      </el-tag>
+      <el-tag size="small" type="info" effect="dark">
+        <el-icon><Position /></el-icon>
         位置: ({{ cameraPosition.x.toFixed(1) }}, {{ cameraPosition.y.toFixed(1) }}, {{ cameraPosition.z.toFixed(1) }})
-      </span>
+      </el-tag>
     </div>
     <div class="footer-right">
-      <span class="status-item">
+      <el-tag size="small" type="success" effect="dark">
+        <el-icon><Cpu /></el-icon>
         FPS: {{ scene?.fps?.value || 0 }}
-      </span>
-      <span class="status-item">
+      </el-tag>
+      <el-tag size="small" type="warning" effect="dark">
+        <el-icon><Box /></el-icon>
         对象数: {{ scene?.getSceneStats?.()?.objects || 0 }}
-      </span>
+      </el-tag>
     </div>
   </footer>
 </template>
@@ -28,7 +33,14 @@
   编辑器底部状态栏组件
   展示选中对象、相机参数、FPS等实时信息
 -->
+<!--
+  编辑器底部状态栏组件
+  展示选中对象、相机参数、FPS等实时信息
+-->
 <script setup>
+import { ElTag, ElIcon } from 'element-plus';
+import { Box, Camera, Cpu, Position } from '@element-plus/icons-vue';
+
 defineProps({
   objectSelection: { type: Object, required: true },
   scene: { type: Object, required: true },

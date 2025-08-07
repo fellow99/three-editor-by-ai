@@ -39,6 +39,7 @@ three-editor-by-ai/
 │   │   │   ├── MaterialPropertyPanel.vue    # 材质编辑面板
 │   │   │   ├── TextureSelectDialog.vue # 纹理选择对话框
 │   │   │   ├── Toolbar.vue          # 工具栏
+│   │   │   ├── EditorFooter.vue     # 编辑器底部状态栏
 │   │   │   ├── AssetBrowser.vue     # 资源浏览器
 │   │   │   ├── ResourcePanel.vue    # 资源面板
 │   │   │   └── Inspector.vue        # 对象检查器
@@ -67,7 +68,7 @@ three-editor-by-ai/
 │   │   └── fileUtils.js      # 文件处理工具
 │   ├── App.vue               # 根组件（仅负责引入Editor.vue）
 │   ├── Editor.vue            # 主编辑器组件（包含全部业务与UI）
-│   ├── main.js               # 应用入口（集成Element Plus）
+│   ├── main.js               # 应用入口
 │   └── style.css             # 全局样式
 ├── .gitignore                # Git 忽略文件
 ├── index.html                # HTML 模板
@@ -82,7 +83,6 @@ three-editor-by-ai/
   - 如需加载Draco压缩的glTF模型，请将node_modules/three/examples/jsm/libs/draco/目录中的文件复制到 /draco/ 目录下。
   - 如需加载KTX2纹理，请将node_modules/three/examples/jsm/libs/basis目录中的文件放入 /basis/ 目录下。
   - 如需加载Meshopt压缩的glTF模型，请将node_modules/three/examples/jsm/libs/meshopt_decoder.module.js文件放入 public/meshopt/ 目录下。
-
 
 ## 🎯 主要功能
 
