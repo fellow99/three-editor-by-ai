@@ -1,55 +1,63 @@
 <template>
   <div class="viewport-controls">
     <div class="control-group">
-      <button 
+      <el-button 
         @click="resetView"
         class="control-btn"
         title="重置视图"
+        circle
+        type="primary"
       >
-        <span class="icon">🏠</span>
-      </button>
+        <el-icon><House /></el-icon>
+      </el-button>
       
-      <button 
+      <el-button 
         @click="fitToScreen"
         class="control-btn"
         title="适应屏幕"
+        circle
+        type="primary"
       >
-        <span class="icon">🔍</span>
-      </button>
+        <el-icon><ZoomIn /></el-icon>
+      </el-button>
       
-      <button 
+      <el-button 
         @click="toggleWireframe"
         class="control-btn"
         :class="{ active: showWireframe }"
         title="线框模式"
+        circle
+        type="primary"
       >
-        <span class="icon">🕸️</span>
-      </button>
+        <el-icon><Box /></el-icon>
+      </el-button>
       
-      <button 
+      <el-button 
         @click="toggleGrid"
         class="control-btn"
         :class="{ active: showGrid }"
         title="网格"
+        circle
+        type="primary"
       >
-        <span class="icon">⚏</span>
-      </button>
+        <el-icon><Grid /></el-icon>
+      </el-button>
     </div>
   </div>
 </template>
 
-<script>
-export default {
-  name: 'ViewportControls',
-  props: {
-    showWireframe: { type: Boolean, required: true },
-    showGrid: { type: Boolean, required: true },
-    resetView: { type: Function, required: true },
-    fitToScreen: { type: Function, required: true },
-    toggleWireframe: { type: Function, required: true },
-    toggleGrid: { type: Function, required: true }
-  }
-};
+<script setup>
+import { ElButton, ElIcon } from 'element-plus';
+import { House, ZoomIn, Box, Grid } from '@element-plus/icons-vue';
+
+defineProps({
+  showWireframe: { type: Boolean, required: true },
+  showGrid: { type: Boolean, required: true },
+  resetView: { type: Function, required: true },
+  fitToScreen: { type: Function, required: true },
+  toggleWireframe: { type: Function, required: true },
+  toggleGrid: { type: Function, required: true }
+});
 </script>
 
 <style scoped>

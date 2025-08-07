@@ -1,32 +1,31 @@
-<template>
-  <div class="interaction-hints">
-    <div class="hint-item">
-      <span class="hint-key">左键</span>
-      <span class="hint-action">选择对象</span>
-    </div>
-    <div class="hint-item">
-      <span class="hint-key">右键</span>
-      <span class="hint-action">旋转视图</span>
-    </div>
-    <div class="hint-item">
-      <span class="hint-key">滚轮</span>
-      <span class="hint-action">缩放</span>
-    </div>
-    <div class="hint-item">
-      <span class="hint-key">中键</span>
-      <span class="hint-action">平移</span>
-    </div>
-  </div>
-</template>
-
 <!--
   交互操作提示组件
   固定显示在视口，提示用户常用鼠标操作说明
 -->
-<script>
-export default {
-  name: 'InteractionHints'
-};
+<template>
+  <div class="interaction-hints">
+    <el-tag class="hint-item" size="small" type="info" effect="dark">
+      <span class="hint-key">左键</span>
+      <span class="hint-action">选择对象</span>
+    </el-tag>
+    <el-tag class="hint-item" size="small" type="info" effect="dark">
+      <span class="hint-key">右键</span>
+      <span class="hint-action">旋转视图</span>
+    </el-tag>
+    <el-tag class="hint-item" size="small" type="info" effect="dark">
+      <span class="hint-key">滚轮</span>
+      <span class="hint-action">缩放</span>
+    </el-tag>
+    <el-tag class="hint-item" size="small" type="info" effect="dark">
+      <span class="hint-key">中键</span>
+      <span class="hint-action">平移</span>
+    </el-tag>
+  </div>
+</template>
+
+<script setup>
+import { ElTag } from 'element-plus';
+// 交互操作提示组件，无响应式数据
 </script>
 
 <style scoped>
@@ -52,8 +51,11 @@ export default {
 .hint-item {
   display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: space-between;
+  width: 100%;
   margin-bottom: 8px;
+  padding: 0 4px;
+  box-sizing: border-box;
 }
 
 .hint-item:last-child {
@@ -69,6 +71,8 @@ export default {
   min-width: 40px;
   text-align: center;
   font-size: 12px;
+  margin-left: -5px;
+  margin-right: 5px;
 }
 
 .hint-action {

@@ -39,7 +39,7 @@ three-editor-by-ai/
 │   │   │   ├── MaterialPropertyPanel.vue    # 材质编辑面板
 │   │   │   ├── TextureSelectDialog.vue # 纹理选择对话框
 │   │   │   ├── Toolbar.vue          # 工具栏
-│   │   │   ├── EditorFooter.vue     # 编辑器底部状态栏
+│   │   │   ├── EditorFooter.vue     # 编辑器底部状态栏（已使用element-plus组件和图标）
 │   │   │   ├── AssetBrowser.vue     # 资源浏览器
 │   │   │   ├── ResourcePanel.vue    # 资源面板
 │   │   │   └── Inspector.vue        # 对象检查器
@@ -49,7 +49,6 @@ three-editor-by-ai/
 │   │   │   ├── ViewportControls.vue     # 视图控制面板组件
 │   │   │   ├── CubeViewportControls.vue # 立方体视角控件
 │   │   │   ├── ObjectGizmo.vue      # 对象操作控制器
-│   │   │   └── Camera.vue           # 相机控制
 │   ├── composables/           # Vue Composition API 可组合函数
 │   │   ├── useScene.js        # 场景管理
 │   │   ├── useObjectSelection.js  # 对象选择
@@ -68,7 +67,7 @@ three-editor-by-ai/
 │   │   └── fileUtils.js      # 文件处理工具
 │   ├── App.vue               # 根组件（仅负责引入Editor.vue）
 │   ├── Editor.vue            # 主编辑器组件（包含全部业务与UI）
-│   ├── main.js               # 应用入口
+│   ├── main.js               # 应用入口（集成Element Plus）
 │   └── style.css             # 全局样式
 ├── .gitignore                # Git 忽略文件
 ├── index.html                # HTML 模板
