@@ -10,7 +10,7 @@
 - 3D模型和纹理加载（GLTF、OBJ、FBX等格式）
 - 拖拽上传和资源管理
 - 相机控制和预设视角
-- 材质编辑和属性调整
+- 材质编辑和属性调整（支持多种材质类型选择与参数动态配置）
 - 场景序列化和导入导出
 
 ## 🚀 技术栈
@@ -34,7 +34,7 @@ three-editor-by-ai/
 │   │   └── vue.svg
 │   ├── components/             # Vue 组件
 │   │   ├── editor/            # 编辑器 UI 组件
-│   │   │   ├── PropertyPanel.vue    # 属性面板（支持材质和纹理修改，通过 ObjectManager 统一接口）
+│   │   │   ├── PropertyPanel.vue    # 属性面板（支持多种材质类型选择与参数动态配置，材质和纹理修改通过 ObjectManager 统一接口）
 │   │   │   ├── Toolbar.vue          # 工具栏
 │   │   │   ├── AssetBrowser.vue     # 资源浏览器（纹理应用支持调用 ObjectManager 接口）
 │   │   │   └── Inspector.vue        # 对象检查器

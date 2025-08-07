@@ -554,6 +554,9 @@ class ObjectManager {
 
     if (material instanceof THREE.Material) {
       object.material = material;
+    } else if (material.type) {
+      // 新建材质对象并赋值，避免直接修改type属性导致threejs报错
+      object.material = this.createMaterial(material);
     } else {
       // 更新材质属性
       Object.assign(object.material, material);
@@ -576,6 +579,12 @@ class ObjectManager {
         return new THREE.MeshLambertMaterial(options);
       case 'MeshPhongMaterial':
         return new THREE.MeshPhongMaterial(options);
+      case 'MeshNormalMaterial':
+        // MeshNormalMaterial只支持部分参数，过滤掉color等无效参数
+        const { flatShading } = options;
+        return new THREE.MeshNormalMaterial({ flatShading });
+      case 'MeshPhysicalMaterial':
+        return new THREE.MeshPhysicalMaterial(options);
       case 'MeshStandardMaterial':
       default:
         return new THREE.MeshStandardMaterial(options);

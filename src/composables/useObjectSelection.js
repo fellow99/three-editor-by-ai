@@ -50,7 +50,7 @@ export function useObjectSelection() {
   
   // 选择配置
   const selectionConfig = reactive({
-    highlightSelected: true,
+    highlightSelected: false, // 是否高亮选中对象，默认否
     highlightColor: 0x00ff00,
     showBoundingBox: true,
     enableHover: true,

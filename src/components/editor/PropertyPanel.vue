@@ -123,9 +123,20 @@
         </div>
       </div>
       
-      <!-- 材质属性 -->
+<!-- 材质属性 -->
       <div v-if="selectedObject && selectedObject.material" class="property-section">
         <h4>材质</h4>
+        <div class="property-group">
+          <label>类型:</label>
+          <select v-model="materialType" @change="onMaterialTypeChange" class="property-input">
+            <option value="MeshStandardMaterial">标准(Standard)</option>
+            <option value="MeshPhysicalMaterial">物理(Physical)</option>
+            <option value="MeshPhongMaterial">冯氏(Phong)</option>
+            <option value="MeshLambertMaterial">兰伯特(Lambert)</option>
+            <option value="MeshNormalMaterial">法向(Normal)</option>
+            <option value="MeshBasicMaterial">基础(Basic)</option>
+          </select>
+        </div>
         <div class="property-group">
           <label>颜色:</label>
           <input 
@@ -135,7 +146,7 @@
             class="color-input"
           >
         </div>
-        <div class="property-group">
+        <div v-if="materialType==='MeshStandardMaterial' || materialType==='MeshPhysicalMaterial'" class="property-group">
           <label>粗糙度:</label>
           <input 
             v-model.number="materialRoughness" 
@@ -148,7 +159,7 @@
           >
           <span class="range-value">{{ materialRoughness.toFixed(2) }}</span>
         </div>
-        <div class="property-group">
+        <div v-if="materialType==='MeshStandardMaterial' || materialType==='MeshPhysicalMaterial'" class="property-group">
           <label>金属度:</label>
           <input 
             v-model.number="materialMetalness" 
@@ -160,6 +171,63 @@
             class="range-input"
           >
           <span class="range-value">{{ materialMetalness.toFixed(2) }}</span>
+        </div>
+        <div v-if="materialType==='MeshPhysicalMaterial'" class="property-group">
+          <label>清漆(clearcoat):</label>
+          <input 
+            v-model.number="materialClearcoat" 
+            @input="updateMaterialClearcoat"
+            type="range" 
+            min="0" 
+            max="1" 
+            step="0.01"
+            class="range-input"
+          >
+          <span class="range-value">{{ materialClearcoat.toFixed(2) }}</span>
+        </div>
+        <div v-if="materialType==='MeshPhysicalMaterial'" class="property-group">
+          <label>清漆粗糙度(clearcoatRoughness):</label>
+          <input 
+            v-model.number="materialClearcoatRoughness" 
+            @input="updateMaterialClearcoatRoughness"
+            type="range" 
+            min="0" 
+            max="1" 
+            step="0.01"
+            class="range-input"
+          >
+          <span class="range-value">{{ materialClearcoatRoughness.toFixed(2) }}</span>
+        </div>
+        <div v-if="materialType==='MeshPhongMaterial'" class="property-group">
+          <label>高光(speclar):</label>
+          <input 
+            v-model="materialSpecular" 
+            @input="updateMaterialSpecular"
+            type="color"
+            class="color-input"
+          >
+        </div>
+        <div v-if="materialType==='MeshPhongMaterial'" class="property-group">
+          <label>高光强度(shininess):</label>
+          <input 
+            v-model.number="materialShininess" 
+            @input="updateMaterialShininess"
+            type="range" 
+            min="0" 
+            max="200" 
+            step="1"
+            class="range-input"
+          >
+          <span class="range-value">{{ materialShininess }}</span>
+        </div>
+        <div v-if="materialType==='MeshLambertMaterial'" class="property-group">
+          <label>自发光(emissive):</label>
+          <input 
+            v-model="materialEmissive" 
+            @input="updateMaterialEmissive"
+            type="color"
+            class="color-input"
+          >
         </div>
         <!-- 纹理相关 -->
         <div class="property-group">
@@ -206,10 +274,17 @@ export default {
       scale: { x: 1, y: 1, z: 1 }
     });
     
+    // 材质相关响应式变量
+    const materialType = ref('MeshStandardMaterial');
     const materialColor = ref('#888888');
     const materialRoughness = ref(0.4);
     const materialMetalness = ref(0.1);
-    
+    const materialClearcoat = ref(0);
+    const materialClearcoatRoughness = ref(0);
+    const materialSpecular = ref('#ffffff');
+    const materialShininess = ref(30);
+    const materialEmissive = ref('#000000');
+
     // 计算属性
     const hasSelection = computed(() => objectSelection.hasSelection.value);
     const selectedObject = computed(() => {
@@ -261,9 +336,15 @@ export default {
       
       // 更新材质数据
       if (object.material) {
-        materialColor.value = `#${object.material.color.getHexString()}`;
-        materialRoughness.value = object.material.roughness || 0.4;
-        materialMetalness.value = object.material.metalness || 0.1;
+        materialType.value = object.material.type || 'MeshStandardMaterial';
+        materialColor.value = `#${object.material.color?.getHexString?.() ?? '888888'}`;
+        materialRoughness.value = object.material.roughness ?? 0.4;
+        materialMetalness.value = object.material.metalness ?? 0.1;
+        materialClearcoat.value = object.material.clearcoat ?? 0;
+        materialClearcoatRoughness.value = object.material.clearcoatRoughness ?? 0;
+        materialSpecular.value = object.material.specular ? `#${object.material.specular.getHexString()}` : '#ffffff';
+        materialShininess.value = object.material.shininess ?? 30;
+        materialEmissive.value = object.material.emissive ? `#${object.material.emissive.getHexString()}` : '#000000';
       }
     }
     
@@ -302,6 +383,33 @@ export default {
     }
     
     /**
+     * 材质类型切换
+     */
+    function onMaterialTypeChange() {
+      if (!selectedObject.value) return;
+      // 构造新材质参数
+      let params = { color: materialColor.value.replace('#', '0x') };
+      if (materialType.value === 'MeshStandardMaterial') {
+        params.roughness = materialRoughness.value;
+        params.metalness = materialMetalness.value;
+      } else if (materialType.value === 'MeshPhysicalMaterial') {
+        params.roughness = materialRoughness.value;
+        params.metalness = materialMetalness.value;
+        params.clearcoat = materialClearcoat.value;
+        params.clearcoatRoughness = materialClearcoatRoughness.value;
+      } else if (materialType.value === 'MeshPhongMaterial') {
+        params.specular = materialSpecular.value.replace('#', '0x');
+        params.shininess = materialShininess.value;
+      } else if (materialType.value === 'MeshLambertMaterial') {
+        params.emissive = materialEmissive.value.replace('#', '0x');
+      }
+      objectManager.setObjectMaterial(selectedObject.value.userData.id, {
+        type: materialType.value,
+        ...params
+      });
+    }
+
+    /**
      * 更新材质颜色
      */
     function updateMaterialColor() {
@@ -311,7 +419,7 @@ export default {
         });
       }
     }
-    
+
     /**
      * 更新材质粗糙度
      */
@@ -322,7 +430,7 @@ export default {
         });
       }
     }
-    
+
     /**
      * 更新材质金属度
      */
@@ -333,7 +441,61 @@ export default {
         });
       }
     }
-    
+
+    /**
+     * 更新清漆
+     */
+    function updateMaterialClearcoat() {
+      if (selectedObject.value && selectedObject.value.material) {
+        objectManager.setObjectMaterial(selectedObject.value.userData.id, {
+          clearcoat: materialClearcoat.value
+        });
+      }
+    }
+
+    /**
+     * 更新清漆粗糙度
+     */
+    function updateMaterialClearcoatRoughness() {
+      if (selectedObject.value && selectedObject.value.material) {
+        objectManager.setObjectMaterial(selectedObject.value.userData.id, {
+          clearcoatRoughness: materialClearcoatRoughness.value
+        });
+      }
+    }
+
+    /**
+     * 更新高光
+     */
+    function updateMaterialSpecular() {
+      if (selectedObject.value && selectedObject.value.material) {
+        objectManager.setObjectMaterial(selectedObject.value.userData.id, {
+          specular: materialSpecular.value.replace('#', '0x')
+        });
+      }
+    }
+
+    /**
+     * 更新高光强度
+     */
+    function updateMaterialShininess() {
+      if (selectedObject.value && selectedObject.value.material) {
+        objectManager.setObjectMaterial(selectedObject.value.userData.id, {
+          shininess: materialShininess.value
+        });
+      }
+    }
+
+    /**
+     * 更新自发光
+     */
+    function updateMaterialEmissive() {
+      if (selectedObject.value && selectedObject.value.material) {
+        objectManager.setObjectMaterial(selectedObject.value.userData.id, {
+          emissive: materialEmissive.value.replace('#', '0x')
+        });
+      }
+    }
     /**
      * 重置缩放为1
      */
@@ -376,19 +538,30 @@ export default {
       objectName,
       objectType,
       transform,
+      materialType,
       materialColor,
       materialRoughness,
       materialMetalness,
-      
+      materialClearcoat,
+      materialClearcoatRoughness,
+      materialSpecular,
+      materialShininess,
+      materialEmissive,
+
       // 方法
       updateObjectName,
       updateTransform,
+      onMaterialTypeChange,
       updateMaterialColor,
       updateMaterialRoughness,
       updateMaterialMetalness,
+      updateMaterialClearcoat,
+      updateMaterialClearcoatRoughness,
+      updateMaterialSpecular,
+      updateMaterialShininess,
+      updateMaterialEmissive,
       resetScale,
       clearSelection,
-      // openTextureDialog 已移除
       clearTexture,
       getTexturePreviewSrc
     };
