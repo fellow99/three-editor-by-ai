@@ -40,6 +40,9 @@ export default {
     let helper = null;
     let currentObject = null;
 
+    // 网格辅助线
+    let gridHelper = null;
+
     // 灯光/相机helper管理
     let currentHelper = null;
     

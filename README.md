@@ -34,13 +34,15 @@ three-editor-by-ai/
 │   │   └── vue.svg
 │   ├── components/             # Vue 组件
 │   │   ├── editor/            # 编辑器 UI 组件
-│   │   │   ├── PropertyPanel.vue    # 属性面板（支持多种材质类型选择与参数动态配置，材质和纹理修改通过 ObjectManager 统一接口）
-│   │   │   ├── TextureSelectDialog.vue # 纹理选择对话框（弹窗选择已加载纹理资源）
+│   │   │   ├── PropertyPanel.vue    # 属性面板
+│   │   │   ├── MaterialPropertyPanel.vue    # 材质编辑面板
+│   │   │   ├── TextureSelectDialog.vue # 纹理选择对话框
 │   │   │   ├── Toolbar.vue          # 工具栏
-│   │   │   ├── AssetBrowser.vue     # 资源浏览器（纹理应用支持调用 ObjectManager 接口）
+│   │   │   ├── AssetBrowser.vue     # 资源浏览器
+│   │   │   ├── ResourcePanel.vue    # 资源面板
 │   │   │   └── Inspector.vue        # 对象检查器
 │   │   ├── scene/             # 3D 场景组件
-│   │   │   ├── SceneViewer.vue      # 主场景视图（支持灯光、相机helper自动可视化）
+│   │   │   ├── SceneViewer.vue      # 主场景视图
 │   │   │   ├── InteractionHints.vue     # 操作提示组件
 │   │   │   ├── ViewportControls.vue     # 视图控制面板组件
 │   │   │   ├── CubeViewportControls.vue # 立方体视角控件
@@ -76,9 +78,9 @@ three-editor-by-ai/
 
 **注意：**
 - vite.config.js中，配置vite-plugin-static-copy，把几个js库的复制到目标路径：
-  > 如需加载Draco压缩的glTF模型，请将node_modules/three/examples/jsm/libs/draco/目录中的文件复制到 /draco/ 目录下。
-  > 如需加载KTX2纹理，请将node_modules/three/examples/jsm/libs/basis目录中的文件放入 /basis/ 目录下。
-  > 如需加载Meshopt压缩的glTF模型，请将node_modules/three/examples/jsm/libs/meshopt_decoder.module.js文件放入 public/meshopt/ 目录下。
+  - 如需加载Draco压缩的glTF模型，请将node_modules/three/examples/jsm/libs/draco/目录中的文件复制到 /draco/ 目录下。
+  - 如需加载KTX2纹理，请将node_modules/three/examples/jsm/libs/basis目录中的文件放入 /basis/ 目录下。
+  - 如需加载Meshopt压缩的glTF模型，请将node_modules/three/examples/jsm/libs/meshopt_decoder.module.js文件放入 public/meshopt/ 目录下。
 
 
 ## 🎯 主要功能

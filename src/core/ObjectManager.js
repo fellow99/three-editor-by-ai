@@ -548,10 +548,6 @@ class ObjectManager {
     const object = this.getObject(objectId);
     if (!object || !object.material) return;
 
-    // 设置材质前先取消选中
-    const { deselectObject } = useObjectSelection();
-    if (object) deselectObject(object);
-
     if (material instanceof THREE.Material) {
       object.material = material;
     } else if (material.type) {
@@ -559,7 +555,28 @@ class ObjectManager {
       object.material = this.createMaterial(material);
     } else {
       // 更新材质属性
-      Object.assign(object.material, material);
+      if (material.color) {
+        // 支持 '#rrggbb' 或 '0xRRGGBB' 字符串
+        if (typeof material.color === 'string') {
+          object.material.color = new THREE.Color(material.color);
+        } else if (typeof material.color === 'number') {
+          object.material.color = new THREE.Color(material.color);
+        } else if (material.color instanceof THREE.Color) {
+          object.material.color.copy(material.color);
+        }
+      }
+      // 其他属性直接赋值
+      Object.entries(material).forEach(([key, value]) => {
+        if (key !== 'color') {
+          // 纹理贴图属性需特殊处理
+          if (['map', 'normalMap', 'aoMap', 'displacementMap', 'metalnessMap', 'roughnessMap', 'envMap', 'gradientMap', 'matcap'].includes(key)) {
+            object.material[key] = value;
+            object.material.needsUpdate = true;
+          } else {
+            object.material[key] = value;
+          }
+        }
+      });
       object.material.needsUpdate = true;
     }
   }

@@ -10,6 +10,7 @@ import { useAssets } from './composables/useAssets.js';
 import Toolbar from './components/editor/Toolbar.vue';
 import AssetBrowser from './components/editor/AssetBrowser.vue';
 import Inspector from './components/editor/Inspector.vue';
+import ResourcePanel from './components/editor/ResourcePanel.vue';
 import SceneViewer from './components/scene/SceneViewer.vue';
 import PropertyPanel from './components/editor/PropertyPanel.vue';
 import EditorFooter from './components/editor/EditorFooter.vue';
@@ -309,51 +310,8 @@ onUnmounted(() => {
     
     <!-- 主编辑区域 -->
     <main class="editor-main">
-      <!-- 左侧面板 -->
-      <div 
-        v-show="!appState.leftPanelCollapsed" 
-        class="editor-sidebar left-panel"
-        :style="{ width: appState.panels.leftWidth + 'px' }"
-      >
-        <!-- 标签页头部 -->
-        <div class="panel-tabs">
-          <button 
-            @click="setActiveLeftTab('assets')" 
-            :class="['tab-btn', { active: appState.activeLeftTab === 'assets' }]"
-          >
-            📦 资源
-          </button>
-          <button 
-            @click="setActiveLeftTab('inspector')" 
-            :class="['tab-btn', { active: appState.activeLeftTab === 'inspector' }]"
-          >
-            🔍 层级
-          </button>
-        </div>
-        <!-- 标签页内容 -->
-        <div class="panel-content">
-          <AssetBrowser v-show="appState.activeLeftTab === 'assets'" />
-          <Inspector v-show="appState.activeLeftTab === 'inspector'" @delete-selected="handleDeleteSelected" />
-        </div>
-      </div>
-      <!-- 浮动切换按钮（不在sidebar内） -->
-      <button 
-        v-if="!appState.leftPanelCollapsed"
-        @click="toggleLeftPanel" 
-        class="panel-toggle-btn sidebar-toggle left"
-        :class="{ active: !appState.leftPanelCollapsed }"
-        title="切换左侧面板"
-      >
-        ☰
-      </button>
-      <button 
-        v-if="appState.leftPanelCollapsed" 
-        @click="toggleLeftPanel" 
-        class="panel-toggle-btn sidebar-toggle left collapsed"
-        title="展开左侧面板"
-      >
-        ☰
-      </button>
+      <!-- 左侧资源面板 -->
+      <ResourcePanel />
       
       <!-- 主场景视口 -->
       <div class="editor-viewport">
