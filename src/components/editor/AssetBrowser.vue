@@ -307,7 +307,7 @@ import { ref, computed } from 'vue';
 import { useAssets } from '../../composables/useAssets.js';
 import { useObjectSelection } from '../../composables/useObjectSelection.js';
 import { useScene } from '../../composables/useScene.js';
-
+import { useObjectManager } from '../../core/ObjectManager.js';
 export default {
   name: 'AssetBrowser',
   /**
@@ -516,15 +516,14 @@ export default {
      */
     function applyTextureToSelected(texture) {
       const selectedObjects = objectSelection.selectedObjects.value;
+      const objectManager = useObjectManager();
       if (selectedObjects.length === 0) {
         alert('请先选择要应用纹理的对象');
         return;
       }
-      
       selectedObjects.forEach(object => {
         if (object.material) {
-          object.material.map = texture.texture;
-          object.material.needsUpdate = true;
+          objectManager.setObjectMaterial(object.userData.id, { map: texture.texture });
         }
       });
     }

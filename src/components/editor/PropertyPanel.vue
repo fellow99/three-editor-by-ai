@@ -161,6 +161,17 @@
           >
           <span class="range-value">{{ materialMetalness.toFixed(2) }}</span>
         </div>
+        <!-- 纹理相关 -->
+        <div class="property-group">
+          <label>纹理:</label>
+          <div v-if="selectedObject.material.map">
+            <img :src="getTexturePreviewSrc(selectedObject.material.map.image)" alt="纹理预览" style="width:64px;height:64px;border:1px solid #555;">
+            <button @click="clearTexture" class="action-btn danger" style="margin-left:8px;">清除纹理</button>
+          </div>
+          <div v-else>
+            <span style="color:#aaa;">无纹理</span>
+          </div>
+        </div>
       </div>
       
       
@@ -295,7 +306,9 @@ export default {
      */
     function updateMaterialColor() {
       if (selectedObject.value && selectedObject.value.material) {
-        selectedObject.value.material.color.setHex(materialColor.value.replace('#', '0x'));
+        objectManager.setObjectMaterial(selectedObject.value.userData.id, {
+          color: materialColor.value.replace('#', '0x')
+        });
       }
     }
     
@@ -304,7 +317,9 @@ export default {
      */
     function updateMaterialRoughness() {
       if (selectedObject.value && selectedObject.value.material) {
-        selectedObject.value.material.roughness = materialRoughness.value;
+        objectManager.setObjectMaterial(selectedObject.value.userData.id, {
+          roughness: materialRoughness.value
+        });
       }
     }
     
@@ -313,7 +328,9 @@ export default {
      */
     function updateMaterialMetalness() {
       if (selectedObject.value && selectedObject.value.material) {
-        selectedObject.value.material.metalness = materialMetalness.value;
+        objectManager.setObjectMaterial(selectedObject.value.userData.id, {
+          metalness: materialMetalness.value
+        });
       }
     }
     
@@ -334,6 +351,24 @@ export default {
       objectSelection.clearSelection();
     }
     
+    // 选择纹理相关逻辑已移除
+    function clearTexture() {
+      if (selectedObject.value && selectedObject.value.material) {
+        objectManager.setObjectMaterial(selectedObject.value.userData.id, { map: null });
+      }
+    }
+
+    // 纹理预览 src 处理
+    function getTexturePreviewSrc(image) {
+        // 创建临时canvas
+        const canvas = document.createElement('canvas');
+        canvas.width = image.width;
+        canvas.height = image.height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(image, 0, 0);
+        return canvas.toDataURL();
+    }
+
     return {
       // 状态
       hasSelection,
@@ -352,7 +387,10 @@ export default {
       updateMaterialRoughness,
       updateMaterialMetalness,
       resetScale,
-      clearSelection
+      clearSelection,
+      // openTextureDialog 已移除
+      clearTexture,
+      getTexturePreviewSrc
     };
   }
 };

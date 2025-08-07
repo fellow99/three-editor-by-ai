@@ -547,7 +547,11 @@ class ObjectManager {
   setObjectMaterial(objectId, material) {
     const object = this.getObject(objectId);
     if (!object || !object.material) return;
-    
+
+    // 设置材质前先取消选中
+    const { deselectObject } = useObjectSelection();
+    if (object) deselectObject(object);
+
     if (material instanceof THREE.Material) {
       object.material = material;
     } else {

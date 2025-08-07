@@ -34,9 +34,9 @@ three-editor-by-ai/
 │   │   └── vue.svg
 │   ├── components/             # Vue 组件
 │   │   ├── editor/            # 编辑器 UI 组件
-│   │   │   ├── PropertyPanel.vue    # 属性面板
+│   │   │   ├── PropertyPanel.vue    # 属性面板（支持材质和纹理修改，通过 ObjectManager 统一接口）
 │   │   │   ├── Toolbar.vue          # 工具栏
-│   │   │   ├── AssetBrowser.vue     # 资源浏览器
+│   │   │   ├── AssetBrowser.vue     # 资源浏览器（纹理应用支持调用 ObjectManager 接口）
 │   │   │   └── Inspector.vue        # 对象检查器
 │   │   ├── scene/             # 3D 场景组件
 │   │   │   ├── SceneViewer.vue      # 主场景视图（支持灯光、相机helper自动可视化）
