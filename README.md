@@ -140,3 +140,5 @@ three-editor-by-ai/
 - 本工程完全使用AI自行编写代码（人工编写代码目前少于10行）；
 - 开发环境：VSCode + Cline + GitHub Copilot + Claude 4 / GPT-4.1
 - 使用Claude 4搭建本工程的主体框架，但由于GitHub Copilot Pro版2天内就消耗完（300 Premium requests），后转向使用GPT-4.1实现各项功能。
+- .clinerules目录：存储AI规则
+- .clinetask目录：存储历史对话
