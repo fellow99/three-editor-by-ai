@@ -1,128 +1,82 @@
+<!--
+  视口方向控制器组件
+  使用 three-viewport-gizmo 实现相机方向可视化与交互，支持与主相机和 OrbitControls 联动
+-->
 <template>
-  <div class="cube-viewport-controls">
-    <canvas ref="cubeCanvas" class="cube-canvas"></canvas>
-  </div>
+  <div ref="gizmoContainer" class="cube-viewport-controls"></div>
 </template>
 
-<!--
-  立方体视角控件组件
-  提供3D立方体交互，点击不同面可切换主视图方向，支持与主相机联动
--->
 <script setup>
 import { ref, onMounted, onUnmounted, watch, defineProps, defineEmits } from 'vue'
 import * as THREE from 'three'
+import { ViewportGizmo } from 'three-viewport-gizmo'
 
 const props = defineProps({
-  cameraQuaternion: { type: Object, required: false, default: null }
+  camera: { type: Object, required: false, default: null }, // 主相机实例
+  renderer: { type: Object, required: false, default: null }, // 主渲染器实例
+  controls: { type: Object, required: false, default: null }, // OrbitControls实例
+  cameraQuaternion: { type: Object, required: false, default: null } // 兼容旧用法
 })
 const emit = defineEmits(['viewChange'])
 
-const cubeCanvas = ref(null)
-let renderer, scene, camera, cube, animationId
-
-// 立方体6面与方向映射
-const faceToDirection = [
-  { face: 10, dir: 'front', vector: new THREE.Vector3(0, 0, 1) },   // Z+
-  { face: 8,  dir: 'back',  vector: new THREE.Vector3(0, 0, -1) },  // Z-
-  { face: 4,  dir: 'right', vector: new THREE.Vector3(1, 0, 0) },   // X+
-  { face: 6,  dir: 'left',  vector: new THREE.Vector3(-1, 0, 0) },  // X-
-  { face: 0,  dir: 'top',   vector: new THREE.Vector3(0, 1, 0) },   // Y+
-  { face: 2,  dir: 'bottom',vector: new THREE.Vector3(0, -1, 0) }   // Y-
-]
+const gizmoContainer = ref(null)
+let gizmo
 
 /**
- * 初始化立方体场景
+ * 初始化 ViewportGizmo
  */
-function initCubeScene() {
-  const width = 80
-  const height = 80
-  renderer = new THREE.WebGLRenderer({ canvas: cubeCanvas.value, alpha: true, antialias: true })
-  renderer.setSize(width, height)
-  renderer.setPixelRatio(window.devicePixelRatio)
-
-  scene = new THREE.Scene()
-  camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 10)
-  camera.position.set(2, 2, 2)
-  camera.lookAt(0, 0, 0)
-
-  // 立方体
-  const geometry = new THREE.BoxGeometry(1, 1, 1)
-  const materials = [
-    new THREE.MeshBasicMaterial({ color: '#ff6666', transparent: true, opacity: 0.9 }), // +X
-    new THREE.MeshBasicMaterial({ color: '#66ccff', transparent: true, opacity: 0.9 }), // -X
-    new THREE.MeshBasicMaterial({ color: '#66ff66', transparent: true, opacity: 0.9 }), // +Y
-    new THREE.MeshBasicMaterial({ color: '#ffcc66', transparent: true, opacity: 0.9 }), // -Y
-    new THREE.MeshBasicMaterial({ color: '#cccccc', transparent: true, opacity: 0.9 }), // +Z
-    new THREE.MeshBasicMaterial({ color: '#cc66ff', transparent: true, opacity: 0.9 })  // -Z
-  ]
-  cube = new THREE.Mesh(geometry, materials)
-  scene.add(cube)
-
-  // 光照
-  scene.add(new THREE.AmbientLight(0xffffff, 1))
-
-  animate()
-}
-
-/**
- * 渲染循环
- */
-function animate() {
-  renderer.render(scene, camera)
-  animationId = requestAnimationFrame(animate)
-}
-
-/**
- * 释放Three.js相关资源
- */
-function dispose() {
-  cancelAnimationFrame(animationId)
-  renderer && renderer.dispose()
-  scene = null
-  camera = null
-  cube = null
-}
-
-/**
- * 处理立方体canvas点击事件，根据点击面切换视角
- * @param {MouseEvent} e
- */
-function onCanvasClick(e) {
-  if (!cube || !renderer) return
-  const rect = cubeCanvas.value.getBoundingClientRect()
-  const x = ((e.clientX - rect.left) / rect.width) * 2 - 1
-  const y = -((e.clientY - rect.top) / rect.height) * 2 + 1
-  const mouse = new THREE.Vector2(x, y)
-  const raycaster = new THREE.Raycaster()
-  raycaster.setFromCamera(mouse, camera)
-  const intersects = raycaster.intersectObject(cube)
-  if (intersects.length > 0) {
-    const faceIndex = intersects[0].faceIndex
-    // BoxGeometry每个面2个三角形，faceIndex/2取整
-    const faceId = Math.floor(faceIndex / 2)
-    const mapping = faceToDirection.find(f => f.face === faceId)
-    if (mapping) {
-      emit('viewChange', mapping.dir)
-    }
+function initGizmo() {
+  console.log('初始化 CubeViewportControls gizmo', props.camera, props.renderer, props.controls)
+  if (props.camera && props.renderer && props.controls) {
+    gizmo = new ViewportGizmo(props.camera, props.renderer, {
+      container: gizmoContainer.value,
+      type: 'sphere',
+      size: 100,
+      placement: 'bottom-right',
+      animated: true,
+      speed: 1.2
+    })
+    gizmo.attachControls(props.controls)
+    gizmo.addEventListener('change', () => {
+      emit('viewChange', 'change')
+    })
   }
 }
 
+/**
+ * 销毁 ViewportGizmo
+ */
+function disposeGizmo() {
+  if (gizmo) {
+    gizmo.dispose()
+    gizmo = null
+  }
+}
+
+let animationId = null
+
 onMounted(() => {
-  initCubeScene()
-  cubeCanvas.value.addEventListener('click', onCanvasClick)
+  initGizmo()
+  function animate() {
+    if (gizmo) gizmo.render()
+    animationId = requestAnimationFrame(animate)
+  }
+  animate()
 })
 
 onUnmounted(() => {
-  dispose()
-  cubeCanvas.value?.removeEventListener('click', onCanvasClick)
+  disposeGizmo()
+  if (animationId) cancelAnimationFrame(animationId)
 })
 
-// 镜头联动
+// 镜头联动（如主相机变化时刷新gizmo）
 watch(
   () => props.cameraQuaternion,
   (q) => {
-    if (cube && q) {
-      cube.quaternion.set(q.x, q.y, q.z, q.w)
+    if (gizmo && q) {
+      // 兼容旧用法，直接设置gizmo的camera四元数
+      gizmo.camera.quaternion.set(q.x, q.y, q.z, q.w)
+      gizmo.cameraUpdate()
     }
   },
   { deep: true }
@@ -130,45 +84,9 @@ watch(
 </script>
 
 <style scoped>
-.cube-controls-bottomright {
-  position: absolute;
-  right: 20px;
-  bottom: 20px;
-  background: rgba(34, 38, 46, 0.92);
-  border-radius: 10px;
-  box-shadow: 0 4px 24px 0 rgba(0,0,0,0.18);
-  padding: 14px 14px 10px 14px;
-  backdrop-filter: blur(12px);
-  z-index: 300;
-  transition: box-shadow 0.2s;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.cube-controls-bottomright:hover {
-  box-shadow: 0 8px 32px 0 rgba(0,0,0,0.28);
-}
-
-/* 可根据实际控件内容补充按钮等样式 */
-</style>
-
-<style scoped>
 .cube-viewport-controls {
-  width: 80px;
-  height: 80px;
-  background: rgba(42,42,42,0.8);
-  border-radius: 8px;
-  box-shadow: 0 2px 8px #0006;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  width: 100px;
+  height: 100px;
   z-index: 300;
-}
-.cube-canvas {
-  width: 80px;
-  height: 80px;
-  cursor: pointer;
-  display: block;
 }
 </style>

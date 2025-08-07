@@ -42,10 +42,14 @@
         />
         <!-- 浮动面板：右下 -->
         <CubeViewportControls
+          v-if="scene.sceneManager && scene.sceneManager.controls"
           :class="[
             'cube-controls-bottomright',
             { 'with-right': !appState.rightPanelCollapsed }
           ]"
+          :camera="scene.sceneManager?.camera"
+          :renderer="scene.sceneManager?.renderer"
+          :controls="scene.sceneManager?.controls"
           :cameraQuaternion="cameraQuaternion"
           @viewChange="setViewAngle"
         />
@@ -72,7 +76,7 @@
         <PropertyPanel />
       </div>
       <!-- 浮动切换按钮（不在sidebar内） -->
-<el-button 
+      <el-button 
         v-if="!appState.rightPanelCollapsed"
         @click="toggleRightPanel" 
         class="panel-toggle-btn sidebar-toggle right"
@@ -85,7 +89,7 @@
           <el-icon><Setting /></el-icon>
         </template>
       </el-button>
-<el-button 
+      <el-button 
         v-if="appState.rightPanelCollapsed" 
         @click="toggleRightPanel" 
         class="panel-toggle-btn sidebar-toggle right collapsed"
@@ -120,8 +124,6 @@ import { useAssets } from './composables/useAssets.js';
 
 // 导入组件
 import Toolbar from './components/editor/Toolbar.vue';
-import AssetBrowser from './components/editor/AssetBrowser.vue';
-import Inspector from './components/editor/Inspector.vue';
 import ResourcePanel from './components/editor/ResourcePanel.vue';
 import SceneViewer from './components/scene/SceneViewer.vue';
 import PropertyPanel from './components/editor/PropertyPanel.vue';

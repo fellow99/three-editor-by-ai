@@ -23,6 +23,7 @@
   - Element Plus - 主流UI组件库
   - Lodash - 实用工具函数库
   - Day.js - 轻量级日期时间库
+  - three-viewport-gizmo - 立方体视角控件库
 
 ## 📁 项目结构
 
@@ -47,7 +48,7 @@ three-editor-by-ai/
 │   │   │   ├── SceneViewer.vue      # 主场景视图
 │   │   │   ├── InteractionHints.vue     # 操作提示组件
 │   │   │   ├── ViewportControls.vue     # 视图控制面板组件
-│   │   │   ├── CubeViewportControls.vue # 立方体视角控件
+│   │   │   ├── CubeViewportControls.vue # 立方体视角控件（已改为基于three-viewport-gizmo库实现，支持主相机联动和视角切换）
 │   │   │   ├── ObjectGizmo.vue      # 对象操作控制器
 │   ├── composables/           # Vue Composition API 可组合函数
 │   │   ├── useScene.js        # 场景管理
@@ -136,4 +137,5 @@ three-editor-by-ai/
 
 ## 📝 更新日志
 
+- feat: "CubeViewportControls.vue 现已重构为基于 three-viewport-gizmo 库实现，支持主相机联动和视角切换"（2025-08-07）
 - 修复：复制对象后，新对象在 Inspector 可见但场景画布不可见的问题（2025-08-06）。
