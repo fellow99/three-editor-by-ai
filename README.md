@@ -20,6 +20,7 @@
 - **构建工具**: Vite
 - **网络请求**: Fetch API
 - **工具库**: 
+  - Element Plus - 主流UI组件库
   - Lodash - 实用工具函数库
   - Day.js - 轻量级日期时间库
 
@@ -66,7 +67,7 @@ three-editor-by-ai/
 │   │   └── fileUtils.js      # 文件处理工具
 │   ├── App.vue               # 根组件（仅负责引入Editor.vue）
 │   ├── Editor.vue            # 主编辑器组件（包含全部业务与UI）
-│   ├── main.js               # 应用入口
+│   ├── main.js               # 应用入口（集成Element Plus）
 │   └── style.css             # 全局样式
 ├── .gitignore                # Git 忽略文件
 ├── index.html                # HTML 模板

@@ -1,7 +1,119 @@
+<!--
+  3D场景编辑器主应用组件
+  - 编辑器主界面，集成场景视图、工具栏、属性面板等
+  - 部分UI组件采用element-plus
+-->
+<template>
+  <div id="app" class="editor-container">
+    <!-- 加载遮罩 -->
+    <div v-if="appState.isLoading" class="loading-overlay">
+      <div class="loading-content">
+        <el-icon class="spin"><Loading /></el-icon>
+        <h2>3D 场景编辑器</h2>
+        <p>正在初始化编辑器...</p>
+      </div>
+    </div>
+
+    <!-- 顶部工具栏 -->
+    <!-- 主工具栏 -->
+    <div class="main-toolbar">
+      <Toolbar @delete-selected="handleDeleteSelected" />
+    </div>
+    
+    <!-- 主编辑区域 -->
+    <main class="editor-main">
+      <!-- 左侧资源面板 -->
+      <ResourcePanel />
+      
+      <!-- 主场景视口 -->
+      <div class="editor-viewport">
+        <!-- 浮动面板：右上 -->
+        <ViewportControls
+          :showWireframe="showWireframe"
+          :showGrid="showGrid"
+          :resetView="resetView"
+          :fitToScreen="fitToScreen"
+          :toggleWireframe="toggleWireframe"
+          :toggleGrid="toggleGrid"
+          :class="[
+            'viewport-controls',
+            { 'with-right': !appState.rightPanelCollapsed }
+          ]"
+        />
+        <!-- 浮动面板：右下 -->
+        <CubeViewportControls
+          :class="[
+            'cube-controls-bottomright',
+            { 'with-right': !appState.rightPanelCollapsed }
+          ]"
+          :cameraQuaternion="cameraQuaternion"
+          @viewChange="setViewAngle"
+        />
+        <!-- 浮动面板：左下 -->
+        <InteractionHints
+          :class="[
+            'interaction-hints',
+            { 'with-left': !appState.leftPanelCollapsed }
+          ]"
+        />
+        <SceneViewer
+          @delete-selected="handleDeleteSelected"
+          :showWireframe="showWireframe"
+          :showGrid="showGrid"
+        />
+      </div>
+      
+      <!-- 右侧属性面板 -->
+      <div 
+        v-show="!appState.rightPanelCollapsed" 
+        class="editor-sidebar right-panel"
+        :style="{ width: appState.panels.rightWidth + 'px' }"
+      >
+        <PropertyPanel />
+      </div>
+      <!-- 浮动切换按钮（不在sidebar内） -->
+<el-button 
+        v-if="!appState.rightPanelCollapsed"
+        @click="toggleRightPanel" 
+        class="panel-toggle-btn sidebar-toggle right"
+        :class="{ active: !appState.rightPanelCollapsed }"
+        title="切换右侧面板"
+        circle
+        size="small"
+      >
+        <template #icon>
+          <el-icon><Setting /></el-icon>
+        </template>
+      </el-button>
+<el-button 
+        v-if="appState.rightPanelCollapsed" 
+        @click="toggleRightPanel" 
+        class="panel-toggle-btn sidebar-toggle right collapsed"
+        title="展开右侧面板"
+        circle
+        size="small"
+      >
+        <template #icon>
+          <el-icon><Setting /></el-icon>
+        </template>
+      </el-button>
+    </main>
+
+    <!-- 状态栏 -->
+    <EditorFooter
+      :objectSelection="objectSelection"
+      :scene="scene"
+      :cameraPosition="cameraPosition"
+    />
+  </div>
+</template>
+
 <script setup>
-// 3D场景编辑器主应用组件
+ // 3D场景编辑器主应用组件
 import { ref, reactive, provide, onMounted, onUnmounted } from 'vue';
 import { useScene } from './composables/useScene.js';
+// 引入element-plus图标
+import { Setting, Loading } from '@element-plus/icons-vue';
 import { useObjectSelection } from './composables/useObjectSelection.js';
 import { useTransform } from './composables/useTransform.js';
 import { useAssets } from './composables/useAssets.js';
@@ -290,104 +402,6 @@ onUnmounted(() => {
 });
 </script>
 
-<template>
-  <div id="app" class="editor-container">
-    <!-- 加载遮罩 -->
-    <div v-if="appState.isLoading" class="loading-overlay">
-      <div class="loading-content">
-        <div class="loading-spinner"></div>
-        <h2>3D 场景编辑器</h2>
-        <p>正在初始化编辑器...</p>
-      </div>
-    </div>
-
-    <!-- 顶部工具栏 -->
-    
-    <!-- 主工具栏 -->
-    <div class="main-toolbar">
-      <Toolbar @delete-selected="handleDeleteSelected" />
-    </div>
-    
-    <!-- 主编辑区域 -->
-    <main class="editor-main">
-      <!-- 左侧资源面板 -->
-      <ResourcePanel />
-      
-      <!-- 主场景视口 -->
-      <div class="editor-viewport">
-        <!-- 浮动面板：右上 -->
-        <ViewportControls
-          :showWireframe="showWireframe"
-          :showGrid="showGrid"
-          :resetView="resetView"
-          :fitToScreen="fitToScreen"
-          :toggleWireframe="toggleWireframe"
-          :toggleGrid="toggleGrid"
-          :class="[
-            'viewport-controls',
-            { 'with-right': !appState.rightPanelCollapsed }
-          ]"
-        />
-        <!-- 浮动面板：右下 -->
-        <CubeViewportControls
-          :class="[
-            'cube-controls-bottomright',
-            { 'with-right': !appState.rightPanelCollapsed }
-          ]"
-          :cameraQuaternion="cameraQuaternion"
-          @viewChange="setViewAngle"
-        />
-        <!-- 浮动面板：左下 -->
-        <InteractionHints
-          :class="[
-            'interaction-hints',
-            { 'with-left': !appState.leftPanelCollapsed }
-          ]"
-        />
-        <SceneViewer
-          @delete-selected="handleDeleteSelected"
-          :showWireframe="showWireframe"
-          :showGrid="showGrid"
-        />
-      </div>
-      
-      <!-- 右侧属性面板 -->
-      <div 
-        v-show="!appState.rightPanelCollapsed" 
-        class="editor-sidebar right-panel"
-        :style="{ width: appState.panels.rightWidth + 'px' }"
-      >
-        <PropertyPanel />
-      </div>
-      <!-- 浮动切换按钮（不在sidebar内） -->
-      <button 
-        v-if="!appState.rightPanelCollapsed"
-        @click="toggleRightPanel" 
-        class="panel-toggle-btn sidebar-toggle right"
-        :class="{ active: !appState.rightPanelCollapsed }"
-        title="切换右侧面板"
-      >
-        ⚙️
-      </button>
-      <button 
-        v-if="appState.rightPanelCollapsed" 
-        @click="toggleRightPanel" 
-        class="panel-toggle-btn sidebar-toggle right collapsed"
-        title="展开右侧面板"
-      >
-        ⚙️
-      </button>
-    </main>
-
-    <!-- 状态栏 -->
-    <EditorFooter
-      :objectSelection="objectSelection"
-      :scene="scene"
-      :cameraPosition="cameraPosition"
-    />
-  </div>
-</template>
-
 <style scoped>
 .editor-container {
   height: 100vh;
@@ -443,6 +457,15 @@ onUnmounted(() => {
   margin: 0;
   color: #aaa;
   font-size: 14px;
+}
+
+.spin {
+  display: inline-block;
+  animation: spin 1s linear infinite;
+}
+@keyframes spin {
+  0% { transform: rotate(0deg);}
+  100% { transform: rotate(360deg);}
 }
 
 /* 顶部标题栏 */
