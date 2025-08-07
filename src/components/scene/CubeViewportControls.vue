@@ -26,7 +26,6 @@ let gizmo
  * 初始化 ViewportGizmo
  */
 function initGizmo() {
-  console.log('初始化 CubeViewportControls gizmo', props.camera, props.renderer, props.controls)
   if (props.camera && props.renderer && props.controls) {
     gizmo = new ViewportGizmo(props.camera, props.renderer, {
       container: gizmoContainer.value,
