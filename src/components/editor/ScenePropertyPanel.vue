@@ -33,7 +33,7 @@
       </div>
     </div>
 
-    <el-form label-width="100px">
+    <el-form class="scene-form" label-width="70px">
       <el-form-item label="场景名称">
         <el-input v-model="sceneName" placeholder="请输入场景名称" />
       </el-form-item>
@@ -53,15 +53,16 @@
         <el-input-number v-model="fogFar" :min="0" />
       </el-form-item>
     </el-form>
-    <el-button type="primary" @click="applySceneConfig">应用修改</el-button>
   </div>
 </template>
 
 <script setup>
 /**
  * 用于管理场景属性的编辑和应用
+ * - 移除“应用修改”按钮
+ * - 属性修改后立即生效
  */
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useScene } from '../../composables/useScene'
 
 /** 获取场景管理器和配置 */
@@ -101,7 +102,6 @@ const fogFar = ref(sceneConfig.fogFar)
  * 初始化面板数据
  */
 function initPanel() {
-  // 仅同步 sceneConfig 到本地变量
   backgroundColor.value = sceneConfig.backgroundColor
   fogEnabled.value = sceneConfig.fogEnabled
   fogColor.value = sceneConfig.fogColor
@@ -111,9 +111,9 @@ function initPanel() {
 initPanel()
 
 /**
- * 应用场景属性修改
+ * 属性变更后立即应用到场景
  */
-function applySceneConfig() {
+watch([backgroundColor, fogEnabled, fogColor, fogNear, fogFar], () => {
   updateSceneConfig({
     backgroundColor: backgroundColor.value,
     fogEnabled: fogEnabled.value,
@@ -121,7 +121,8 @@ function applySceneConfig() {
     fogNear: fogNear.value,
     fogFar: fogFar.value
   })
-}
+})
+
 </script>
 
 <style scoped>
@@ -150,5 +151,9 @@ function applySceneConfig() {
 .stat-value {
   color: #fff;
   font-weight: 600;
+}
+
+.scene-form {
+  margin-top: 16px;
 }
 </style>
