@@ -49,7 +49,7 @@ three-editor-by-ai/
 │   │   │   └── Inspector.vue        # 对象检查器
 │   │   ├── scene/             # 3D 场景组件
 │   │   │   ├── SceneViewer.vue      # 主场景视图
-│   │   │   ├── InteractionHints.vue     # 操作提示组件
+│   │   │   ├── InteractionHints.vue     # 操作提示组件（支持键盘控制/FlyControls切换）
 │   │   │   ├── ViewportControls.vue     # 视图控制面板组件
 │   │   │   ├── CubeViewportControls.vue # 立方体视角控件
 │   │   │   ├── ObjectGizmo.vue      # 对象操作控制器
@@ -59,7 +59,7 @@ three-editor-by-ai/
 │   │   ├── useTransform.js    # 变换操作
 │   │   └── useAssets.js       # 资源管理
 │   ├── core/                  # 核心 Three.js 逻辑
-│   │   ├── SceneManager.js    # 场景管理器
+│   │   ├── SceneManager.js    # 场景管理器（支持OrbitControls与FlyControls切换）
 │   │   ├── ObjectManager.js   # 对象管理器
 │   │   ├── InputManager.js    # 输入处理
 │   │   └── AssetLoader.js     # 资源加载器
@@ -100,6 +100,7 @@ three-editor-by-ai/
   - 资源浏览器中直接添加几何体
   - 实时变换操作 (位移、旋转、缩放)
   - 单对象选择和编辑
+  - 支持相机控制模式切换：OrbitControls（鼠标）与FlyControls（键盘飞行模式），可在操作提示区勾选“键盘控制”启停
 - **属性编辑**: 实时修改模型的材质、几何体等属性
 - **场景管理**: 完整的场景层级管理和序列化
 - **资源浏览**: 内置资源管理器，支持模型预览和几何体创建

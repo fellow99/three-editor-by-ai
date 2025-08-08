@@ -5,6 +5,8 @@
 
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+// 引入FlyControls用于飞行模式控制
+import { FlyControls } from 'three/examples/jsm/controls/FlyControls.js';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { reactive } from 'vue';
@@ -14,11 +16,16 @@ import { reactive } from 'vue';
  * Three.js场景、渲染器、相机、控制器、后处理等统一管理类
  */
 class SceneManager {
+  /**
+   * Three.js场景管理器，支持OrbitControls和FlyControls切换
+   */
   constructor() {
     this.scene = null;
     this.renderer = null;
     this.camera = null;
-    this.controls = null;
+    this.controls = null; // OrbitControls实例
+    this.flyControls = null; // FlyControls实例
+    this.isFlyControlEnabled = false; // 是否启用FlyControls
     this.container = null;
     this.animationId = null;
 
@@ -230,6 +237,7 @@ class SceneManager {
     if (container && this.renderer) {
       container.appendChild(this.renderer.domElement);
       this.setupControls();
+      this.setupFlyControls();
       this.handleResize();
       window.addEventListener('resize', this.resizeHandler);
     }
@@ -240,9 +248,7 @@ class SceneManager {
    */
   setupControls() {
     if (!this.camera || !this.renderer) return;
-    
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
-    
     // 配置控制器
     this.controls.enableDamping = true;
     this.controls.dampingFactor = 0.05;
@@ -250,15 +256,38 @@ class SceneManager {
     this.controls.minDistance = 1;
     this.controls.maxDistance = 500;
     this.controls.maxPolarAngle = Math.PI;
-    
     // 设置控制器速度
     this.controls.rotateSpeed = 1.0;
     this.controls.zoomSpeed = 1.0;
     this.controls.panSpeed = 1.0;
-    
     // 设置目标点
     this.controls.target.set(0, 0, 0);
     this.controls.update();
+  }
+
+  /**
+   * 设置FlyControls
+   * 仅初始化一次，默认不启用
+   */
+  setupFlyControls() {
+    if (!this.camera || !this.renderer) return;
+    this.flyControls = new FlyControls(this.camera, this.renderer.domElement);
+    // FlyControls参数可根据需要调整
+    this.flyControls.movementSpeed = 10;
+    this.flyControls.rollSpeed = Math.PI / 12;
+    this.flyControls.autoForward = false;
+    this.flyControls.dragToLook = true;
+    this.flyControls.enabled = false;
+  }
+
+  /**
+   * 启用或禁用FlyControls
+   * @param {boolean} enabled 是否启用飞行控制
+   */
+  setFlyControlEnabled(enabled) {
+    this.isFlyControlEnabled = enabled;
+    if (this.flyControls) this.flyControls.enabled = enabled;
+    if (this.controls) this.controls.enabled = !enabled;
   }
   
   /**
@@ -322,30 +351,36 @@ class SceneManager {
    */
   animate() {
     this.animationId = requestAnimationFrame(() => this.animate());
-    
     // 计算FPS
     const currentTime = performance.now();
     this.frameCount++;
-    
     if (currentTime - this.lastTime >= 1000) {
       this.state.fps = Math.round((this.frameCount * 1000) / (currentTime - this.lastTime));
       this.frameCount = 0;
       this.lastTime = currentTime;
     }
-    
     this.render();
     this.state.frameCount++;
   }
-  
+
   /**
    * 渲染场景
+   * 根据控制器类型更新
    */
   render() {
-    // 更新控制器（启用阻尼时需要）
-    if (this.controls) {
+    // 更新控制器
+    if (this.isFlyControlEnabled && this.flyControls) {
+      // 动态调整速度：根据相机到视点距离
+      let target = this.controls ? this.controls.target : new THREE.Vector3(0, 0, 0);
+      let camPos = this.camera ? this.camera.position : new THREE.Vector3(0, 0, 0);
+      let distance = camPos.distanceTo(target);
+      // 距离越远速度越快，越近越慢（限制最小最大值）
+      this.flyControls.movementSpeed = Math.max(0.5, Math.min(20, distance * 0.6));
+      this.flyControls.rollSpeed = Math.max(Math.PI / 36, Math.min(Math.PI / 6, distance * 0.04));
+      this.flyControls.update(0.1);
+    } else if (this.controls) {
       this.controls.update();
     }
-
     if (this.composer) {
       this.composer.render();
     } else if (this.renderer && this.scene && this.camera) {
