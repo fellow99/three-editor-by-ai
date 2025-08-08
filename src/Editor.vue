@@ -22,9 +22,6 @@
     
     <!-- 主编辑区域 -->
     <main class="editor-main">
-      <!-- 左侧资源面板 -->
-      <ResourcePanel />
-      
       <!-- 主场景视口 -->
       <div class="editor-viewport">
         <!-- 浮动面板：右上 -->
@@ -67,6 +64,25 @@
         />
       </div>
       
+      <!-- 左侧资源面板 -->
+      <div 
+        v-show="!appState.leftPanelCollapsed" 
+        class="editor-sidebar left-panel"
+        :style="{ width: appState.panels.leftWidth + 'px' }"
+      >
+        <ResourcePanel
+          :activeLeftTab="appState.activeLeftTab"
+          :setActiveLeftTab="setActiveLeftTab"
+        />
+      </div>
+      <!-- 浮动切换按钮（左侧） -->
+      <div 
+        @click="toggleLeftPanel" 
+        class="sidebar-toggle left"
+        :class="{ active: !appState.leftPanelCollapsed }"
+      >
+      </div>
+      
       <!-- 右侧属性面板 -->
       <div 
         v-show="!appState.rightPanelCollapsed" 
@@ -75,32 +91,13 @@
       >
         <PropertyPanel />
       </div>
-      <!-- 浮动切换按钮（不在sidebar内） -->
-      <el-button 
-        v-if="!appState.rightPanelCollapsed"
+      <!-- 浮动切换按钮（右侧） -->
+      <div
         @click="toggleRightPanel" 
-        class="panel-toggle-btn sidebar-toggle right"
+        class="sidebar-toggle right"
         :class="{ active: !appState.rightPanelCollapsed }"
-        title="切换右侧面板"
-        circle
-        size="small"
       >
-        <template #icon>
-          <el-icon><Setting /></el-icon>
-        </template>
-      </el-button>
-      <el-button 
-        v-if="appState.rightPanelCollapsed" 
-        @click="toggleRightPanel" 
-        class="panel-toggle-btn sidebar-toggle right collapsed"
-        title="展开右侧面板"
-        circle
-        size="small"
-      >
-        <template #icon>
-          <el-icon><Setting /></el-icon>
-        </template>
-      </el-button>
+      </div>
     </main>
 
     <!-- 状态栏 -->
@@ -134,7 +131,7 @@ import ViewportControls from './components/scene/ViewportControls.vue';
 import CubeViewportControls from './components/scene/CubeViewportControls.vue';
 import InteractionHints from './components/scene/InteractionHints.vue';
 
-// 应用状态管理
+ // 应用状态管理
 const appState = reactive({
   isLoading: true,
   leftPanelCollapsed: false,
@@ -147,6 +144,11 @@ const appState = reactive({
     bottomHeight: 200
   }
 });
+
+// 左侧面板控制方法
+function toggleLeftPanel() {
+  appState.leftPanelCollapsed = !appState.leftPanelCollapsed;
+}
 
 import { computed } from 'vue';
 
@@ -345,24 +347,12 @@ function handleKeyboard(event) {
         }
       }
       break;
-    case 'KeyF':
-      if (objectSelection?.hasSelection?.value) {
-        const selectedObjects = objectSelection.selectedObjects.value;
-        if (selectedObjects?.length > 0) {
-          scene.focusOnObject?.(selectedObjects[0]);
-        }
-      }
-      break;
     case 'Escape':
       objectSelection?.clearSelection?.();
       break;
   }
 }
 
-// 面板控制方法
-function toggleLeftPanel() {
-  appState.leftPanelCollapsed = !appState.leftPanelCollapsed;
-}
 
 function toggleRightPanel() {
   appState.rightPanelCollapsed = !appState.rightPanelCollapsed;
@@ -470,34 +460,6 @@ onUnmounted(() => {
   100% { transform: rotate(360deg);}
 }
 
-/* 顶部标题栏 */
-
-.panel-toggle-btn {
-  width: 32px;
-  height: 32px;
-  background: transparent;
-  border: 1px solid #555;
-  border-radius: 4px;
-  color: #aaa;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  transition: all 0.2s;
-}
-
-.panel-toggle-btn:hover {
-  background: #444;
-  border-color: #777;
-  color: #fff;
-}
-
-.panel-toggle-btn.active {
-  background: #007acc;
-  border-color: #0088dd;
-  color: #fff;
-}
 
 /* 主工具栏 */
 .main-toolbar {
@@ -542,13 +504,13 @@ onUnmounted(() => {
 
 /* 浮动切换按钮样式 */
 .sidebar-toggle {
+  cursor: pointer;
   position: absolute;
   top: 0;
   z-index: 20;
-  background: #222;
-  border: 1px solid #555;
-  border-radius: 4px;
-  color: #aaa;
+  background: #007acc;
+  border-color: #0088dd;
+  color: #fff;
   width: 28px;
   height: 28px;
   display: flex;
@@ -559,23 +521,25 @@ onUnmounted(() => {
 }
 .sidebar-toggle.left {
   left: 0;
+  top: 50%;
+  width: 10px;
+  height: 50px;
+  border-radius: 0 10px 10px 0;
 }
 .sidebar-toggle.right {
   right: 0;
+  top: 50%;
+  width: 10px;
+  height: 50px;
+  border-radius: 10px 0 0 10px;
 }
-.sidebar-toggle.left.collapsed {
-  left: 0;
-  border-radius: 0 4px 4px 0;
-  background: #222;
-  border: 1px solid #555;
-  z-index: 30;
+
+
+.sidebar-toggle.left.active {
+  left: 300px; /* 300px面板宽度 */
 }
-.sidebar-toggle.right.collapsed {
-  right: 0;
-  border-radius: 4px 0 0 4px;
-  background: #222;
-  border: 1px solid #555;
-  z-index: 30;
+.sidebar-toggle.right.active {
+  right: 300px; /* 300px面板宽度 */
 }
 
 /* 面板标签页 */

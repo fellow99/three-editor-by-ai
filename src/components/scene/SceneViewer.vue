@@ -198,35 +198,8 @@ export default {
       //   }
       // });
       */
-      
-      // 键盘快捷键
-      inputManager.on('keydown', (event) => {
-        handleKeyboardShortcuts(event);
-      });
     }
     
-    function handleKeyboardShortcuts(event) {
-      switch (event.code) {
-        case 'KeyF':
-          if (objectSelection.hasSelection.value) {
-            const selectedObjects = objectSelection.selectedObjects.value;
-            scene.focusOnObject(selectedObjects[0]);
-          }
-          break;
-        case 'KeyG':
-          // 切换到移动模式
-          transform.transformMode.value = 'translate';
-          break;
-        case 'KeyR':
-          // 切换到旋转模式
-          transform.transformMode.value = 'rotate';
-          break;
-        case 'KeyS':
-          // 切换到缩放模式
-          transform.transformMode.value = 'scale';
-          break;
-      }
-    }
     
     function startCameraPositionUpdate() {
       function updateCameraPosition() {
