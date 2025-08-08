@@ -4,6 +4,9 @@ import { ref, watch } from 'vue';
 import TextureSelectDialog from './TextureSelectDialog.vue';
 import { useObjectSelection } from '../../composables/useObjectSelection.js';
 import { useObjectManager } from '../../core/ObjectManager.js';
+// 引入element-plus组件
+import { ElSelect, ElOption, ElColorPicker, ElSlider, ElButton } from 'element-plus';
+import { Close } from '@element-plus/icons-vue';
 
 const objectSelection = useObjectSelection();
 const objectManager = useObjectManager();
@@ -98,209 +101,256 @@ function getTexturePreviewSrc(image) {
 <template>
   <div v-if="selectedObject && selectedObject.material" class="property-section">
     <h4>材质</h4>
-    <div class="property-group">
-      <label>类型:</label>
-      <select v-model="materialType" @change="onMaterialTypeChange" class="property-input">
-        <option value="MeshStandardMaterial">标准(Standard)</option>
-        <option value="MeshPhysicalMaterial">物理(Physical)</option>
-        <option value="MeshPhongMaterial">冯氏(Phong)</option>
-        <option value="MeshLambertMaterial">兰伯特(Lambert)</option>
-        <option value="MeshNormalMaterial">法向(Normal)</option>
-        <option value="MeshBasicMaterial">基础(Basic)</option>
-      </select>
-    </div>
-    <div class="property-group">
-      <label>颜色:</label>
-      <input 
-        v-model="materialColor" 
-        @input="updateMaterialColor"
-        type="color"
-        class="color-input"
-      >
-    </div>
-    <div v-if="materialType==='MeshStandardMaterial' || materialType==='MeshPhysicalMaterial'" class="property-group">
-      <label>粗糙度:</label>
-      <input 
-        v-model.number="materialRoughness" 
-        @input="updateMaterialRoughness"
-        type="range" 
-        min="0" 
-        max="1" 
-        step="0.01"
-        class="range-input"
-      >
-      <span class="range-value">{{ materialRoughness.toFixed(2) }}</span>
-    </div>
-    <div v-if="materialType==='MeshStandardMaterial' || materialType==='MeshPhysicalMaterial'" class="property-group">
-      <label>金属度:</label>
-      <input 
-        v-model.number="materialMetalness" 
-        @input="updateMaterialMetalness"
-        type="range" 
-        min="0" 
-        max="1" 
-        step="0.01"
-        class="range-input"
-      >
-      <span class="range-value">{{ materialMetalness.toFixed(2) }}</span>
-    </div>
-    <div v-if="materialType==='MeshPhysicalMaterial'" class="property-group">
-      <label>清漆(clearcoat):</label>
-      <input 
-        v-model.number="materialClearcoat" 
-        @input="updateMaterialClearcoat"
-        type="range" 
-        min="0" 
-        max="1" 
-        step="0.01"
-        class="range-input"
-      >
-      <span class="range-value">{{ materialClearcoat.toFixed(2) }}</span>
-    </div>
-    <div v-if="materialType==='MeshPhysicalMaterial'" class="property-group">
-      <label>清漆粗糙度(clearcoatRoughness):</label>
-      <input 
-        v-model.number="materialClearcoatRoughness" 
-        @input="updateMaterialClearcoatRoughness"
-        type="range" 
-        min="0" 
-        max="1" 
-        step="0.01"
-        class="range-input"
-      >
-      <span class="range-value">{{ materialClearcoatRoughness.toFixed(2) }}</span>
-    </div>
-    <div v-if="materialType==='MeshPhongMaterial'" class="property-group">
-      <label>高光(speclar):</label>
-      <input 
-        v-model="materialSpecular" 
-        @input="updateMaterialSpecular"
-        type="color"
-        class="color-input"
-      >
-    </div>
-    <div v-if="materialType==='MeshPhongMaterial'" class="property-group">
-      <label>高光强度(shininess):</label>
-      <input 
-        v-model.number="materialShininess" 
-        @input="updateMaterialShininess"
-        type="range" 
-        min="0" 
-        max="200" 
-        step="1"
-        class="range-input"
-      >
-      <span class="range-value">{{ materialShininess }}</span>
-    </div>
-    <div v-if="materialType==='MeshLambertMaterial'" class="property-group">
-      <label>自发光(emissive):</label>
-      <input 
-        v-model="materialEmissive" 
-        @input="updateMaterialEmissive"
-        type="color"
-        class="color-input"
-      >
-    </div>
-    <!-- 纹理相关（多种类型） -->
-    <div class="property-group">
-      <label>颜色贴图(map):</label>
-      <div v-if="selectedObject.material.map">
-        <img :src="getTexturePreviewSrc(selectedObject.material.map.image)" alt="纹理预览" style="width:64px;height:64px;border:1px solid #555;">
-        <button @click="clearTexture('map')" class="action-btn danger" style="margin-left:8px;">清除</button>
-      </div>
-      <div v-else>
-        <span style="color:#aaa;">无</span>
-      </div>
-      <button @click="showTextureDialogType = 'map'; showTextureDialog = true" class="action-btn" style="margin-top:8px;">选择</button>
-    </div>
-    <div v-if="materialType==='MeshStandardMaterial' || materialType==='MeshPhysicalMaterial'" class="property-group">
-      <label>环境光遮蔽贴图(aoMap):</label>
-      <div v-if="selectedObject.material.aoMap">
-        <img :src="getTexturePreviewSrc(selectedObject.material.aoMap.image)" alt="纹理预览" style="width:64px;height:64px;border:1px solid #555;">
-        <button @click="clearTexture('aoMap')" class="action-btn danger" style="margin-left:8px;">清除</button>
-      </div>
-      <div v-else>
-        <span style="color:#aaa;">无</span>
-      </div>
-      <button @click="showTextureDialogType = 'aoMap'; showTextureDialog = true" class="action-btn" style="margin-top:8px;">选择</button>
-    </div>
-    <div v-if="materialType==='MeshStandardMaterial' || materialType==='MeshPhysicalMaterial'" class="property-group">
-      <label>位移贴图(displacementMap):</label>
-      <div v-if="selectedObject.material.displacementMap">
-        <img :src="getTexturePreviewSrc(selectedObject.material.displacementMap.image)" alt="纹理预览" style="width:64px;height:64px;border:1px solid #555;">
-        <button @click="clearTexture('displacementMap')" class="action-btn danger" style="margin-left:8px;">清除</button>
-      </div>
-      <div v-else>
-        <span style="color:#aaa;">无</span>
-      </div>
-      <button @click="showTextureDialogType = 'displacementMap'; showTextureDialog = true" class="action-btn" style="margin-top:8px;">选择</button>
-    </div>
-    <div v-if="materialType==='MeshStandardMaterial' || materialType==='MeshPhysicalMaterial'" class="property-group">
-      <label>法线贴图(normalMap):</label>
-      <div v-if="selectedObject.material.normalMap">
-        <img :src="getTexturePreviewSrc(selectedObject.material.normalMap.image)" alt="纹理预览" style="width:64px;height:64px;border:1px solid #555;">
-        <button @click="clearTexture('normalMap')" class="action-btn danger" style="margin-left:8px;">清除</button>
-      </div>
-      <div v-else>
-        <span style="color:#aaa;">无</span>
-      </div>
-      <button @click="showTextureDialogType = 'normalMap'; showTextureDialog = true" class="action-btn" style="margin-top:8px;">选择</button>
-    </div>
-    <div v-if="materialType==='MeshStandardMaterial' || materialType==='MeshPhysicalMaterial'" class="property-group">
-      <label>金属度贴图(metalnessMap):</label>
-      <div v-if="selectedObject.material.metalnessMap">
-        <img :src="getTexturePreviewSrc(selectedObject.material.metalnessMap.image)" alt="纹理预览" style="width:64px;height:64px;border:1px solid #555;">
-        <button @click="clearTexture('metalnessMap')" class="action-btn danger" style="margin-left:8px;">清除</button>
-      </div>
-      <div v-else>
-        <span style="color:#aaa;">无</span>
-      </div>
-      <button @click="showTextureDialogType = 'metalnessMap'; showTextureDialog = true" class="action-btn" style="margin-top:8px;">选择</button>
-    </div>
-    <div v-if="materialType==='MeshStandardMaterial' || materialType==='MeshPhysicalMaterial'" class="property-group">
-      <label>粗糙度贴图(roughnessMap):</label>
-      <div v-if="selectedObject.material.roughnessMap">
-        <img :src="getTexturePreviewSrc(selectedObject.material.roughnessMap.image)" alt="纹理预览" style="width:64px;height:64px;border:1px solid #555;">
-        <button @click="clearTexture('roughnessMap')" class="action-btn danger" style="margin-left:8px;">清除</button>
-      </div>
-      <div v-else>
-        <span style="color:#aaa;">无</span>
-      </div>
-      <button @click="showTextureDialogType = 'roughnessMap'; showTextureDialog = true" class="action-btn" style="margin-top:8px;">选择</button>
-    </div>
-    <div v-if="materialType==='MeshStandardMaterial' || materialType==='MeshPhysicalMaterial'" class="property-group">
-      <label>环境映射贴图(envMap):</label>
-      <div v-if="selectedObject.material.envMap">
-        <img :src="getTexturePreviewSrc(selectedObject.material.envMap.image)" alt="纹理预览" style="width:64px;height:64px;border:1px solid #555;">
-        <button @click="clearTexture('envMap')" class="action-btn danger" style="margin-left:8px;">清除</button>
-      </div>
-      <div v-else>
-        <span style="color:#aaa;">无</span>
-      </div>
-      <button @click="showTextureDialogType = 'envMap'; showTextureDialog = true" class="action-btn" style="margin-top:8px;">选择</button>
-    </div>
-    <div v-if="materialType==='MeshToonMaterial'" class="property-group">
-      <label>渐变贴图(gradientMap):</label>
-      <div v-if="selectedObject.material.gradientMap">
-        <img :src="getTexturePreviewSrc(selectedObject.material.gradientMap.image)" alt="纹理预览" style="width:64px;height:64px;border:1px solid #555;">
-        <button @click="clearTexture('gradientMap')" class="action-btn danger" style="margin-left:8px;">清除</button>
-      </div>
-      <div v-else>
-        <span style="color:#aaa;">无</span>
-      </div>
-      <button @click="showTextureDialogType = 'gradientMap'; showTextureDialog = true" class="action-btn" style="margin-top:8px;">选择</button>
-    </div>
-    <div v-if="materialType==='MeshMatcapMaterial'" class="property-group">
-      <label>Matcap贴图(matcap):</label>
-      <div v-if="selectedObject.material.matcap">
-        <img :src="getTexturePreviewSrc(selectedObject.material.matcap.image)" alt="纹理预览" style="width:64px;height:64px;border:1px solid #555;">
-        <button @click="clearTexture('matcap')" class="action-btn danger" style="margin-left:8px;">清除</button>
-      </div>
-      <div v-else>
-        <span style="color:#aaa;">无</span>
-      </div>
-      <button @click="showTextureDialogType = 'matcap'; showTextureDialog = true" class="action-btn" style="margin-top:8px;">选择</button>
-    </div>
+    <el-form label-width="70px">
+      <el-form-item label="类型">
+        <el-select v-model="materialType" @change="onMaterialTypeChange" class="property-input" size="small">
+          <el-option label="标准(Standard)" value="MeshStandardMaterial" />
+          <el-option label="物理(Physical)" value="MeshPhysicalMaterial" />
+          <el-option label="冯氏(Phong)" value="MeshPhongMaterial" />
+          <el-option label="兰伯特(Lambert)" value="MeshLambertMaterial" />
+          <el-option label="法向(Normal)" value="MeshNormalMaterial" />
+          <el-option label="基础(Basic)" value="MeshBasicMaterial" />
+        </el-select>
+      </el-form-item>
+      <el-form-item label="颜色">
+        <el-color-picker
+          v-model="materialColor"
+          @change="updateMaterialColor"
+          class="color-input"
+          size="small"
+        />
+      </el-form-item>
+      <el-form-item v-if="materialType==='MeshStandardMaterial' || materialType==='MeshPhysicalMaterial'" label="粗糙度">
+        <el-slider
+          v-model="materialRoughness"
+          :min="0"
+          :max="1"
+          :step="0.01"
+          @change="updateMaterialRoughness"
+          class="range-input"
+          size="small"
+        />
+        <span class="range-value">{{ materialRoughness.toFixed(2) }}</span>
+      </el-form-item>
+      <el-form-item v-if="materialType==='MeshStandardMaterial' || materialType==='MeshPhysicalMaterial'" label="金属度">
+        <el-slider
+          v-model="materialMetalness"
+          :min="0"
+          :max="1"
+          :step="0.01"
+          @change="updateMaterialMetalness"
+          class="range-input"
+          size="small"
+        />
+        <span class="range-value">{{ materialMetalness.toFixed(2) }}</span>
+      </el-form-item>
+      <el-form-item v-if="materialType==='MeshPhysicalMaterial'" label="清漆(clearcoat)">
+        <el-slider
+          v-model="materialClearcoat"
+          :min="0"
+          :max="1"
+          :step="0.01"
+          @change="updateMaterialClearcoat"
+          class="range-input"
+          size="small"
+        />
+        <span class="range-value">{{ materialClearcoat.toFixed(2) }}</span>
+      </el-form-item>
+      <el-form-item v-if="materialType==='MeshPhysicalMaterial'" label="清漆粗糙度">
+        <el-slider
+          v-model="materialClearcoatRoughness"
+          :min="0"
+          :max="1"
+          :step="0.01"
+          @change="updateMaterialClearcoatRoughness"
+          class="range-input"
+          size="small"
+        />
+        <span class="range-value">{{ materialClearcoatRoughness.toFixed(2) }}</span>
+      </el-form-item>
+      <el-form-item v-if="materialType==='MeshPhongMaterial'" label="高光">
+        <el-color-picker
+          v-model="materialSpecular"
+          @change="updateMaterialSpecular"
+          class="color-input"
+          size="small"
+        />
+      </el-form-item>
+      <el-form-item v-if="materialType==='MeshPhongMaterial'" label="高光强度">
+        <el-slider
+          v-model="materialShininess"
+          :min="0"
+          :max="200"
+          :step="1"
+          @change="updateMaterialShininess"
+          class="range-input"
+          size="small"
+        />
+        <span class="range-value">{{ materialShininess }}</span>
+      </el-form-item>
+      <el-form-item v-if="materialType==='MeshLambertMaterial'" label="自发光">
+        <el-color-picker
+          v-model="materialEmissive"
+          @change="updateMaterialEmissive"
+          class="color-input"
+          size="small"
+        />
+      </el-form-item>
+      <!-- 纹理相关（多种类型） -->
+      <el-form-item label="颜色贴图">
+        <div v-if="selectedObject.material.map" class="texture-preview-wrapper">
+          <img :src="getTexturePreviewSrc(selectedObject.material.map.image)" alt="纹理预览" class="texture-preview-img">
+          <el-button
+            type="danger"
+            circle
+            size="small"
+            class="texture-clear-btn"
+            @click="clearTexture('map')"
+          >
+            <template #icon>
+              <Close />
+            </template>
+          </el-button>
+        </div>
+        <el-button type="primary" size="small" @click="showTextureDialogType = 'map'; showTextureDialog = true" style="margin-top:8px;">选择</el-button>
+      </el-form-item>
+      <el-form-item v-if="materialType==='MeshStandardMaterial' || materialType==='MeshPhysicalMaterial'" label="遮蔽贴图">
+        <div v-if="selectedObject.material.aoMap" class="texture-preview-wrapper">
+          <img :src="getTexturePreviewSrc(selectedObject.material.aoMap.image)" alt="纹理预览" class="texture-preview-img">
+          <el-button
+            type="danger"
+            circle
+            size="small"
+            class="texture-clear-btn"
+            @click="clearTexture('aoMap')"
+          >
+            <template #icon>
+              <Close />
+            </template>
+          </el-button>
+        </div>
+        <el-button type="primary" size="small" @click="showTextureDialogType = 'aoMap'; showTextureDialog = true" style="margin-top:8px;">选择</el-button>
+      </el-form-item>
+      <el-form-item v-if="materialType==='MeshStandardMaterial' || materialType==='MeshPhysicalMaterial'" label="位移贴图">
+        <div v-if="selectedObject.material.displacementMap" class="texture-preview-wrapper">
+          <img :src="getTexturePreviewSrc(selectedObject.material.displacementMap.image)" alt="纹理预览" class="texture-preview-img">
+          <el-button
+            type="danger"
+            circle
+            size="small"
+            class="texture-clear-btn"
+            @click="clearTexture('displacementMap')"
+          >
+            <template #icon>
+              <Close />
+            </template>
+          </el-button>
+        </div>
+        <el-button type="primary" size="small" @click="showTextureDialogType = 'displacementMap'; showTextureDialog = true" style="margin-top:8px;">选择</el-button>
+      </el-form-item>
+      <el-form-item v-if="materialType==='MeshStandardMaterial' || materialType==='MeshPhysicalMaterial'" label="法线贴图">
+        <div v-if="selectedObject.material.normalMap" class="texture-preview-wrapper">
+          <img :src="getTexturePreviewSrc(selectedObject.material.normalMap.image)" alt="纹理预览" class="texture-preview-img">
+          <el-button
+            type="danger"
+            circle
+            size="small"
+            class="texture-clear-btn"
+            @click="clearTexture('normalMap')"
+          >
+            <template #icon>
+              <Close />
+            </template>
+          </el-button>
+        </div>
+        <el-button type="primary" size="small" @click="showTextureDialogType = 'normalMap'; showTextureDialog = true" style="margin-top:8px;">选择</el-button>
+      </el-form-item>
+      <el-form-item v-if="materialType==='MeshStandardMaterial' || materialType==='MeshPhysicalMaterial'" label="金属贴图">
+        <div v-if="selectedObject.material.metalnessMap" class="texture-preview-wrapper">
+          <img :src="getTexturePreviewSrc(selectedObject.material.metalnessMap.image)" alt="纹理预览" class="texture-preview-img">
+          <el-button
+            type="danger"
+            circle
+            size="small"
+            class="texture-clear-btn"
+            @click="clearTexture('metalnessMap')"
+          >
+            <template #icon>
+              <Close />
+            </template>
+          </el-button>
+        </div>
+        <el-button type="primary" size="small" @click="showTextureDialogType = 'metalnessMap'; showTextureDialog = true" style="margin-top:8px;">选择</el-button>
+      </el-form-item>
+      <el-form-item v-if="materialType==='MeshStandardMaterial' || materialType==='MeshPhysicalMaterial'" label="粗糙贴图">
+        <div v-if="selectedObject.material.roughnessMap" class="texture-preview-wrapper">
+          <img :src="getTexturePreviewSrc(selectedObject.material.roughnessMap.image)" alt="纹理预览" class="texture-preview-img">
+          <el-button
+            type="danger"
+            circle
+            size="small"
+            class="texture-clear-btn"
+            @click="clearTexture('roughnessMap')"
+          >
+            <template #icon>
+              <CircleClose />
+            </template>
+          </el-button>
+        </div>
+        <el-button type="primary" size="small" @click="showTextureDialogType = 'roughnessMap'; showTextureDialog = true" style="margin-top:8px;">选择</el-button>
+      </el-form-item>
+      <el-form-item v-if="materialType==='MeshStandardMaterial' || materialType==='MeshPhysicalMaterial'" label="映射贴图">
+        <div v-if="selectedObject.material.envMap" class="texture-preview-wrapper">
+          <img :src="getTexturePreviewSrc(selectedObject.material.envMap.image)" alt="纹理预览" class="texture-preview-img">
+          <el-button
+            type="danger"
+            circle
+            size="small"
+            class="texture-clear-btn"
+            @click="clearTexture('envMap')"
+          >
+            <template #icon>
+              <CircleClose />
+            </template>
+          </el-button>
+        </div>
+        <el-button type="primary" size="small" @click="showTextureDialogType = 'envMap'; showTextureDialog = true" style="margin-top:8px;">选择</el-button>
+      </el-form-item>
+      <el-form-item v-if="materialType==='MeshToonMaterial'" label="渐变贴图">
+        <div v-if="selectedObject.material.gradientMap" class="texture-preview-wrapper">
+          <img :src="getTexturePreviewSrc(selectedObject.material.gradientMap.image)" alt="纹理预览" class="texture-preview-img">
+          <el-button
+            type="danger"
+            circle
+            size="small"
+            class="texture-clear-btn"
+            @click="clearTexture('gradientMap')"
+          >
+            <template #icon>
+              <CircleClose />
+            </template>
+          </el-button>
+        </div>
+        <el-button type="primary" size="small" @click="showTextureDialogType = 'gradientMap'; showTextureDialog = true" style="margin-top:8px;">选择</el-button>
+      </el-form-item>
+      <el-form-item v-if="materialType==='MeshMatcapMaterial'" label="Matcap贴图">
+        <div v-if="selectedObject.material.matcap" class="texture-preview-wrapper">
+          <img :src="getTexturePreviewSrc(selectedObject.material.matcap.image)" alt="纹理预览" class="texture-preview-img">
+          <el-button
+            type="danger"
+            circle
+            size="small"
+            class="texture-clear-btn"
+            @click="clearTexture('matcap')"
+          >
+            <template #icon>
+              <CircleClose />
+            </template>
+          </el-button>
+        </div>
+        <el-button type="primary" size="small" @click="showTextureDialogType = 'matcap'; showTextureDialog = true" style="margin-top:8px;">选择</el-button>
+      </el-form-item>
+    </el-form>
     <TextureSelectDialog
       :visible="showTextureDialog"
       @close="showTextureDialog = false"
@@ -369,5 +419,25 @@ function getTexturePreviewSrc(image) {
 }
 .action-btn.danger:hover {
   background: #e85662;
+}
+.texture-preview-wrapper {
+  position: relative;
+  display: inline-block;
+  width: 64px;
+  height: 64px;
+}
+.texture-preview-img {
+  width: 64px;
+  height: 64px;
+  border: 1px solid #555;
+  display: block;
+  border-radius: 4px;
+}
+.texture-clear-btn {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  z-index: 2;
+  box-shadow: 0 0 2px #333;
 }
 </style>

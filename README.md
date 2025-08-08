@@ -43,7 +43,7 @@ three-editor-by-ai/
 │   │   │   ├── PropertyPanel.vue    # 属性面板
 │   │   │   ├── ScenePropertyPanel.vue    # 场景属性面板
 │   │   │   ├── ObjectPropertyPanel.vue    # 对象基本属性面板
-│   │   │   ├── MaterialPropertyPanel.vue    # 材质编辑面板
+│   │   │   ├── MaterialPropertyPanel.vue    # 材质编辑面板（已使用element-plus重构UI组件）
 │   │   │   ├── TextureSelectDialog.vue # 纹理选择对话框
 │   │   │   ├── Toolbar.vue          # 工具栏
 │   │   │   ├── EditorFooter.vue     # 编辑器底部状态栏
