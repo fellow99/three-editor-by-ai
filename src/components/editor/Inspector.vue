@@ -2,25 +2,6 @@
   <div class="inspector">
 <!-- inspector-header已移除 -->
 
-    <!-- 场景统计 -->
-    <div class="scene-stats">
-      <div class="stat-item">
-        <span class="stat-label">对象数量:</span>
-        <span class="stat-value">{{ sceneStats.objects }}</span>
-      </div>
-      <div class="stat-item">
-        <span class="stat-label">三角形:</span>
-        <span class="stat-value">{{ formatNumber(sceneStats.triangles) }}</span>
-      </div>
-      <div class="stat-item">
-        <span class="stat-label">顶点:</span>
-        <span class="stat-value">{{ formatNumber(sceneStats.vertices) }}</span>
-      </div>
-      <div class="stat-item">
-        <span class="stat-label">材质:</span>
-        <span class="stat-value">{{ sceneStats.materials }}</span>
-      </div>
-    </div>
 
     <!-- 搜索框 -->
     <div class="search-section">
@@ -156,8 +137,7 @@ export default {
     // 计算属性
     const allObjects = computed(() => objectManager.getAllObjects());
     const selectedObjectIds = computed(() => objectSelection.selectedObjectIds.value);
-    const sceneStats = computed(() => scene.getSceneStats());
-    
+
     const filteredObjects = computed(() => {
       let objects = allObjects.value;
       
@@ -332,20 +312,6 @@ export default {
       hideContextMenu();
     }
     
-    /**
-     * 格式化数字显示
-     * @param {number} num 数值
-     * @returns {string} 格式化结果
-     */
-    function formatNumber(num) {
-      if (num >= 1000000) {
-        return (num / 1000000).toFixed(1) + 'M';
-      } else if (num >= 1000) {
-        return (num / 1000).toFixed(1) + 'K';
-      }
-      return num.toString();
-    }
-    
     // 监听全局点击事件来隐藏右键菜单
     /**
      * 监听全局点击事件，隐藏右键菜单
@@ -373,7 +339,6 @@ export default {
       contextMenu,
       allObjects,
       selectedObjectIds,
-      sceneStats,
       filteredObjects,
       
       // 方法
@@ -389,8 +354,7 @@ export default {
       deleteObject,
       isolateObject,
       focusObject,
-      renameObject,
-      formatNumber
+      renameObject
     };
   }
 };

@@ -40,7 +40,8 @@ three-editor-by-ai/
 │   │   └── vue.svg
 │   ├── components/             # Vue 组件
 │   │   ├── editor/            # 编辑器 UI 组件
-│   │   │   ├── PropertyPanel.vue    # 
+│   │   │   ├── PropertyPanel.vue    # 属性面板
+│   │   │   ├── ScenePropertyPanel.vue    # 场景属性面板
 │   │   │   ├── ObjectPropertyPanel.vue    # 对象基本属性面板
 │   │   │   ├── MaterialPropertyPanel.vue    # 材质编辑面板
 │   │   │   ├── TextureSelectDialog.vue # 纹理选择对话框

@@ -23,7 +23,7 @@ export function useScene() {
   // 场景配置
   const sceneConfig = reactive({
     backgroundColor: '#222222',
-    fogEnabled: true,
+    fogEnabled: false,
     fogColor: '#222222',
     fogNear: 1000,
     fogFar: 10000,

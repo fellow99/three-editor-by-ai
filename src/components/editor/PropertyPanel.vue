@@ -1,46 +1,91 @@
 <template>
   <!--
     PropertyPanel.vue
-    该组件仅负责Tabs切换和内容分发，“基本”Tab内容已迁移至ObjectPropertyPanel.vue
+    功能：根据对象选择状态，动态切换属性面板Tab。
+    - 未选对象时，仅显示“场景属性”Tab（ScenePropertyPanel）
+    - 选中对象时，显示“对象属性”“材质属性”两个Tab
   -->
   <div class="property-panel">
     <div class="property-content">
       <div class="tabs">
-        <button
-          v-for="tab in tabs"
-          :key="tab"
-          :class="['tab-btn', { active: activeTab === tab }]"
-          @click="activeTab = tab"
-        >
-          <span class="tab-icon" v-if="tab === '基本'">📝</span>
-          <span class="tab-icon" v-else-if="tab === '材质'">🎨</span>
-          {{ tab }}
-        </button>
+        <!-- 未选对象时，仅显示“场景属性”Tab -->
+        <template v-if="!hasSelection">
+          <button
+            class="tab-btn"
+            :class="{ active: activeTab === '场景' }"
+            @click="activeTab = '场景'"
+          >
+            <span class="tab-icon">🌐</span>
+            场景
+          </button>
+        </template>
+        <!-- 选中对象时，显示“对象属性”“材质属性”Tab -->
+        <template v-else>
+          <button
+            class="tab-btn"
+            :class="{ active: activeTab === '对象' }"
+            @click="activeTab = '对象'"
+          >
+            <span class="tab-icon">📝</span>
+            对象属性
+          </button>
+          <button
+            class="tab-btn"
+            :class="{ active: activeTab === '材质' }"
+            @click="activeTab = '材质'"
+          >
+            <span class="tab-icon">🎨</span>
+            材质属性
+          </button>
+        </template>
       </div>
-      <ObjectPropertyPanel v-if="activeTab === '基本'" />
-      <MaterialPropertyPanel v-if="activeTab === '材质'" />
+      <!-- Tab内容区域 -->
+      <ScenePropertyPanel v-show="!hasSelection && activeTab === '场景'" />
+      <ObjectPropertyPanel v-if="hasSelection && activeTab === '对象'" />
+      <MaterialPropertyPanel v-if="hasSelection && activeTab === '材质'" />
     </div>
   </div>
 </template>
 
 <script>
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
+import ScenePropertyPanel from './ScenePropertyPanel.vue';
 import ObjectPropertyPanel from './ObjectPropertyPanel.vue';
 import MaterialPropertyPanel from './MaterialPropertyPanel.vue';
+import { useObjectSelection } from '../../composables/useObjectSelection.js';
 
 export default {
   name: 'PropertyPanel',
   components: {
+    ScenePropertyPanel,
     ObjectPropertyPanel,
     MaterialPropertyPanel
   },
   setup() {
-    // 只保留Tabs切换相关逻辑
-    const tabs = ['基本', '材质'];
-    const activeTab = ref('基本');
+    /**
+     * 属性面板Tab切换逻辑
+     * - activeTab: 当前激活的Tab
+     * - hasSelection: 是否有选中对象
+     */
+    // 当前激活的Tab
+    const activeTab = ref('场景'); // 默认显示场景属性
+    // 获取对象选择状态
+    const { hasSelection } = useObjectSelection(); // 是否有选中对象
+
+    // 当选择状态变化时，自动切换Tab
+    // 必须加注释说明用途
+    // 选中对象时，切换到“对象属性”Tab；未选对象时，切换到“场景”Tab
+    watch(hasSelection, (val) => {
+      if (val) {
+        activeTab.value = '对象';
+      } else {
+        activeTab.value = '场景';
+      }
+    });
+
     return {
-      tabs,
-      activeTab
+      activeTab,
+      hasSelection
     };
   }
 };
