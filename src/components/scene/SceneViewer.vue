@@ -138,6 +138,7 @@ export default {
       });
 
       // 拖拽时禁用OrbitControls
+      // 注意：此处禁用OrbitControls，避免被其他逻辑（如飞行控制切换）覆盖，若遇到镜头跟随问题请优先排查controls.enabled赋值冲突
       transformControls.addEventListener('dragging-changed', function (event) {
         if (scene.sceneManager.controls) {
           scene.sceneManager.controls.enabled = !event.value;
