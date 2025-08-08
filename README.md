@@ -40,16 +40,17 @@ three-editor-by-ai/
 │   │   └── vue.svg
 │   ├── components/             # Vue 组件
 │   │   ├── editor/            # 编辑器 UI 组件
-│   │   │   ├── PropertyPanel.vue    # 属性面板
+│   │   │   ├── PropertyPanel.vue    # 
+│   │   │   ├── ObjectPropertyPanel.vue    # 对象基本属性面板
 │   │   │   ├── MaterialPropertyPanel.vue    # 材质编辑面板
 │   │   │   ├── TextureSelectDialog.vue # 纹理选择对话框
 │   │   │   ├── Toolbar.vue          # 工具栏
 │   │   │   ├── EditorFooter.vue     # 编辑器底部状态栏
 │   │   │   ├── AssetBrowser.vue     # 资源浏览器
-│   │   │   ├── ResourcePanel.vue    # 资源面板（仅内容展示，面板切换与折叠逻辑已迁移至 Editor.vue）
+│   │   │   ├── ResourcePanel.vue    # 资源面板
 │   │   │   └── Inspector.vue        # 对象检查器
 │   │   ├── scene/             # 3D 场景组件
-│   │   │   ├── SceneViewer.vue      # 主场景视图（TransformControls拖拽时会禁用OrbitControls，避免镜头跟随问题，详见开发规范说明）
+│   │   │   ├── SceneViewer.vue      # 主场景视图
 │   │   │   ├── InteractionHints.vue     # 操作提示组件
 │   │   │   ├── ViewportControls.vue     # 视图控制面板组件
 │   │   │   ├── CubeViewportControls.vue # 立方体视角控件
