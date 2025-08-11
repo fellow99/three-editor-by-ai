@@ -121,7 +121,7 @@
 /**
  * 该组件用于展示和编辑选中对象的基本属性，包括名称、类型、变换（位置、旋转、缩放）。
  */
-import { ref, reactive, computed, watch, inject } from 'vue';
+import { ref, reactive, computed, watch, inject, onMounted, onUnmounted } from 'vue';
 import { useObjectSelection } from '../../composables/useObjectSelection.js';
 import { useTransform } from '../../composables/useTransform.js';
 import { radToDeg, degToRad } from '../../utils/mathUtils.js';
@@ -148,7 +148,9 @@ export default {
       if (!selectedObject.value) return '';
       return selectedObject.value.userData.type || selectedObject.value.type || 'Object3D';
     });
-    watch(selectedObject, (newObject) => {
+    // 刷新transform显示
+    function refreshTransform() {
+      const newObject = selectedObject.value;
       if (newObject) {
         objectName.value = newObject.name || '';
         transform.position.x = Number(newObject.position.x.toFixed(3));
@@ -161,7 +163,16 @@ export default {
         transform.scale.y = Number(newObject.scale.y.toFixed(3));
         transform.scale.z = Number(newObject.scale.z.toFixed(3));
       }
-    }, { immediate: true });
+    }
+    watch(selectedObject, refreshTransform, { immediate: true });
+
+    // 监听对象变换事件，刷新属性
+    onMounted(() => {
+      window.addEventListener('object-transform-updated', refreshTransform);
+    });
+    onUnmounted(() => {
+      window.removeEventListener('object-transform-updated', refreshTransform);
+    });
     function updateObjectName() {
       if (selectedObject.value) {
         selectedObject.value.name = objectName.value;

@@ -43,7 +43,7 @@ three-editor-by-ai/
 │   │   │   ├── PropertyPanel.vue    # 属性面板
 │   │   │   ├── ScenePropertyPanel.vue    # 场景属性面板
 │   │   │   ├── ObjectPropertyPanel.vue    # 对象基本属性面板
-│   │   │   ├── MaterialPropertyPanel.vue    # 材质编辑面板（已使用element-plus重构UI组件）
+│   │   │   ├── MaterialPropertyPanel.vue    # 材质编辑面板
 │   │   │   ├── TextureSelectDialog.vue # 纹理选择对话框
 │   │   │   ├── Toolbar.vue          # 工具栏
 │   │   │   ├── EditorFooter.vue     # 编辑器底部状态栏
@@ -141,8 +141,10 @@ three-editor-by-ai/
 - 组件命名采用 PascalCase
 - 文件和目录命名采用 camelCase
 - Git 提交信息格式: `feat: 功能描述`
-- 【重要】SceneViewer.vue中TransformControls拖拽时会自动禁用OrbitControls，避免拖拽时镜头跟随问题。若遇到该问题，请优先排查controls.enabled赋值冲突（如飞行控制切换、其他组件逻辑），并参考SceneViewer.vue相关注释。
 
+## 重要逻辑
+- SceneViewer.vue中，TransformControls拖拽时会自动禁用OrbitControls，避免拖拽时镜头跟随问题。
+- ObjectManager.js中，变换后分发object-transform-updated事件
 
 ## 💯 AI
 - 本工程完全使用AI自行编写代码（人工编写代码目前少于10行）；

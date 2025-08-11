@@ -521,6 +521,8 @@ class ObjectManager {
     if (transform.scale) {
       object.scale.set(...transform.scale);
     }
+    // 变换后分发事件，通知属性面板刷新
+    window.dispatchEvent(new CustomEvent('object-transform-updated', { detail: { objectId } }));
   }
   
   /**
