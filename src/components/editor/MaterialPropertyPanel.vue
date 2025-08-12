@@ -1,7 +1,7 @@
 <script setup>
 // 材质属性面板
 import { ref, watch } from 'vue';
-import TextureSelectDialog from './TextureSelectDialog.vue';
+import TextureSelectDialog from '../dialog/TextureSelectDialog.vue';
 import { useObjectSelection } from '../../composables/useObjectSelection.js';
 import { useObjectManager } from '../../core/ObjectManager.js';
 // 引入element-plus组件
