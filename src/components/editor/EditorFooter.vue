@@ -15,6 +15,11 @@
         <el-icon><Position /></el-icon>
         位置: ({{ cameraPosition.x.toFixed(1) }}, {{ cameraPosition.y.toFixed(1) }}, {{ cameraPosition.z.toFixed(1) }})
       </el-tag>
+      <!-- 当前视点（OrbitControls target） -->
+      <el-tag size="small" type="info" effect="dark">
+        <el-icon><Camera /></el-icon>
+        视点: ({{ cameraTarget?.x?.toFixed?.(2) ?? 'N/A' }}, {{ cameraTarget?.y?.toFixed?.(2) ?? 'N/A' }}, {{ cameraTarget?.z?.toFixed?.(2) ?? 'N/A' }})
+      </el-tag>
     </div>
     <div class="footer-right">
       <el-tag size="small" type="success" effect="dark">
@@ -44,7 +49,11 @@ import { Box, Camera, Cpu, Position } from '@element-plus/icons-vue';
 defineProps({
   objectSelection: { type: Object, required: true },
   scene: { type: Object, required: true },
-  cameraPosition: { type: Object, required: true }
+  cameraPosition: { type: Object, required: true },
+  /**
+   * @description OrbitControls target（即视点目标点），用于显示当前视点
+   */
+  cameraTarget: { type: Object, required: true }
 });
 </script>
 

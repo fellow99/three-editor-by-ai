@@ -105,6 +105,7 @@
       :objectSelection="objectSelection"
       :scene="scene"
       :cameraPosition="cameraPosition"
+      :cameraTarget="cameraTarget"
     />
   </div>
 </template>
@@ -173,9 +174,15 @@ provide('appState', appState);
 const showWireframe = ref(false);
 const showGrid = ref(true);
 
-// 相机位置与四元数
+/**
+ * @description 相机位置与四元数
+ */
 const cameraPosition = reactive({ x: 0, y: 0, z: 0 });
 const cameraQuaternion = ref({ x: 0, y: 0, z: 0, w: 1 });
+/**
+ * @description OrbitControls target（即视点目标点），用于底部状态栏显示
+ */
+const cameraTarget = reactive({ x: 0, y: 0, z: 0 });
 
 // 性能监控
 const fps = computed(() => scene.fps.value);
@@ -189,9 +196,12 @@ function updateCameraState() {
     cameraPosition.x = pos.x;
     cameraPosition.y = pos.y;
     cameraPosition.z = pos.z;
-    const q = scene.sceneManager.camera.quaternion;
-    if (q) {
-      cameraQuaternion.value = { x: q.x, y: q.y, z: q.z, w: q.w };
+    // 获取 OrbitControls target
+    const controls = scene.sceneManager.controls;
+    if (controls && controls.target) {
+      cameraTarget.x = controls.target.x;
+      cameraTarget.y = controls.target.y;
+      cameraTarget.z = controls.target.z;
     }
   }
   animationId = requestAnimationFrame(updateCameraState);
