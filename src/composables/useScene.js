@@ -105,6 +105,7 @@ export function useScene() {
   
   /**
    * 应用相机配置
+   * 设置相机位置和目标点，并同步OrbitControls的target
    */
   function applyCameraConfig() {
     if (!sceneManager.camera) return;
@@ -122,6 +123,17 @@ export function useScene() {
       cameraState.target.y,
       cameraState.target.z
     );
+
+    // 设置OrbitControls的target为新的位置对象
+    if (sceneManager.controls) {
+      const newTarget = new THREE.Vector3(
+        cameraState.target.x,
+        cameraState.target.y,
+        cameraState.target.z
+      );
+      sceneManager.controls.target.copy(newTarget);
+      sceneManager.controls.update();
+    }
     
     // 设置相机参数
     sceneManager.camera.fov = cameraState.fov;
@@ -316,6 +328,7 @@ export function useScene() {
   
   /**
    * 聚焦到对象
+   * 计算对象包围盒中心点，设置OrbitControls target为该位置对象
    * @param {string|THREE.Object3D} objectOrId 对象或ID
    */
   function focusOnObject(objectOrId) {
@@ -340,8 +353,8 @@ export function useScene() {
     
     // 设置相机位置
     const direction = new THREE.Vector3(1, 1, 1).normalize();
-    const newPosition = center.clone().add(direction.multiplyScalar(distance * 1.5));
-    
+    const newPosition = center.clone().add(direction.multiplyScalar(distance * 2.0));
+
     cameraState.position.x = newPosition.x;
     cameraState.position.y = newPosition.y;
     cameraState.position.z = newPosition.z;

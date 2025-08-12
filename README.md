@@ -85,12 +85,6 @@ three-editor-by-ai/
 └── README.md                 # 项目说明
 ```
 
-**注意：**
-- vite.config.js中，配置vite-plugin-static-copy，把几个js库的复制到目标路径：
-  - 如需加载Draco压缩的glTF模型，请将node_modules/three/examples/jsm/libs/draco/目录中的文件复制到 /draco/ 目录下。
-  - 如需加载KTX2纹理，请将node_modules/three/examples/jsm/libs/basis目录中的文件放入 /basis/ 目录下。
-  - 如需加载Meshopt压缩的glTF模型，请将node_modules/three/examples/jsm/libs/meshopt_decoder.module.js文件放入 public/meshopt/ 目录下。
-
 ## 🎯 主要功能
 
 - **3D场景渲染**: 基于 Three.js 的高性能 3D 渲染，支持灯光、相机helper自动可视化
@@ -144,8 +138,13 @@ three-editor-by-ai/
 - Git 提交信息格式: `feat: 功能描述`
 
 ## 重要逻辑
+- vite.config.js中，配置vite-plugin-static-copy，把几个js库的复制到目标路径：
+  - 如需加载Draco压缩的glTF模型，请将node_modules/three/examples/jsm/libs/draco/目录中的文件复制到 /draco/ 目录下。
+  - 如需加载KTX2纹理，请将node_modules/three/examples/jsm/libs/basis目录中的文件放入 /basis/ 目录下。
+  - 如需加载Meshopt压缩的glTF模型，请将node_modules/three/examples/jsm/libs/meshopt_decoder.module.js文件放入 public/meshopt/ 目录下。
 - SceneViewer.vue中，TransformControls拖拽时会自动禁用OrbitControls，避免拖拽时镜头跟随问题。
-- ObjectManager.js中，变换后分发object-transform-updated事件
+- ObjectManager.js中，变换后分发object-transform-updated事件。
+- useScene.js中，聚焦对象时计算中心点并设置OrbitControls target。
 
 ## 💯 AI
 - 本工程完全使用AI自行编写代码（人工编写代码目前少于10行）；
