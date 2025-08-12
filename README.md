@@ -43,7 +43,7 @@ three-editor-by-ai/
 │   │   ├── editor/            # 编辑器 UI 组件
 │   │   │   ├── PropertyPanel.vue    # 属性面板
 │   │   │   ├── ScenePropertyPanel.vue    # 场景属性面板
-│   │   │   ├── ObjectPropertyPanel.vue    # 对象基本属性面板
+│   │   │   ├── ObjectPropertyPanel.vue    # 对象基本属性面板（已改为element-plus组件+组合式API）
 │   │   │   ├── MaterialPropertyPanel.vue    # 材质编辑面板
 │   │   │   ├── Toolbar.vue          # 工具栏
 │   │   │   ├── EditorFooter.vue     # 编辑器底部状态栏
@@ -148,6 +148,12 @@ three-editor-by-ai/
 - useScene.js中，聚焦对象时计算中心点并设置OrbitControls target。
 
 ## 💯 AI
+
+---
+
+### 更新记录
+
+- 2025/8/12：ObjectPropertyPanel.vue 完成重构，采用 element-plus 组件、组合式 API，并按 element-plus 规范使用图标，提升交互体验和代码规范。
 - 本工程完全使用AI自行编写代码（人工编写代码目前少于10行）；
 - 开发环境：VSCode + Cline + GitHub Copilot + Claude 4 / GPT-4.1
 - 使用Claude 4搭建本工程的主体框架，但由于GitHub Copilot Pro版2天内就消耗完（300 Premium requests），后转向使用GPT-4.1实现各项功能。

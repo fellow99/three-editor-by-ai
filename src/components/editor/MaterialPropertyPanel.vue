@@ -196,159 +196,78 @@ function getTexturePreviewSrc(image) {
           size="small"
         />
       </el-form-item>
-      <!-- 纹理相关（多种类型） -->
+      <!-- 统一贴图相关写法 -->
       <el-form-item label="颜色贴图">
         <div v-if="selectedObject.material.map" class="texture-preview-wrapper">
           <img :src="getTexturePreviewSrc(selectedObject.material.map.image)" alt="纹理预览" class="texture-preview-img">
-          <el-button
-            type="danger"
-            circle
-            size="small"
-            class="texture-clear-btn"
-            @click="clearTexture('map')"
-          >
-            <template #icon>
-              <Close />
-            </template>
-          </el-button>
+          <el-button type="danger" size="small" @click="clearTexture('map')">清理</el-button>
+          <el-button type="primary" size="small" @click="showTextureDialogType = 'map'; showTextureDialog = true">重选</el-button>
         </div>
-        <el-button type="primary" size="small" @click="showTextureDialogType = 'map'; showTextureDialog = true" style="margin-top:8px;">选择</el-button>
+        <el-button v-else type="primary" size="small" @click="showTextureDialogType = 'map'; showTextureDialog = true">选择</el-button>
       </el-form-item>
       <el-form-item v-if="materialType==='MeshStandardMaterial' || materialType==='MeshPhysicalMaterial'" label="遮蔽贴图">
         <div v-if="selectedObject.material.aoMap" class="texture-preview-wrapper">
           <img :src="getTexturePreviewSrc(selectedObject.material.aoMap.image)" alt="纹理预览" class="texture-preview-img">
-          <el-button
-            type="danger"
-            circle
-            size="small"
-            class="texture-clear-btn"
-            @click="clearTexture('aoMap')"
-          >
-            <template #icon>
-              <Close />
-            </template>
-          </el-button>
+          <el-button type="danger" size="small" @click="clearTexture('aoMap')">清理</el-button>
+          <el-button type="primary" size="small" @click="showTextureDialogType = 'aoMap'; showTextureDialog = true">重选</el-button>
         </div>
-        <el-button type="primary" size="small" @click="showTextureDialogType = 'aoMap'; showTextureDialog = true" style="margin-top:8px;">选择</el-button>
+        <el-button v-else type="primary" size="small" @click="showTextureDialogType = 'aoMap'; showTextureDialog = true">选择</el-button>
       </el-form-item>
       <el-form-item v-if="materialType==='MeshStandardMaterial' || materialType==='MeshPhysicalMaterial'" label="位移贴图">
         <div v-if="selectedObject.material.displacementMap" class="texture-preview-wrapper">
           <img :src="getTexturePreviewSrc(selectedObject.material.displacementMap.image)" alt="纹理预览" class="texture-preview-img">
-          <el-button
-            type="danger"
-            circle
-            size="small"
-            class="texture-clear-btn"
-            @click="clearTexture('displacementMap')"
-          >
-            <template #icon>
-              <Close />
-            </template>
-          </el-button>
+          <el-button type="danger" size="small" @click="clearTexture('displacementMap')">清理</el-button>
+          <el-button type="primary" size="small" @click="showTextureDialogType = 'displacementMap'; showTextureDialog = true">重选</el-button>
         </div>
-        <el-button type="primary" size="small" @click="showTextureDialogType = 'displacementMap'; showTextureDialog = true" style="margin-top:8px;">选择</el-button>
+        <el-button v-else type="primary" size="small" @click="showTextureDialogType = 'displacementMap'; showTextureDialog = true">选择</el-button>
       </el-form-item>
       <el-form-item v-if="materialType==='MeshStandardMaterial' || materialType==='MeshPhysicalMaterial'" label="法线贴图">
         <div v-if="selectedObject.material.normalMap" class="texture-preview-wrapper">
           <img :src="getTexturePreviewSrc(selectedObject.material.normalMap.image)" alt="纹理预览" class="texture-preview-img">
-          <el-button
-            type="danger"
-            circle
-            size="small"
-            class="texture-clear-btn"
-            @click="clearTexture('normalMap')"
-          >
-            <template #icon>
-              <Close />
-            </template>
-          </el-button>
+          <el-button type="danger" size="small" @click="clearTexture('normalMap')">清理</el-button>
+          <el-button type="primary" size="small" @click="showTextureDialogType = 'normalMap'; showTextureDialog = true">重选</el-button>
         </div>
-        <el-button type="primary" size="small" @click="showTextureDialogType = 'normalMap'; showTextureDialog = true" style="margin-top:8px;">选择</el-button>
+        <el-button v-else type="primary" size="small" @click="showTextureDialogType = 'normalMap'; showTextureDialog = true">选择</el-button>
       </el-form-item>
       <el-form-item v-if="materialType==='MeshStandardMaterial' || materialType==='MeshPhysicalMaterial'" label="金属贴图">
         <div v-if="selectedObject.material.metalnessMap" class="texture-preview-wrapper">
           <img :src="getTexturePreviewSrc(selectedObject.material.metalnessMap.image)" alt="纹理预览" class="texture-preview-img">
-          <el-button
-            type="danger"
-            circle
-            size="small"
-            class="texture-clear-btn"
-            @click="clearTexture('metalnessMap')"
-          >
-            <template #icon>
-              <Close />
-            </template>
-          </el-button>
+          <el-button type="danger" size="small" @click="clearTexture('metalnessMap')">清理</el-button>
+          <el-button type="primary" size="small" @click="showTextureDialogType = 'metalnessMap'; showTextureDialog = true">重选</el-button>
         </div>
-        <el-button type="primary" size="small" @click="showTextureDialogType = 'metalnessMap'; showTextureDialog = true" style="margin-top:8px;">选择</el-button>
+        <el-button v-else type="primary" size="small" @click="showTextureDialogType = 'metalnessMap'; showTextureDialog = true">选择</el-button>
       </el-form-item>
       <el-form-item v-if="materialType==='MeshStandardMaterial' || materialType==='MeshPhysicalMaterial'" label="粗糙贴图">
         <div v-if="selectedObject.material.roughnessMap" class="texture-preview-wrapper">
           <img :src="getTexturePreviewSrc(selectedObject.material.roughnessMap.image)" alt="纹理预览" class="texture-preview-img">
-          <el-button
-            type="danger"
-            circle
-            size="small"
-            class="texture-clear-btn"
-            @click="clearTexture('roughnessMap')"
-          >
-            <template #icon>
-              <CircleClose />
-            </template>
-          </el-button>
+          <el-button type="danger" size="small" @click="clearTexture('roughnessMap')">清理</el-button>
+          <el-button type="primary" size="small" @click="showTextureDialogType = 'roughnessMap'; showTextureDialog = true">重选</el-button>
         </div>
-        <el-button type="primary" size="small" @click="showTextureDialogType = 'roughnessMap'; showTextureDialog = true" style="margin-top:8px;">选择</el-button>
+        <el-button v-else type="primary" size="small" @click="showTextureDialogType = 'roughnessMap'; showTextureDialog = true">选择</el-button>
       </el-form-item>
       <el-form-item v-if="materialType==='MeshStandardMaterial' || materialType==='MeshPhysicalMaterial'" label="映射贴图">
         <div v-if="selectedObject.material.envMap" class="texture-preview-wrapper">
           <img :src="getTexturePreviewSrc(selectedObject.material.envMap.image)" alt="纹理预览" class="texture-preview-img">
-          <el-button
-            type="danger"
-            circle
-            size="small"
-            class="texture-clear-btn"
-            @click="clearTexture('envMap')"
-          >
-            <template #icon>
-              <CircleClose />
-            </template>
-          </el-button>
+          <el-button type="danger" size="small" @click="clearTexture('envMap')">清理</el-button>
+          <el-button type="primary" size="small" @click="showTextureDialogType = 'envMap'; showTextureDialog = true">重选</el-button>
         </div>
-        <el-button type="primary" size="small" @click="showTextureDialogType = 'envMap'; showTextureDialog = true" style="margin-top:8px;">选择</el-button>
+        <el-button v-else type="primary" size="small" @click="showTextureDialogType = 'envMap'; showTextureDialog = true">选择</el-button>
       </el-form-item>
       <el-form-item v-if="materialType==='MeshToonMaterial'" label="渐变贴图">
         <div v-if="selectedObject.material.gradientMap" class="texture-preview-wrapper">
           <img :src="getTexturePreviewSrc(selectedObject.material.gradientMap.image)" alt="纹理预览" class="texture-preview-img">
-          <el-button
-            type="danger"
-            circle
-            size="small"
-            class="texture-clear-btn"
-            @click="clearTexture('gradientMap')"
-          >
-            <template #icon>
-              <CircleClose />
-            </template>
-          </el-button>
+          <el-button type="danger" size="small" @click="clearTexture('gradientMap')">清理</el-button>
+          <el-button type="primary" size="small" @click="showTextureDialogType = 'gradientMap'; showTextureDialog = true">重选</el-button>
         </div>
-        <el-button type="primary" size="small" @click="showTextureDialogType = 'gradientMap'; showTextureDialog = true" style="margin-top:8px;">选择</el-button>
+        <el-button v-else type="primary" size="small" @click="showTextureDialogType = 'gradientMap'; showTextureDialog = true">选择</el-button>
       </el-form-item>
       <el-form-item v-if="materialType==='MeshMatcapMaterial'" label="Matcap贴图">
         <div v-if="selectedObject.material.matcap" class="texture-preview-wrapper">
           <img :src="getTexturePreviewSrc(selectedObject.material.matcap.image)" alt="纹理预览" class="texture-preview-img">
-          <el-button
-            type="danger"
-            circle
-            size="small"
-            class="texture-clear-btn"
-            @click="clearTexture('matcap')"
-          >
-            <template #icon>
-              <CircleClose />
-            </template>
-          </el-button>
+          <el-button type="danger" size="small" @click="clearTexture('matcap')">清理</el-button>
+          <el-button type="primary" size="small" @click="showTextureDialogType = 'matcap'; showTextureDialog = true">重选</el-button>
         </div>
-        <el-button type="primary" size="small" @click="showTextureDialogType = 'matcap'; showTextureDialog = true" style="margin-top:8px;">选择</el-button>
+        <el-button v-else type="primary" size="small" @click="showTextureDialogType = 'matcap'; showTextureDialog = true">选择</el-button>
       </el-form-item>
     </el-form>
     <TextureSelectDialog
@@ -361,10 +280,17 @@ function getTexturePreviewSrc(image) {
 
 <style scoped>
 .property-section {
-  margin-bottom: 24px;
-  padding: 16px;
+  padding: 8px;
   overflow-y: auto;
   max-height: calc(100vh - 48px - 32px);
+}
+.property-section h4 {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #ccc;
+  border-bottom: 1px solid #444;
+  padding-bottom: 4px;
 }
 .property-group {
   margin-bottom: 12px;
@@ -422,22 +348,19 @@ function getTexturePreviewSrc(image) {
 }
 .texture-preview-wrapper {
   position: relative;
-  display: inline-block;
-  width: 64px;
-  height: 64px;
-}
-.texture-preview-img {
-  width: 64px;
-  height: 64px;
-  border: 1px solid #555;
-  display: block;
-  border-radius: 4px;
-}
-.texture-clear-btn {
-  position: absolute;
-  top: 2px;
-  right: 2px;
-  z-index: 2;
-  box-shadow: 0 0 2px #333;
+  display: flex;
+  width: 100%;
+  height: 24px;
+
+  .texture-preview-img {
+    width: 48px;
+    height: 24px;
+    border: 1px solid #555;
+    display: inline-block;
+    border-radius: 4px;
+  }
+  .el-button {
+    margin-left: 8px;
+  }
 }
 </style>
