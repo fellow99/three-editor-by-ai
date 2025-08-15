@@ -250,7 +250,7 @@ class SceneManager {
     if (!this.camera || !this.renderer) return;
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
     // 配置控制器
-    this.controls.enableDamping = true;
+    this.controls.enableDamping = false; // 禁用惯性移动
     this.controls.dampingFactor = 0.05;
     this.controls.screenSpacePanning = false;
     this.controls.minDistance = 1;
