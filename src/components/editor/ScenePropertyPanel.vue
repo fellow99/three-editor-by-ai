@@ -1,6 +1,6 @@
 <!--
   ScenePropertyPanel.vue
-  场景属性面板：用于查看和编辑当前场景的基础属性（如名称、背景色、雾效等）。
+  场景属性面板：用于查看和编辑当前场景的基础属性（如名称、背景色、userData等）。
 -->
 
 <template>
@@ -40,17 +40,17 @@
       <el-form-item label="背景色">
         <el-color-picker v-model="backgroundColor" />
       </el-form-item>
-      <el-form-item label="雾效">
-        <el-switch v-model="fogEnabled" />
-      </el-form-item>
-      <el-form-item v-if="fogEnabled" label="雾颜色">
-        <el-color-picker v-model="fogColor" />
-      </el-form-item>
-      <el-form-item v-if="fogEnabled" label="雾近端">
-        <el-input-number v-model="fogNear" :min="0" />
-      </el-form-item>
-      <el-form-item v-if="fogEnabled" label="雾远端">
-        <el-input-number v-model="fogFar" :min="0" />
+      <el-form-item label="userData">
+        <el-input
+          type="textarea"
+          v-model="userDataText"
+          :rows="4"
+          placeholder="请输入合法的JSON"
+          @blur="onUserDataBlur"
+        />
+        <div v-if="userDataError" style="color: #f56c6c; font-size: 12px; margin-top: 4px;">
+          {{ userDataError }}
+        </div>
       </el-form-item>
     </el-form>
   </div>
@@ -89,39 +89,45 @@ function formatNumber(num) {
 const sceneName = ref('')
 /** 当前场景背景色 */
 const backgroundColor = ref(sceneConfig.backgroundColor)
-/** 是否启用雾效 */
-const fogEnabled = ref(sceneConfig.fogEnabled)
-/** 雾颜色 */
-const fogColor = ref(sceneConfig.fogColor)
-/** 雾近端 */
-const fogNear = ref(sceneConfig.fogNear)
-/** 雾远端 */
-const fogFar = ref(sceneConfig.fogFar)
+/** userData编辑区文本 */
+const userDataText = ref('')
+/** userData校验错误信息 */
+const userDataError = ref('')
 
 /**
  * 初始化面板数据
  */
 function initPanel() {
   backgroundColor.value = sceneConfig.backgroundColor
-  fogEnabled.value = sceneConfig.fogEnabled
-  fogColor.value = sceneConfig.fogColor
-  fogNear.value = sceneConfig.fogNear
-  fogFar.value = sceneConfig.fogFar
+  // userData初始化为格式化JSON字符串
+  userDataText.value = JSON.stringify(sceneConfig.userData ?? {}, null, 2)
+  userDataError.value = ''
 }
 initPanel()
 
 /**
  * 属性变更后立即应用到场景
  */
-watch([backgroundColor, fogEnabled, fogColor, fogNear, fogFar], () => {
+watch([backgroundColor], () => {
   updateSceneConfig({
-    backgroundColor: backgroundColor.value,
-    fogEnabled: fogEnabled.value,
-    fogColor: fogColor.value,
-    fogNear: fogNear.value,
-    fogFar: fogFar.value
+    backgroundColor: backgroundColor.value
   })
 })
+
+/**
+ * userData编辑失焦时校验并应用
+ */
+function onUserDataBlur() {
+  try {
+    const json = JSON.parse(userDataText.value)
+    updateSceneConfig({
+      userData: json
+    })
+    userDataError.value = ''
+  } catch (e) {
+    userDataError.value = 'JSON格式错误，请检查输入'
+  }
+}
 
 </script>
 
