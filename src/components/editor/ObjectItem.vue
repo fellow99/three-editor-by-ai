@@ -31,6 +31,15 @@
       <!-- 对象类型标签 -->
       <span v-if="objectType" class="object-type">{{ objectType }}</span>
       
+      <!-- 锁定切换 -->
+      <button
+        @click.stop="toggleLock"
+        class="lock-btn"
+        :class="{ locked: object.userData.locked }"
+        :title="object.userData.locked ? '解锁' : '锁定'"
+      >
+        {{ object.userData.locked ? '🔒' : '🔓' }}
+      </button>
       <!-- 可见性切换 -->
       <button 
         @click.stop="toggleVisibility"
@@ -66,7 +75,7 @@ import { computed } from 'vue';
 
 export default {
   name: 'ObjectItem',
-  emits: ['select', 'toggle-expand', 'toggle-visibility', 'context-menu'],
+  emits: ['select', 'toggle-expand', 'toggle-visibility', 'context-menu', 'toggle-lock'],
   props: {
     object: {
       type: Object,
@@ -202,6 +211,13 @@ export default {
       emit('toggle-visibility', props.object);
     }
     
+    /**
+     * 切换对象锁定状态
+     */
+    function toggleLock() {
+      emit('toggle-lock', props.object);
+    }
+
     return {
       // 计算属性
       isSelected,
@@ -215,7 +231,8 @@ export default {
       handleClick,
       handleContextMenu,
       toggleExpand,
-      toggleVisibility
+      toggleVisibility,
+      toggleLock
     };
   }
 };

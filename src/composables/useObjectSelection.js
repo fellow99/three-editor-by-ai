@@ -225,6 +225,10 @@ export function useObjectSelection() {
     
     if (intersectedObjects.length > 0) {
       const targetObject = intersectedObjects[0];
+      // 如果对象被锁定，则不允许选中
+      if (targetObject.userData && targetObject.userData.locked) {
+        return;
+      }
       const addToSelection = event.modifiers?.ctrl || event.modifiers?.shift;
       
       if (addToSelection && selectionMode.value === 'multiple') {

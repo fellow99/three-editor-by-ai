@@ -52,6 +52,7 @@
           @select="handleObjectSelect"
           @toggle-expand="handleToggleExpand"
           @toggle-visibility="handleToggleVisibility"
+          @toggle-lock="handleToggleLock"
           @context-menu="handleContextMenu"
         />
       </div>
@@ -330,6 +331,18 @@ export default {
       document.removeEventListener('click', handleGlobalClick);
     });
     
+    /**
+     * 切换对象锁定状态
+     * @param {Object} object 目标对象
+     */
+    function handleToggleLock(object) {
+      object.userData.locked = !object.userData.locked;
+      // 锁定后取消选择
+      if (object.userData.locked) {
+        objectSelection.deselectObject(object);
+      }
+    }
+
     return {
       // 状态
       searchQuery,
@@ -348,6 +361,7 @@ export default {
       handleObjectSelect,
       handleToggleExpand,
       handleToggleVisibility,
+      handleToggleLock,
       handleContextMenu,
       hideContextMenu,
       duplicateObject,

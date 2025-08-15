@@ -172,9 +172,16 @@ export default {
       watch(() => objectSelection.selectedObjects.value, (objs) => {
         if (objs.length === 1) {
           currentObject = objs[0];
-          transformControls.attach(currentObject);
-          transformControls.visible = true;
-          updateSelectedHelper(currentObject);
+          // 锁定状态下不绑定transformControls
+          if (currentObject.userData && currentObject.userData.locked) {
+            transformControls.detach();
+            transformControls.visible = false;
+            updateSelectedHelper(currentObject);
+          } else {
+            transformControls.attach(currentObject);
+            transformControls.visible = true;
+            updateSelectedHelper(currentObject);
+          }
         } else {
           transformControls.detach();
           transformControls.visible = false;
