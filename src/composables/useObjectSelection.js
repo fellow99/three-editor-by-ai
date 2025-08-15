@@ -5,6 +5,12 @@
 
 import { ref, reactive, computed, watch } from 'vue';
 import * as THREE from 'three';
+
+/**
+ * selectionStore
+ * 用于存储选中对象的临时材质信息，key为对象id
+ */
+const selectionStore = reactive({});
 import { useObjectManager } from '../core/ObjectManager.js';
 import { useInputManager } from '../core/InputManager.js';
 
@@ -350,21 +356,27 @@ export function useObjectSelection() {
    * 添加选择高亮
    * @param {THREE.Object3D} object 对象
    */
+  /**
+   * 添加选择高亮
+   * @param {THREE.Object3D} object 对象
+   */
   function addSelectionHighlight(object) {
     object.traverse(child => {
-      if (child.isMesh && child.material) {
+      if (child.isMesh && child.material && child.userData.id) {
+        const id = child.userData.id;
+        if (!selectionStore[id]) selectionStore[id] = {};
         // 保存原始材质
-        if (!child.userData.originalMaterial) {
-          child.userData.originalMaterial = child.material;
+        if (!selectionStore[id].originalMaterial) {
+          selectionStore[id].originalMaterial = child.material;
         }
         // 创建高亮材质并记录
-        if (!child.userData.selectionMaterial) {
+        if (!selectionStore[id].selectionMaterial) {
           const highlightMaterial = child.material.clone();
           highlightMaterial.emissive = new THREE.Color(selectionConfig.highlightColor);
           highlightMaterial.emissiveIntensity = 0.3;
-          child.userData.selectionMaterial = highlightMaterial;
+          selectionStore[id].selectionMaterial = highlightMaterial;
         }
-        child.material = child.userData.selectionMaterial;
+        child.material = selectionStore[id].selectionMaterial;
       }
     });
   }
@@ -373,15 +385,27 @@ export function useObjectSelection() {
    * 移除选择高亮
    * @param {THREE.Object3D} object 对象
    */
+  /**
+   * 移除选择高亮
+   * @param {THREE.Object3D} object 对象
+   */
   function removeSelectionHighlight(object) {
     object.traverse(child => {
-      if (child.isMesh) {
-        if (child.userData.originalMaterial) {
-          child.material = child.userData.originalMaterial;
-          delete child.userData.originalMaterial;
+      if (child.isMesh && child.userData.id) {
+        const id = child.userData.id;
+        if (selectionStore[id]?.originalMaterial) {
+          child.material = selectionStore[id].originalMaterial;
+          delete selectionStore[id].originalMaterial;
         }
-        if (child.userData.selectionMaterial) {
-          delete child.userData.selectionMaterial;
+        if (selectionStore[id]?.selectionMaterial) {
+          delete selectionStore[id].selectionMaterial;
+        }
+        // 如果 hoverMaterial 也被移除，且 selectionStore[id] 为空对象，则清理
+        if (
+          selectionStore[id] &&
+          Object.keys(selectionStore[id]).length === 0
+        ) {
+          delete selectionStore[id];
         }
       }
     });
@@ -391,21 +415,27 @@ export function useObjectSelection() {
    * 添加悬停高亮
    * @param {THREE.Object3D} object 对象
    */
+  /**
+   * 添加悬停高亮
+   * @param {THREE.Object3D} object 对象
+   */
   function addHoverHighlight(object) {
     object.traverse(child => {
-      if (child.isMesh && child.material) {
+      if (child.isMesh && child.material && child.userData.id) {
+        const id = child.userData.id;
+        if (!selectionStore[id]) selectionStore[id] = {};
         // 保存原始材质
-        if (!child.userData.originalMaterial) {
-          child.userData.originalMaterial = child.material;
+        if (!selectionStore[id].originalMaterial) {
+          selectionStore[id].originalMaterial = child.material;
         }
         // 创建悬停材质并记录
-        if (!child.userData.hoverMaterial) {
+        if (!selectionStore[id].hoverMaterial) {
           const hoverMaterial = child.material.clone();
           hoverMaterial.emissive = new THREE.Color(selectionConfig.hoverColor);
           hoverMaterial.emissiveIntensity = 0.2;
-          child.userData.hoverMaterial = hoverMaterial;
+          selectionStore[id].hoverMaterial = hoverMaterial;
         }
-        child.material = child.userData.hoverMaterial;
+        child.material = selectionStore[id].hoverMaterial;
       }
     });
   }
@@ -414,17 +444,29 @@ export function useObjectSelection() {
    * 移除悬停高亮
    * @param {THREE.Object3D} object 对象
    */
+  /**
+   * 移除悬停高亮
+   * @param {THREE.Object3D} object 对象
+   */
   function removeHoverHighlight(object) {
     object.traverse(child => {
-      if (child.isMesh) {
+      if (child.isMesh && child.userData.id) {
+        const id = child.userData.id;
         // 如果对象被选中，恢复 selectionMaterial
-        if (child.userData.selectionMaterial) {
-          child.material = child.userData.selectionMaterial;
-        } else if (child.userData.originalMaterial) {
-          child.material = child.userData.originalMaterial;
+        if (selectionStore[id]?.selectionMaterial) {
+          child.material = selectionStore[id].selectionMaterial;
+        } else if (selectionStore[id]?.originalMaterial) {
+          child.material = selectionStore[id].originalMaterial;
         }
-        if (child.userData.hoverMaterial) {
-          delete child.userData.hoverMaterial;
+        if (selectionStore[id]?.hoverMaterial) {
+          delete selectionStore[id].hoverMaterial;
+        }
+        // 如果 selectionStore[id] 为空对象，则清理
+        if (
+          selectionStore[id] &&
+          Object.keys(selectionStore[id]).length === 0
+        ) {
+          delete selectionStore[id];
         }
       }
     });

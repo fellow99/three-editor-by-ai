@@ -208,8 +208,8 @@ export function useAssets() {
    */
   async function uploadModel(file, options = {}) {
     const model = await assetLoader.loadModel(file, {
-      autoScale: true,
-      center: true,
+      autoScale: false,
+      center: false,
       ...options
     });
     
@@ -229,7 +229,7 @@ export function useAssets() {
     
     // 生成预览图
     modelInfo.preview = await generateModelPreview(model);
-    
+    console.log(model)
     // 添加到资源库
     assetLibrary.models.set(modelInfo.id, modelInfo);
     
