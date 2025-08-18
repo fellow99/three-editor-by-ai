@@ -69,7 +69,8 @@ three-editor-by-ai/
 │   │   ├── InputManager.js    # 输入处理
 │   │   └── AssetLoader.js     # 资源加载器
 │   ├── services/              # 服务接口
-│   │   ├── 暂无
+│   │   ├── static-drive-api.js # 静态文件系统封装
+│   │   ├── vfs-service.js    # 虚拟文件系统服务，用于读写文件
 │   ├── utils/                # 工具函数
 │   │   ├── mathUtils.js      # 数学工具
 │   │   ├── geometryUtils.js  # 几何工具
