@@ -84,6 +84,25 @@ export class StaticDriveApi {
     }
 
     /**
+     * 获取文件内容，返回Blob对象
+     * @param {string} path 文件路径
+     * @returns {Promise<Blob>} 文件内容的Blob对象
+     */
+    async blob (path) {
+        let root = this._root;
+        root = (root === '/' ? '' : root);
+        path = (path === '/' ? '' : path);
+        let url = `${this._baseURL}${root}${path}`;
+        try {
+            const res = await fetch(url);
+            if (!res.ok) throw new Error('Network response was not ok');
+            return await res.blob();
+        } catch (e) {
+            throw e;
+        }
+    }
+
+    /**
      * 判断文件路径是否存在
      * @param {string} path 文件路径
      * @returns {Promise<boolean>} 是否存在

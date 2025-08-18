@@ -12,7 +12,13 @@
       <div class="drag-content">
         <span class="drag-icon">📥</span>
         <p>释放文件以上传</p>
-      </div>
+      <button 
+        @click="activeTab = 'vfs'" 
+        :class="['tab-btn', { active: activeTab === 'vfs' }]"
+      >
+        虚拟文件
+      </button>
+    </div>
     </div>
 
     <!-- 上传进度 -->
@@ -58,6 +64,12 @@
         :class="['tab-btn', { active: activeTab === 'textures' }]"
       >
         纹理 ({{ filteredTextures.length }})
+      </button>
+      <button 
+        @click="activeTab = 'vfs'" 
+        :class="['tab-btn', { active: activeTab === 'vfs' }]"
+      >
+        虚拟文件
       </button>
     </div>
 
@@ -298,18 +310,24 @@
           <p>没有找到纹理</p>
         </div>
       </div>
+      <!-- 虚拟文件系统 -->
+      <div v-if="activeTab === 'vfs'" class="vfs-panel-wrap">
+        <VfsFilePanel />
+      </div>
     </div>
   </div>
 </template>
 
 <script>
 import { ref, computed } from 'vue';
+import VfsFilePanel from './VfsFilePanel.vue';
 import { useAssets } from '../../composables/useAssets.js';
 import { useObjectSelection } from '../../composables/useObjectSelection.js';
 import { useScene } from '../../composables/useScene.js';
 import { useObjectManager } from '../../core/ObjectManager.js';
 export default {
   name: 'AssetBrowser',
+  components: { VfsFilePanel },
   /**
    * 资源浏览器组件
    * 提供模型、纹理、几何体的浏览与管理功能

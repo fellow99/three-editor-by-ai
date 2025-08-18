@@ -43,12 +43,13 @@ three-editor-by-ai/
 │   │   ├── editor/                           # 编辑器 UI 组件
 │   │   │   ├── PropertyPanel.vue             # 属性面板
 │   │   │   ├── ScenePropertyPanel.vue        # 场景属性面板
-│   │   │   ├── ObjectPropertyPanel.vue       # 对象基本属性面板（已改为element-plus组件+组合式API）
+│   │   │   ├── ObjectPropertyPanel.vue       # 对象基本属性面板
 │   │   │   ├── MaterialPropertyPanel.vue     # 材质编辑面板
 │   │   │   ├── Toolbar.vue                   # 工具栏
 │   │   │   ├── EditorFooter.vue              # 编辑器底部状态栏
 │   │   │   ├── AssetBrowser.vue              # 资源浏览器
 │   │   │   ├── ResourcePanel.vue             # 资源面板
+│   │   │   ├── VfsFilePanel.vue              # 虚拟文件系统面板
 │   │   │   └── Inspector.vue                 # 对象检查器
 │   │   ├── dialog/                           # 各类对话框组件
 │   │   │   └── TextureSelectDialog.vue       # 纹理选择对话框
@@ -83,7 +84,7 @@ three-editor-by-ai/
 ├── index.html                # HTML 模板
 ├── package.json              # 项目配置
 ├── package-lock.json         # 依赖锁定
-├── vite.config.js            # Vite 配置（base 和 build.outDir 均由 package.json 的 name 字段动态决定）
+├── vite.config.js            # Vite 配置
 ├── generate-vfs.js           # 脚本：生成虚拟文件系统的元数据，用于编辑器的文件浏览器
 └── README.md                 # 项目说明
 ```
@@ -141,9 +142,6 @@ three-editor-by-ai/
 - Git 提交信息格式: `feat: 功能描述`
 
 ## 重要逻辑
-
-### selectionStore 临时材质信息管理
-
 - vite.config.js中，配置vite-plugin-static-copy，把几个js库的复制到目标路径：
   - 如需加载Draco压缩的glTF模型，请将node_modules/three/examples/jsm/libs/draco/目录中的文件复制到 /draco/ 目录下。
   - 如需加载KTX2纹理，请将node_modules/three/examples/jsm/libs/basis目录中的文件放入 /basis/ 目录下。

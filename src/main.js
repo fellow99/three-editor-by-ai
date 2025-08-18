@@ -13,15 +13,9 @@ import vfsService from './services/vfs-service';
 
 vfsService.registerVfs({
     type: 'static',
-    drive: 'static-models',
+    drive: 'static',
     baseURL: `/${pkg.name}`,
-    root: '/vfs/models',
-});
-vfsService.registerVfs({
-    type: 'static',
-    drive: 'static-textures',
-    baseURL: `/${pkg.name}`,
-    root: '/vfs/textures',
+    root: '/vfs',
 });
 
 const app = createApp(App)

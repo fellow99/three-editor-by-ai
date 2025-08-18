@@ -19,6 +19,13 @@ function registerVfs (opt) {
 }
 
 /**
+ * 列举已注册的虚拟文件系统
+ */
+function listVfs () {
+    return Object.values(driveMap);
+}
+
+/**
  * 获取一个虚拟文件系统
  */
 function getVfs (drive) {
@@ -52,6 +59,7 @@ function getParentPath (path) {
 
 export default {
     registerVfs,
+    listVfs,
     getVfs,
     getMimetype,
     getParentPath
