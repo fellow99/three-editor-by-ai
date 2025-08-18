@@ -1,0 +1,25 @@
+{
+  "data": {
+    "files": [
+      {
+        "path": "/textures",
+        "name": "hardwood2",
+        "ext": "",
+        "type": "FOLDER",
+        "size": 0,
+        "time": null,
+        "url": "/three-editor-by-ai/vfs/textures/hardwood2"
+      },
+      {
+        "path": "/textures",
+        "name": "brick",
+        "ext": "",
+        "type": "FOLDER",
+        "size": 0,
+        "time": null,
+        "url": "/three-editor-by-ai/vfs/textures/brick"
+      }
+    ]
+  },
+  "code": 0
+}

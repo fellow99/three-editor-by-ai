@@ -1,0 +1,25 @@
+{
+  "data": {
+    "files": [
+      {
+        "path": "/",
+        "name": "textures",
+        "ext": "",
+        "type": "FOLDER",
+        "size": 0,
+        "time": null,
+        "url": "/three-editor-by-ai/vfs//textures"
+      },
+      {
+        "path": "/",
+        "name": "models",
+        "ext": "",
+        "type": "FOLDER",
+        "size": 0,
+        "time": null,
+        "url": "/three-editor-by-ai/vfs//models"
+      }
+    ]
+  },
+  "code": 0
+}

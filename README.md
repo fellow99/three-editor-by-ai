@@ -34,30 +34,30 @@
 
 ```
 three-editor-by-ai/
-├── public/                     # 静态资源
-│   └── vite.svg
+├── public/                   # 存放无需构建的静态资源
+│   ├── images/               # 图片资源目录
+│   ├── mock/                 # 静态API数据目录
+│   ├── vfs/                  # 静态资源目录（虚拟文件系统，.folder.json文件用于描述目录和文件信息）
 ├── src/
-│   ├── assets/                 # 静态资源 (3D模型、纹理等)
-│   │   └── vue.svg
-│   ├── components/             # Vue 组件
-│   │   ├── editor/            # 编辑器 UI 组件
-│   │   │   ├── PropertyPanel.vue    # 属性面板
-│   │   │   ├── ScenePropertyPanel.vue    # 场景属性面板
-│   │   │   ├── ObjectPropertyPanel.vue    # 对象基本属性面板（已改为element-plus组件+组合式API）
-│   │   │   ├── MaterialPropertyPanel.vue    # 材质编辑面板
-│   │   │   ├── Toolbar.vue          # 工具栏
-│   │   │   ├── EditorFooter.vue     # 编辑器底部状态栏
-│   │   │   ├── AssetBrowser.vue     # 资源浏览器
-│   │   │   ├── ResourcePanel.vue    # 资源面板
-│   │   │   └── Inspector.vue        # 对象检查器
-│   │   ├── dialog/            # 各类对话框组件
-│   │   │   └── TextureSelectDialog.vue # 纹理选择对话框
-│   │   ├── scene/             # 3D 场景组件
-│   │   │   ├── SceneViewer.vue      # 主场景视图
-│   │   │   ├── InteractionHints.vue     # 操作提示组件
-│   │   │   ├── ViewportControls.vue     # 视图控制面板组件
-│   │   │   ├── CubeViewportControls.vue # 立方体视角控件
-│   │   │   ├── ObjectGizmo.vue      # 对象操作控制器
+│   ├── components/                           # Vue 组件
+│   │   ├── editor/                           # 编辑器 UI 组件
+│   │   │   ├── PropertyPanel.vue             # 属性面板
+│   │   │   ├── ScenePropertyPanel.vue        # 场景属性面板
+│   │   │   ├── ObjectPropertyPanel.vue       # 对象基本属性面板（已改为element-plus组件+组合式API）
+│   │   │   ├── MaterialPropertyPanel.vue     # 材质编辑面板
+│   │   │   ├── Toolbar.vue                   # 工具栏
+│   │   │   ├── EditorFooter.vue              # 编辑器底部状态栏
+│   │   │   ├── AssetBrowser.vue              # 资源浏览器
+│   │   │   ├── ResourcePanel.vue             # 资源面板
+│   │   │   └── Inspector.vue                 # 对象检查器
+│   │   ├── dialog/                           # 各类对话框组件
+│   │   │   └── TextureSelectDialog.vue       # 纹理选择对话框
+│   │   ├── scene/                            # 3D 场景组件
+│   │   │   ├── SceneViewer.vue               # 主场景视图
+│   │   │   ├── InteractionHints.vue          # 操作提示组件
+│   │   │   ├── ViewportControls.vue          # 视图控制面板组件
+│   │   │   ├── CubeViewportControls.vue      # 立方体视角控件
+│   │   │   ├── ObjectGizmo.vue               # 对象操作控制器
 │   ├── composables/           # Vue Composition API 可组合函数
 │   │   ├── useScene.js        # 场景管理
 │   │   ├── useObjectSelection.js  # 对象选择
@@ -68,9 +68,9 @@ three-editor-by-ai/
 │   │   ├── ObjectManager.js   # 对象管理器
 │   │   ├── InputManager.js    # 输入处理
 │   │   └── AssetLoader.js     # 资源加载器
-│   ├── services/                  # 服务接口
+│   ├── services/              # 服务接口
 │   │   ├── 暂无
-│   ├── utils/                 # 工具函数
+│   ├── utils/                # 工具函数
 │   │   ├── mathUtils.js      # 数学工具
 │   │   ├── geometryUtils.js  # 几何工具
 │   │   └── fileUtils.js      # 文件处理工具
@@ -82,7 +82,8 @@ three-editor-by-ai/
 ├── index.html                # HTML 模板
 ├── package.json              # 项目配置
 ├── package-lock.json         # 依赖锁定
-├── vite.config.js            # Vite 配置
+├── vite.config.js            # Vite 配置（base 和 build.outDir 均由 package.json 的 name 字段动态决定）
+├── generate-vfs.js           # 脚本：生成虚拟文件系统的元数据，用于编辑器的文件浏览器
 └── README.md                 # 项目说明
 ```
 

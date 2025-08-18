@@ -1,0 +1,124 @@
+{
+  "data": {
+    "files": [
+      {
+        "path": "/models/fbx",
+        "name": "nurbs.fbx",
+        "ext": "fbx",
+        "type": "FILE",
+        "size": 0,
+        "time": null,
+        "url": "/three-editor-by-ai/vfs/models/fbx/nurbs.fbx"
+      },
+      {
+        "path": "/models/gltf",
+        "name": "collision-world.glb",
+        "ext": "glb",
+        "type": "FILE",
+        "size": 0,
+        "time": null,
+        "url": "/three-editor-by-ai/vfs/models/gltf/collision-world.glb"
+      },
+      {
+        "path": "/models/gltf",
+        "name": "Flamingo.glb",
+        "ext": "glb",
+        "type": "FILE",
+        "size": 0,
+        "time": null,
+        "url": "/three-editor-by-ai/vfs/models/gltf/Flamingo.glb"
+      },
+      {
+        "path": "/models/gltf",
+        "name": "Horse.glb",
+        "ext": "glb",
+        "type": "FILE",
+        "size": 0,
+        "time": null,
+        "url": "/three-editor-by-ai/vfs/models/gltf/Horse.glb"
+      },
+      {
+        "path": "/models/gltf",
+        "name": "Parrot.glb",
+        "ext": "glb",
+        "type": "FILE",
+        "size": 0,
+        "time": null,
+        "url": "/three-editor-by-ai/vfs/models/gltf/Parrot.glb"
+      },
+      {
+        "path": "/models/gltf",
+        "name": "Stork.glb",
+        "ext": "glb",
+        "type": "FILE",
+        "size": 0,
+        "time": null,
+        "url": "/three-editor-by-ai/vfs/models/gltf/Stork.glb"
+      },
+      {
+        "path": "/models/obj",
+        "name": "tree.obj",
+        "ext": "obj",
+        "type": "FILE",
+        "size": 0,
+        "time": null,
+        "url": "/three-editor-by-ai/vfs/models/obj/tree.obj"
+      },
+      {
+        "path": "/textures/brick",
+        "name": "brick_bump.jpg",
+        "ext": "jpg",
+        "type": "FILE",
+        "size": 0,
+        "time": null,
+        "url": "/three-editor-by-ai/vfs/textures/brick/brick_bump.jpg"
+      },
+      {
+        "path": "/textures/brick",
+        "name": "brick_diffuse.jpg",
+        "ext": "jpg",
+        "type": "FILE",
+        "size": 0,
+        "time": null,
+        "url": "/three-editor-by-ai/vfs/textures/brick/brick_diffuse.jpg"
+      },
+      {
+        "path": "/textures/brick",
+        "name": "brick_roughness.jpg",
+        "ext": "jpg",
+        "type": "FILE",
+        "size": 0,
+        "time": null,
+        "url": "/three-editor-by-ai/vfs/textures/brick/brick_roughness.jpg"
+      },
+      {
+        "path": "/textures/hardwood2",
+        "name": "hardwood2_bump.jpg",
+        "ext": "jpg",
+        "type": "FILE",
+        "size": 0,
+        "time": null,
+        "url": "/three-editor-by-ai/vfs/textures/hardwood2/hardwood2_bump.jpg"
+      },
+      {
+        "path": "/textures/hardwood2",
+        "name": "hardwood2_diffuse.jpg",
+        "ext": "jpg",
+        "type": "FILE",
+        "size": 0,
+        "time": null,
+        "url": "/three-editor-by-ai/vfs/textures/hardwood2/hardwood2_diffuse.jpg"
+      },
+      {
+        "path": "/textures/hardwood2",
+        "name": "hardwood2_roughness.jpg",
+        "ext": "jpg",
+        "type": "FILE",
+        "size": 0,
+        "time": null,
+        "url": "/three-editor-by-ai/vfs/textures/hardwood2/hardwood2_roughness.jpg"
+      }
+    ]
+  },
+  "code": 0
+}

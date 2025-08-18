@@ -1,9 +1,18 @@
+/**
+ * Vite 配置文件
+ * - base 和 build.outDir 动态读取 package.json 的 name 字段
+ */
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { viteStaticCopy } from 'vite-plugin-static-copy'
+import pkg from './package.json' assert { type: 'json' }
 
 // https://vite.dev/config/
 export default defineConfig({
+  base: `/${pkg.name}`,
+  build: {
+    outDir: `dist/${pkg.name}`
+  },
   plugins: [
     vue(),
     viteStaticCopy({

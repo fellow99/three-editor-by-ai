@@ -1,0 +1,52 @@
+{
+  "data": {
+    "files": [
+      {
+        "path": "/models/gltf",
+        "name": "collision-world.glb",
+        "ext": "glb",
+        "type": "FILE",
+        "size": 0,
+        "time": null,
+        "url": "/three-editor-by-ai/vfs/models/gltf/collision-world.glb"
+      },
+      {
+        "path": "/models/gltf",
+        "name": "Flamingo.glb",
+        "ext": "glb",
+        "type": "FILE",
+        "size": 0,
+        "time": null,
+        "url": "/three-editor-by-ai/vfs/models/gltf/Flamingo.glb"
+      },
+      {
+        "path": "/models/gltf",
+        "name": "Horse.glb",
+        "ext": "glb",
+        "type": "FILE",
+        "size": 0,
+        "time": null,
+        "url": "/three-editor-by-ai/vfs/models/gltf/Horse.glb"
+      },
+      {
+        "path": "/models/gltf",
+        "name": "Parrot.glb",
+        "ext": "glb",
+        "type": "FILE",
+        "size": 0,
+        "time": null,
+        "url": "/three-editor-by-ai/vfs/models/gltf/Parrot.glb"
+      },
+      {
+        "path": "/models/gltf",
+        "name": "Stork.glb",
+        "ext": "glb",
+        "type": "FILE",
+        "size": 0,
+        "time": null,
+        "url": "/three-editor-by-ai/vfs/models/gltf/Stork.glb"
+      }
+    ]
+  },
+  "code": 0
+}

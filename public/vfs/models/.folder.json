@@ -1,0 +1,34 @@
+{
+  "data": {
+    "files": [
+      {
+        "path": "/models",
+        "name": "obj",
+        "ext": "",
+        "type": "FOLDER",
+        "size": 0,
+        "time": null,
+        "url": "/three-editor-by-ai/vfs/models/obj"
+      },
+      {
+        "path": "/models",
+        "name": "gltf",
+        "ext": "",
+        "type": "FOLDER",
+        "size": 0,
+        "time": null,
+        "url": "/three-editor-by-ai/vfs/models/gltf"
+      },
+      {
+        "path": "/models",
+        "name": "fbx",
+        "ext": "",
+        "type": "FOLDER",
+        "size": 0,
+        "time": null,
+        "url": "/three-editor-by-ai/vfs/models/fbx"
+      }
+    ]
+  },
+  "code": 0
+}

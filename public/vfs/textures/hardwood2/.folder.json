@@ -1,0 +1,34 @@
+{
+  "data": {
+    "files": [
+      {
+        "path": "/textures/hardwood2",
+        "name": "hardwood2_bump.jpg",
+        "ext": "jpg",
+        "type": "FILE",
+        "size": 0,
+        "time": null,
+        "url": "/three-editor-by-ai/vfs/textures/hardwood2/hardwood2_bump.jpg"
+      },
+      {
+        "path": "/textures/hardwood2",
+        "name": "hardwood2_diffuse.jpg",
+        "ext": "jpg",
+        "type": "FILE",
+        "size": 0,
+        "time": null,
+        "url": "/three-editor-by-ai/vfs/textures/hardwood2/hardwood2_diffuse.jpg"
+      },
+      {
+        "path": "/textures/hardwood2",
+        "name": "hardwood2_roughness.jpg",
+        "ext": "jpg",
+        "type": "FILE",
+        "size": 0,
+        "time": null,
+        "url": "/three-editor-by-ai/vfs/textures/hardwood2/hardwood2_roughness.jpg"
+      }
+    ]
+  },
+  "code": 0
+}

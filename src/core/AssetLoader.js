@@ -133,7 +133,7 @@ class AssetLoader {
       }
       
       const result = await this.loadWithLoader(loader, url, options);
-      
+      console.log(result)
       // 处理加载结果
       let model;
       if (result.scene) {

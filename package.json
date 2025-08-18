@@ -7,7 +7,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "generate-vfs": "node ./generate-vfs.js three-editor-by-ai /vfs ./public/vfs"
   },
   "dependencies": {
     "dayjs": "^1.11.13",

@@ -1,0 +1,24 @@
+{
+    "material": {
+        "hardwood2": {
+            "category": "材质",
+            "name": "硬木2",
+            "type": "MeshStandardMaterial",
+            "color": "#8B4513",
+            "map": "assets/textures/hardwood2_diffuse.jpg",
+            "bumpMap" : "assets/textures/hardwood2/hardwood2_bump.jpg",
+            "roughness" : "assets/textures/hardwood2/hardwood2_roughness.jpg",
+            "uvScale": 1.0,
+            "uvOffset": { "x": 0, "y": 0 }
+        },
+        "brick": {
+            "category": "材质",
+            "name": "砖块",
+            "type": "MeshStandardMaterial",
+            "color": "#B22222",
+            "texture": "assets/textures/brick_diffuse.jpg",
+            "bump" : "assets/textures/brick/brick_bump.jpg",
+            "roughness" : "assets/textures/brick/brick_roughness.jpg"
+        }
+    }
+}
