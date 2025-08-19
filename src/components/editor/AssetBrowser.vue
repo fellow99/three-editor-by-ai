@@ -12,7 +12,7 @@
       <div class="drag-content">
         <span class="drag-icon">📥</span>
         <p>释放文件以上传</p>
-    </div>
+      </div>
     </div>
 
     <!-- 上传进度 -->
@@ -42,12 +42,6 @@
     <!-- 资源标签页 -->
     <div class="asset-tabs">
       <button 
-        @click="activeTab = 'primitives'" 
-        :class="['tab-btn', { active: activeTab === 'primitives' }]"
-      >
-        基础几何体
-      </button>
-      <button 
         @click="activeTab = 'models'" 
         :class="['tab-btn', { active: activeTab === 'models' }]"
       >
@@ -67,105 +61,22 @@
          @dragover.prevent
          @dragleave="handleDragLeave"
          @drop="handleDrop">
-      
-      <!-- 基础几何体 -->
-      <div v-if="activeTab === 'primitives'" class="primitives-grid">
-        <div class="primitives-section">
-          <h4 class="section-title">基础几何体</h4>
-          <div class="primitives-list">
-            <div 
-              v-for="primitive in basicPrimitives" 
-              :key="primitive.type"
-              class="primitive-item"
-              @click="addPrimitive(primitive.type)"
-              :title="primitive.description"
-            >
-              <div class="primitive-preview">
-                <span class="primitive-icon">{{ primitive.icon }}</span>
-              </div>
-              <div class="primitive-info">
-                <div class="primitive-name">{{ primitive.name }}</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="primitives-section">
-          <h4 class="section-title">扩展几何体</h4>
-          <div class="primitives-list">
-            <div 
-              v-for="primitive in extendedPrimitives" 
-              :key="primitive.type"
-              class="primitive-item"
-              @click="addPrimitive(primitive.type)"
-              :title="primitive.description"
-            >
-              <div class="primitive-preview">
-                <span class="primitive-icon">{{ primitive.icon }}</span>
-              </div>
-              <div class="primitive-info">
-                <div class="primitive-name">{{ primitive.name }}</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="primitives-section">
-          <h4 class="section-title">灯光</h4>
-          <div class="primitives-list">
-            <div 
-              v-for="light in lightPrimitives" 
-              :key="light.type"
-              class="primitive-item"
-              @click="addPrimitive(light.type)"
-              :title="light.description"
-            >
-              <div class="primitive-preview">
-                <span class="primitive-icon">{{ light.icon }}</span>
-              </div>
-              <div class="primitive-info">
-                <div class="primitive-name">{{ light.name }}</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="primitives-section">
-          <h4 class="section-title">其他对象</h4>
-          <div class="primitives-list">
-            <div 
-              v-for="other in otherPrimitives" 
-              :key="other.type"
-              class="primitive-item"
-              @click="addPrimitive(other.type)"
-              :title="other.description"
-            >
-              <div class="primitive-preview">
-                <span class="primitive-icon">{{ other.icon }}</span>
-              </div>
-              <div class="primitive-info">
-                <div class="primitive-name">{{ other.name }}</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      
+      <!-- 基础几何体Tab已迁移到ResourcePanel.vue -->
       <!-- 3D模型 -->
-<div v-if="activeTab === 'models'" class="models-grid">
+      <div v-if="activeTab === 'models'" class="models-grid">
         <!-- 固定上传模型按钮 -->
-<div class="asset-item model-item upload-item-fixed"
-     @click="selectAndUploadFiles(['.gltf', '.glb', '.obj', '.fbx'])"
-     title="上传模型文件">
-  <div class="asset-preview">
-    <div class="preview-placeholder">
-      <span class="placeholder-icon">⬆️</span>
-    </div>
-  </div>
-  <div class="asset-info">
-    <div class="asset-name">上传模型文件</div>
-  </div>
-</div>
+        <div class="asset-item model-item upload-item-fixed"
+          @click="selectAndUploadFiles(['.gltf', '.glb', '.obj', '.fbx'])"
+          title="上传模型文件">
+          <div class="asset-preview">
+            <div class="preview-placeholder">
+              <span class="placeholder-icon">⬆️</span>
+            </div>
+          </div>
+          <div class="asset-info">
+            <div class="asset-name">上传模型文件</div>
+          </div>
+        </div>
         <!-- 渲染模型列表 -->
         <div 
           v-for="model in filteredModels" 
@@ -232,20 +143,20 @@
       </div>
 
       <!-- 纹理 -->
-<div v-if="activeTab === 'textures'" class="textures-grid">
+      <div v-if="activeTab === 'textures'" class="textures-grid">
         <!-- 固定上传纹理按钮 -->
-<div class="asset-item texture-item upload-item-fixed"
-     @click="selectAndUploadFiles(['.jpg', '.jpeg', '.png', '.bmp', '.gif'])"
-     title="上传纹理文件">
-  <div class="asset-preview">
-    <div class="preview-placeholder">
-      <span class="placeholder-icon">⬆️</span>
-    </div>
-  </div>
-  <div class="asset-info">
-    <div class="asset-name">上传纹理文件</div>
-  </div>
-</div>
+        <div class="asset-item texture-item upload-item-fixed"
+          @click="selectAndUploadFiles(['.jpg', '.jpeg', '.png', '.bmp', '.gif'])"
+          title="上传纹理文件">
+          <div class="asset-preview">
+            <div class="preview-placeholder">
+              <span class="placeholder-icon">⬆️</span>
+            </div>
+          </div>
+          <div class="asset-info">
+            <div class="asset-name">上传纹理文件</div>
+          </div>
+        </div>
         <!-- 渲染纹理列表 -->
         <div 
           v-for="texture in filteredTextures" 
@@ -322,150 +233,8 @@ export default {
     const scene = useScene();
     
     // 本地状态
-    const activeTab = ref('primitives');
+    const activeTab = ref('models');
     const selectedAssetId = ref(null);
-    
-    // 基础几何体数据
-    const basicPrimitives = ref([
-      {
-        type: 'box',
-        name: '立方体',
-        icon: '⬜',
-        description: '创建一个立方体几何体'
-      },
-      {
-        type: 'sphere',
-        name: '球体',
-        icon: '⚪',
-        description: '创建一个球体几何体'
-      },
-      {
-        type: 'cylinder',
-        name: '圆柱体',
-        icon: '🥫',
-        description: '创建一个圆柱体几何体'
-      },
-      {
-        type: 'plane',
-        name: '平面',
-        icon: '▭',
-        description: '创建一个平面几何体'
-      },
-      {
-        type: 'cone',
-        name: '圆锥体',
-        icon: '🔺',
-        description: '创建一个圆锥体几何体'
-      },
-      {
-        type: 'torus',
-        name: '圆环体',
-        icon: '🍩',
-        description: '创建一个圆环体几何体'
-      }
-    ]);
-
-    // 扩展几何体数据
-    const extendedPrimitives = ref([
-      {
-        type: 'dodecahedron',
-        name: '十二面体',
-        icon: '🎲',
-        description: '创建一个十二面体几何体'
-      },
-      {
-        type: 'icosahedron',
-        name: '二十面体',
-        icon: '💎',
-        description: '创建一个二十面体几何体'
-      },
-      {
-        type: 'octahedron',
-        name: '八面体',
-        icon: '🔸',
-        description: '创建一个八面体几何体'
-      },
-      {
-        type: 'tetrahedron',
-        name: '四面体',
-        icon: '🔻',
-        description: '创建一个四面体几何体'
-      },
-      {
-        type: 'ring',
-        name: '环形',
-        icon: '⭕',
-        description: '创建一个环形几何体'
-      },
-      {
-        type: 'tube',
-        name: '管道',
-        icon: '🌀',
-        description: '创建一个管道几何体'
-      }
-    ]);
-
-    // 灯光数据
-    const lightPrimitives = ref([
-      {
-        type: 'directionalLight',
-        name: '方向光',
-        icon: '☀️',
-        description: '创建一个方向光源'
-      },
-      {
-        type: 'pointLight',
-        name: '点光源',
-        icon: '💡',
-        description: '创建一个点光源'
-      },
-      {
-        type: 'spotLight',
-        name: '聚光灯',
-        icon: '🔦',
-        description: '创建一个聚光灯'
-      },
-      {
-        type: 'ambientLight',
-        name: '环境光',
-        icon: '🌕',
-        description: '创建一个环境光'
-      },
-      {
-        type: 'hemisphereLight',
-        name: '半球光',
-        icon: '🌗',
-        description: '创建一个半球光'
-      }
-    ]);
-
-    // 其他对象数据
-    const otherPrimitives = ref([
-      {
-        type: 'camera',
-        name: '相机',
-        icon: '📷',
-        description: '创建一个透视相机'
-      },
-      {
-        type: 'group',
-        name: '空对象',
-        icon: '📦',
-        description: '创建一个空的组对象'
-      },
-      {
-        type: 'text',
-        name: '文本',
-        icon: '📝',
-        description: '创建一个3D文本对象'
-      },
-      {
-        type: 'sprite',
-        name: '精灵',
-        icon: '🎭',
-        description: '创建一个精灵对象'
-      }
-    ]);
     
     // 从assets composable获取状态
     const {
@@ -558,21 +327,6 @@ export default {
       return statusMap[status] || status;
     }
 
-    // 添加几何体到场景
-    /**
-     * 添加几何体到场景
-     * @param {string} type 几何体类型
-     */
-    function addPrimitive(type) {
-      const position = [
-        Math.random() * 4 - 2,
-        Math.random() * 2,
-        Math.random() * 4 - 2
-      ];
-      
-      scene.createPrimitive(type, { position });
-    }
-
     // 解构 selectAndUploadFiles 以便 setup 内和模板都能直接用
     const { selectAndUploadFiles } = assets;
     
@@ -585,10 +339,6 @@ export default {
       dragState,
       filteredModels,
       filteredTextures,
-      basicPrimitives,
-      extendedPrimitives,
-      lightPrimitives,
-      otherPrimitives,
       
       // 方法
       selectModel,
@@ -603,7 +353,6 @@ export default {
       handleDragEnter,
       handleDragLeave,
       handleDrop,
-      addPrimitive,
       selectAndUploadFiles
     };
   }
@@ -611,235 +360,14 @@ export default {
 </script>
 
 <style scoped>
-.asset-browser {
-  width: 100%;
-  height: 100%;
-  background: #2a2a2a;
-  border-right: 1px solid #444;
-  display: flex;
-  flex-direction: column;
-  color: #fff;
-}
-
-.browser-header {
-  padding: 16px;
-  border-bottom: 1px solid #444;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.browser-header h3 {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 600;
-}
-
-.header-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.upload-btn {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 6px 12px;
-  background: #007acc;
-  border: none;
-  border-radius: 4px;
-  color: #fff;
-  font-size: 12px;
-  cursor: pointer;
-}
-
-.upload-btn:hover {
-  background: #0088dd;
-}
-
-.clear-btn {
-  padding: 6px 8px;
-  background: #d73a49;
-  border: none;
-  border-radius: 4px;
-  color: #fff;
-  cursor: pointer;
-}
-
-.clear-btn:hover {
-  background: #e85662;
-}
-
-.browser-filters {
-  padding: 12px 16px;
-  border-bottom: 1px solid #444;
-}
-
-.search-box {
-  position: relative;
-  margin-bottom: 12px;
-}
-
-.search-input {
-  width: 100%;
-  padding: 8px 32px 8px 12px;
-  background: #333;
-  border: 1px solid #555;
-  border-radius: 4px;
-  color: #fff;
-  font-size: 12px;
-}
-
-.search-input:focus {
-  outline: none;
-  border-color: #007acc;
-}
-
-.search-icon {
-  position: absolute;
-  right: 8px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #aaa;
-  font-size: 14px;
-}
-
-.filter-controls {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-.category-select,
-.sort-select {
-  flex: 1;
-  padding: 6px 8px;
-  background: #333;
-  border: 1px solid #555;
-  border-radius: 4px;
-  color: #fff;
-  font-size: 12px;
-}
-
-.sort-order-btn {
-  padding: 6px 8px;
-  background: #555;
-  border: none;
-  border-radius: 4px;
-  color: #fff;
-  cursor: pointer;
-}
-
-.sort-order-btn:hover {
-  background: #666;
-}
-
-.drag-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 122, 204, 0.8);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
-.drag-content {
-  text-align: center;
-  color: #fff;
-}
-
-.drag-icon {
-  font-size: 48px;
-  display: block;
-  margin-bottom: 16px;
-}
-
-.upload-progress {
-  padding: 12px 16px;
-  border-bottom: 1px solid #444;
-  background: #333;
-}
-
-.progress-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
-  font-size: 12px;
-}
-
-.progress-bar {
-  height: 4px;
-  background: #555;
-  border-radius: 2px;
-  overflow: hidden;
-  margin-bottom: 8px;
-}
-
-.progress-fill {
-  height: 100%;
-  background: #007acc;
-  transition: width 0.3s;
-}
-
-.upload-queue {
-  max-height: 120px;
-  overflow-y: auto;
-}
-
-.upload-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 4px 0;
-  font-size: 11px;
-}
-
-.upload-item.completed {
-  color: #4caf50;
-}
-
-.upload-item.failed {
-  color: #f44336;
-}
-
 .asset-tabs {
   display: flex;
   border-bottom: 1px solid #444;
 }
 
-.tab-btn {
-  flex: 1;
-  padding: 12px 16px;
-  background: #333;
-  border: none;
-  border-bottom: 2px solid transparent;
-  color: #aaa;
-  font-size: 12px;
-  cursor: pointer;
-}
-
-.tab-btn:hover {
-  background: #444;
-  color: #fff;
-}
-
-.tab-btn.active {
-  background: #2a2a2a;
-  border-bottom-color: #007acc;
-  color: #fff;
-}
-
 .asset-grid {
-  flex: 1;
-  overflow-y: auto;
-  padding: 16px;
+  padding: 8px;
 }
-
 .models-grid,
 .textures-grid {
   display: grid;
@@ -915,6 +443,23 @@ export default {
 .asset-info {
   padding: 8px;
 }
+.upload-item-fixed {
+  background: #222;
+  border: 1px dashed #888;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.upload-item-fixed:hover {
+  border-color: #007acc;
+  background: #292929;
+}
 .upload-item-fixed .asset-info {
   display: flex;
   flex-direction: column;
@@ -924,6 +469,12 @@ export default {
 .upload-item-fixed .asset-name {
   text-align: center;
   width: 100%;
+  color: #007acc;
+  font-weight: 600;
+}
+.upload-item-fixed .placeholder-icon {
+  font-size: 28px;
+  color: #007acc;
 }
 
 .asset-name {
@@ -1002,101 +553,96 @@ export default {
   background: #0088dd;
 }
 
-/* 几何体样式 */
-.primitives-grid {
+.tab-btn {
+  flex: 1;
+  padding: 12px 16px;
+  background: #333;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: #aaa;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.tab-btn:hover {
+  background: #444;
+  color: #fff;
+}
+
+.tab-btn.active {
+  background: #2a2a2a;
+  border-bottom-color: #007acc;
+  color: #fff;
+}
+
+/* 上传进度浮动蒙版样式 */
+.upload-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2000;
+  background: rgba(30, 30, 30, 0.75);
   display: flex;
   flex-direction: column;
-  gap: 20px;
-}
-
-.primitives-section {
-  margin-bottom: 16px;
-}
-
-.section-title {
-  margin: 0 0 12px 0;
-  font-size: 14px;
-  font-weight: 600;
-  color: #fff;
-  border-bottom: 1px solid #555;
-  padding-bottom: 8px;
-}
-
-.primitives-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-  gap: 8px;
-}
-
-.primitive-item {
-  background: #333;
-  border: 1px solid #555;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.2s;
-  overflow: hidden;
-}
-
-.primitive-item:hover {
-  background: #444;
-  border-color: #777;
-  transform: translateY(-1px);
-}
-
-.primitive-item:active {
-  transform: translateY(0);
-  background: #007acc;
-  border-color: #0088dd;
-}
-
-.primitive-preview {
-  display: flex;
   align-items: center;
   justify-content: center;
-  height: 60px;
-  background: #2a2a2a;
+  pointer-events: auto;
 }
-
-.primitive-icon {
-  font-size: 24px;
-  line-height: 1;
-}
-
-.primitive-info {
-  padding: 8px 6px;
+.upload-progress .progress-header,
+.upload-progress .progress-bar,
+.upload-progress .upload-queue {
+  width: 320px;
+  max-width: 90vw;
+  margin: 0 auto 16px auto;
+  background: transparent;
   text-align: center;
 }
-
-.primitive-name {
-  font-size: 10px;
-  font-weight: 500;
+.upload-progress .progress-header {
+  font-size: 18px;
   color: #fff;
-  white-space: nowrap;
+  margin-bottom: 12px;
+}
+.upload-progress .progress-bar {
+  height: 10px;
+  background: #444;
+  border-radius: 5px;
   overflow: hidden;
-  text-overflow: ellipsis;
+  margin-bottom: 12px;
 }
-
-/* 移动端响应式 */
-@media (max-width: 768px) {
-  .primitives-list {
-    grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
-    gap: 6px;
-  }
-  
-  .primitive-preview {
-    height: 50px;
-  }
-  
-  .primitive-icon {
-    font-size: 20px;
-  }
-  
-  .primitive-name {
-    font-size: 9px;
-  }
-  
-  .section-title {
-    font-size: 12px;
-  }
+.upload-progress .progress-fill {
+  height: 100%;
+  background: #007acc;
+  transition: width 0.3s;
 }
+.upload-progress .upload-queue {
+  background: transparent;
+  color: #fff;
+  font-size: 13px;
+  border-radius: 4px;
+  padding: 0;
+  margin-bottom: 0;
+}
+.upload-progress .upload-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 2px 0;
+  border-bottom: 1px solid #4442;
+}
+.upload-progress .upload-item:last-child {
+  border-bottom: none;
+}
+.upload-progress .item-name {
+  flex: 1;
+  text-align: left;
+  color: #fff;
+  font-size: 13px;
+}
+.upload-progress .item-status {
+  margin-left: 12px;
+  color: #aaa;
+  font-size: 13px;
+}
+/* 其余样式同原文件，无需变动 */
 </style>

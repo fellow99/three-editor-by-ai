@@ -52,6 +52,7 @@ three-editor-by-ai/
 │   │   │   ├── Toolbar.vue                   # 工具栏
 │   │   │   ├── EditorFooter.vue              # 编辑器底部状态栏
 │   │   │   ├── AssetBrowser.vue              # 资源浏览器
+│   │   │   ├── PrimitiveBrowser.vue          # 基础几何体与灯光浏览组件
 │   │   │   ├── ResourcePanel.vue             # 资源面板
 │   │   │   ├── VfsFilePanel.vue              # 虚拟文件系统面板
 │   │   │   └── Inspector.vue                 # 对象检查器
@@ -76,10 +77,14 @@ three-editor-by-ai/
 │   ├── services/              # 服务接口
 │   │   ├── static-drive-api.js # 静态文件系统封装
 │   │   ├── vfs-service.js    # 虚拟文件系统服务，用于读写文件
+│   ├── constants/            # 常量与预定义数据
+│   │   └── PRIMITIVES.json      # 预定义几何体与灯光类型数据
 │   ├── utils/                # 工具函数
 │   │   ├── mathUtils.js      # 数学工具
 │   │   ├── geometryUtils.js  # 几何工具
 │   │   └── fileUtils.js      # 文件处理工具
+│   ├── constants/
+│   │   └── PRIMITIVES.json      # 预定义几何体与灯光类型数据
 │   ├── App.vue               # 根组件（仅负责引入Editor.vue）
 │   ├── Editor.vue            # 主编辑器组件（包含全部业务与UI）
 │   ├── main.js               # 应用入口
