@@ -4,107 +4,73 @@
   用于展示和选择预定义的几何体、灯光等对象
 -->
 <template>
+  <!--
+    基础几何体与灯光浏览组件
+    直接从PRIMITIVES.json读取并分组渲染
+  -->
   <div class="primitives-grid">
-    <div class="primitives-section" v-if="basicPrimitives.length">
-      <h4 class="section-title">基础几何体</h4>
-      <div class="primitives-list">
-        <div 
-          v-for="primitive in basicPrimitives" 
-          :key="primitive.type"
-          class="primitive-item"
-          @click="onSelect(primitive.type)"
-          :title="primitive.description"
-        >
-          <div class="primitive-preview">
-            <span class="primitive-icon">{{ primitive.icon }}</span>
-          </div>
-          <div class="primitive-info">
-            <div class="primitive-name">{{ primitive.name }}</div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="primitives-section" v-if="extendedPrimitives.length">
-      <h4 class="section-title">扩展几何体</h4>
-      <div class="primitives-list">
-        <div 
-          v-for="primitive in extendedPrimitives" 
-          :key="primitive.type"
-          class="primitive-item"
-          @click="onSelect(primitive.type)"
-          :title="primitive.description"
-        >
-          <div class="primitive-preview">
-            <span class="primitive-icon">{{ primitive.icon }}</span>
-          </div>
-          <div class="primitive-info">
-            <div class="primitive-name">{{ primitive.name }}</div>
+    <template v-for="(group, idx) in groupedPrimitives" :key="group.category">
+      <div
+        class="primitives-section"
+        v-if="group.items && group.items.length"
+      >
+        <h4 class="section-title">{{ group.category }}</h4>
+        <div class="primitives-list">
+          <div
+            v-for="primitive in group.items"
+            :key="primitive.type"
+            class="primitive-item"
+            @click="onSelect(primitive.type)"
+            :title="primitive.description"
+          >
+            <div class="primitive-preview">
+              <span class="primitive-icon">{{ primitive.icon }}</span>
+            </div>
+            <div class="primitive-info">
+              <div class="primitive-name">{{ primitive.name }}</div>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-    <div class="primitives-section" v-if="lightPrimitives.length">
-      <h4 class="section-title">灯光</h4>
-      <div class="primitives-list">
-        <div 
-          v-for="light in lightPrimitives" 
-          :key="light.type"
-          class="primitive-item"
-          @click="onSelect(light.type)"
-          :title="light.description"
-        >
-          <div class="primitive-preview">
-            <span class="primitive-icon">{{ light.icon }}</span>
-          </div>
-          <div class="primitive-info">
-            <div class="primitive-name">{{ light.name }}</div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="primitives-section" v-if="otherPrimitives.length">
-      <h4 class="section-title">其他对象</h4>
-      <div class="primitives-list">
-        <div 
-          v-for="other in otherPrimitives" 
-          :key="other.type"
-          class="primitive-item"
-          @click="onSelect(other.type)"
-          :title="other.description"
-        >
-          <div class="primitive-preview">
-            <span class="primitive-icon">{{ other.icon }}</span>
-          </div>
-          <div class="primitive-info">
-            <div class="primitive-name">{{ other.name }}</div>
-          </div>
-        </div>
-      </div>
-    </div>
+    </template>
   </div>
 </template>
 
 <script setup>
 /**
  * 基础几何体与灯光浏览组件
- * props:
- *   - basicPrimitives: Array
- *   - extendedPrimitives: Array
- *   - lightPrimitives: Array
- *   - otherPrimitives: Array
+ * 直接从PRIMITIVES.json读取并分组渲染
  * emits:
  *   - select(type: string)
  */
-defineProps({
-  basicPrimitives: { type: Array, default: () => [] },
-  extendedPrimitives: { type: Array, default: () => [] },
-  lightPrimitives: { type: Array, default: () => [] },
-  otherPrimitives: { type: Array, default: () => [] }
-});
+import { computed } from 'vue';
+// @ts-ignore
+import PRIMITIVES from '../../constants/PRIMITIVES.json';
+
 const emit = defineEmits(['select']);
 function onSelect(type) {
   emit('select', type);
 }
+
+// 按category分组
+const groupedPrimitives = computed(() => {
+  const groups = {};
+  for (const item of PRIMITIVES) {
+    if (!groups[item.category]) {
+      groups[item.category] = [];
+    }
+    groups[item.category].push(item);
+  }
+  // 保证顺序：基础几何体、扩展几何体、灯光、其他对象
+  const order = ['基础几何体', '扩展几何体', '灯光', '其他对象'];
+  // 保证每个group结构完整且items为数组
+  return order
+    .map(category => {
+      const items = Array.isArray(groups[category]) ? groups[category] : [];
+      return { category, items };
+    })
+    .filter(group => Array.isArray(group.items) && group.items.length > 0);
+});
 </script>
 
 <style scoped>
