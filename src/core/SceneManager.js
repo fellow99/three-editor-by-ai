@@ -667,7 +667,6 @@ class SceneManager {
   clearScene() {
     // 仅移除非 gridHelper/axesHelper 的对象
     const reservedNames = ['grid_helper', 'axes_helper'];
-    console.log(this.scene.children)
     for (let i = this.scene.children.length - 1; i >= 0; i--) {
       const child = this.scene.children[i];
       if (!reservedNames.includes(child.name)) {

@@ -153,7 +153,6 @@ class AssetLoader {
       
       // 后处理
       this.postProcessModel(model, options);
-      console.log(model)
       
       // 缓存结果
       this.cache.set(url, model);
