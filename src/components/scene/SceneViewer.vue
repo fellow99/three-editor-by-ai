@@ -25,7 +25,7 @@
  * 三维场景显示与交互组件
  * - 支持拖拽VFS模型文件到场景
  */
-import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue';
+import { ref, reactive, computed, onMounted, onUnmounted, watch, inject } from 'vue';
 import * as THREE from 'three';
 import { useScene } from '../../composables/useScene.js';
 import { useObjectSelection } from '../../composables/useObjectSelection.js';
@@ -34,6 +34,8 @@ import useTransform from '../../composables/useTransform.js';
 import vfsService from '../../services/vfs-service.js';
 import { useAssetLoader } from '../../core/AssetLoader.js';
 import { useAssets } from '../../composables/useAssets.js';
+import { ElMessage } from 'element-plus';
+import 'element-plus/es/components/message/style/css';
 
 export default {
   name: 'SceneViewer',
@@ -42,6 +44,8 @@ export default {
     showGrid: { type: Boolean, default: true }
   },
   setup(props) {
+    // 注入全局appState
+    const appState = inject('appState');
     // 模型加载器单例
     const assetLoader = useAssetLoader();
     // 资源管理器
@@ -61,10 +65,12 @@ export default {
      */
     /**
      * 拖拽释放时处理模型加载（纳入资源库并加入场景）
+     * 增加全局loading蒙版
      * @param {DragEvent} event
      */
     async function onDrop(event) {
       event.preventDefault();
+      if (appState) appState.isLoading = true;
       try {
         // 解析拖拽数据
         const data = event.dataTransfer.getData('application/json');
@@ -86,9 +92,12 @@ export default {
         const modelInfo = await uploadModel(file);
         // 加入场景
         addModelToScene(modelInfo.id);
+        ElMessage.success('文件加载成功');
       } catch (e) {
         // 可根据需要弹窗提示
         console.error('拖拽加载模型失败', e);
+      } finally {
+        if (appState) appState.isLoading = false;
       }
     }
     const containerRef = ref(null);

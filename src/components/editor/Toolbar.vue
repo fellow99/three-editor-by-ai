@@ -103,7 +103,7 @@
 </template>
 
 <script>
-import { ref, computed } from 'vue';
+import { ref, computed, inject } from 'vue';
 import { ElMessageBox, ElMessage } from 'element-plus';
 import 'element-plus/es/components/message/style/css';
 import 'element-plus/es/components/message-box/style/css';
@@ -121,6 +121,8 @@ export default {
    * 提供场景文件、编辑、对象变换等操作入口
    */
   setup(props, { emit }) {
+    // 注入全局appState
+    const appState = inject('appState');
     // Ribbon tab 配置
     const tabs = [
       { key: 'file', label: '文件' },
@@ -194,6 +196,9 @@ export default {
      * 加载场景文件
      * 选择JSON文件并调用SceneManager.loadScene(json)
      */
+    /**
+     * 加载场景文件，显示全局loading蒙版
+     */
     async function loadScene() {
       const input = document.createElement('input');
       input.type = 'file';
@@ -209,15 +214,24 @@ export default {
               cancelButtonText: '取消',
               type: 'warning'
             }).then(async () => {
-              // 动态引入SceneManager，调用loadScene
-              const { useSceneManager } = await import('../../core/SceneManager.js');
-              const sceneManager = useSceneManager();
-              
-              objectSelection.clearSelection();
-              transform.clearHistory();
+              // 显示loading
+              if (appState) appState.isLoading = true;
+              try {
+                // 动态引入SceneManager，调用loadScene
+                const { useSceneManager } = await import('../../core/SceneManager.js');
+                const sceneManager = useSceneManager();
+                
+                objectSelection.clearSelection();
+                transform.clearHistory();
 
-              await sceneManager.loadScene(sceneData);
-              ElMessage.success('场景加载成功');
+                await sceneManager.loadScene(sceneData);
+                ElMessage.success('场景加载成功');
+              } catch (e) {
+                console.error('加载场景失败:', e);
+                ElMessage.error('加载场景失败，请检查文件格式。');
+              } finally {
+                if (appState) appState.isLoading = false;
+              }
             }).catch(() => {});
           } catch (error) {
             console.error('加载场景失败:', error);

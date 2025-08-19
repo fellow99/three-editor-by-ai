@@ -9,8 +9,8 @@
     <div v-if="appState.isLoading" class="loading-overlay">
       <div class="loading-content">
         <el-icon class="spin"><Loading /></el-icon>
-        <h2>3D 场景编辑器</h2>
-        <p>正在初始化编辑器...</p>
+        <!-- <h2>3D 场景编辑器</h2> -->
+        <p>正在加载，请稍候...</p>
       </div>
     </div>
 
@@ -431,7 +431,7 @@ onUnmounted(() => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+  background: linear-gradient(135deg, rgba(0,0,0,0.9) 0%, rgba(33,33,33,0.9) 100%);
   display: flex;
   align-items: center;
   justify-content: center;
