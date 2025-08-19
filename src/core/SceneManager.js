@@ -10,7 +10,6 @@ import { FlyControls } from 'three/examples/jsm/controls/FlyControls.js';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { reactive } from 'vue';
-import { useObjectManager } from './ObjectManager.js';
 
 /**
  * SceneManager
@@ -150,6 +149,8 @@ class SceneManager {
     this.createScene();
     this.createRenderer();
     this.createCamera();
+
+    // 设置默认灯光
     this.setupLights();
     
     // 添加网格地面
@@ -528,8 +529,6 @@ class SceneManager {
         }
       }
     }
-    // 重新设置光照（不会重复添加辅助对象）
-    this.setupLights();
     
     // 添加网格地面
     this.setupGrid();

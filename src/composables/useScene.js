@@ -324,6 +324,9 @@ export function useScene() {
     
     applySceneConfig();
     applyCameraConfig();
+
+    // 设置默认灯光
+    sceneManager.setupLights();
   }
   
   /**

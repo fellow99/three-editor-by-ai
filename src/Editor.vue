@@ -113,6 +113,8 @@
 <script setup>
  // 3D场景编辑器主应用组件
 import { ref, reactive, provide, onMounted, onUnmounted } from 'vue';
+import { ElMessageBox } from 'element-plus';
+import 'element-plus/es/components/message-box/style/css';
 import { useScene } from './composables/useScene.js';
 // 引入element-plus图标
 import { Setting, Loading } from '@element-plus/icons-vue';
@@ -348,13 +350,17 @@ function handleKeyboard(event) {
   switch (event.code) {
     case 'Delete':
       if (objectSelection.hasSelection.value) {
-        if (confirm('确定要删除选中的对象吗？')) {
+        ElMessageBox.confirm('确定要删除选中的对象吗？', '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }).then(() => {
           const selectedIds = Array.from(objectSelection.selectedObjectIds.value);
           selectedIds.forEach(id => {
             scene.removeObjectFromScene(id);
           });
           objectSelection.clearSelection();
-        }
+        }).catch(() => {});
       }
       break;
     case 'Escape':
@@ -377,13 +383,17 @@ function setActiveLeftTab(tab) {
 
 function handleDeleteSelected() {
   if (objectSelection.hasSelection.value) {
-    if (confirm('确定要删除选中的对象吗？')) {
-        const selectedIds = Array.from(objectSelection.selectedObjectIds.value);
-        selectedIds.forEach(id => {
-          scene.removeObjectFromScene(id);
-        });
-        objectSelection.clearSelection();
-    }
+    ElMessageBox.confirm('确定要删除选中的对象吗？', '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    }).then(() => {
+      const selectedIds = Array.from(objectSelection.selectedObjectIds.value);
+      selectedIds.forEach(id => {
+        scene.removeObjectFromScene(id);
+      });
+      objectSelection.clearSelection();
+    }).catch(() => {});
   }
 }
 

@@ -104,6 +104,9 @@
 
 <script>
 import { ref, computed } from 'vue';
+import { ElMessageBox, ElMessage } from 'element-plus';
+import 'element-plus/es/components/message/style/css';
+import 'element-plus/es/components/message-box/style/css';
 import { useScene } from '../../composables/useScene.js';
 import { useObjectSelection } from '../../composables/useObjectSelection.js';
 import useTransform from '../../composables/useTransform.js';
@@ -148,15 +151,25 @@ export default {
     /**
      * 新建场景，清空所有内容
      */
+    /**
+     * 新建场景，清空所有内容
+     */
     function newScene() {
-      if (confirm('确定要新建场景吗？这将清除当前所有内容。')) {
-        scene.clearScene();
-        scene.resetScene();
+      ElMessageBox.confirm('确定要新建场景吗？这将清除当前所有内容。', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
         objectSelection.clearSelection();
         transform.clearHistory();
-}
+        scene.clearScene();
+        scene.resetScene();
+      }).catch(() => {});
     }
     
+    /**
+     * 保存当前场景为JSON文件
+     */
     /**
      * 保存当前场景为JSON文件
      */
@@ -165,12 +178,17 @@ export default {
         const sceneData = scene.exportScene();
         const filename = `scene_${new Date().toISOString().slice(0, 19).replace(/[:-]/g, '')}.json`;
         exportJSON(sceneData, filename);
+        ElMessage.success('场景已保存');
       } catch (error) {
         console.error('保存场景失败:', error);
-        alert('保存场景失败，请检查控制台错误信息。');
+        ElMessage.error('保存场景失败，请检查控制台错误信息。');
       }
     }
     
+    /**
+     * 加载场景文件
+     * 选择JSON文件并调用SceneManager.loadScene(json)
+     */
     /**
      * 加载场景文件
      * 选择JSON文件并调用SceneManager.loadScene(json)
@@ -185,16 +203,20 @@ export default {
           try {
             const text = await file.text();
             const sceneData = JSON.parse(text);
-            if (confirm('确定要加载这个场景吗？这将替换当前场景。')) {
+            ElMessageBox.confirm('确定要加载这个场景吗？这将替换当前场景。', '提示', {
+              confirmButtonText: '确定',
+              cancelButtonText: '取消',
+              type: 'warning'
+            }).then(async () => {
               // 动态引入SceneManager，调用loadScene
               const { useSceneManager } = await import('../../core/SceneManager.js');
               const sceneManager = useSceneManager();
               await sceneManager.loadScene(sceneData);
-              alert('场景加载完成');
-            }
+              ElMessage.success('场景加载成功');
+            }).catch(() => {});
           } catch (error) {
             console.error('加载场景失败:', error);
-            alert('加载场景失败，请检查文件格式。');
+            ElMessage.error('加载场景失败，请检查文件格式。');
           }
         }
       };

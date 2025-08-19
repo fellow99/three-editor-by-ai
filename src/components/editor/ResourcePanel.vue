@@ -44,6 +44,8 @@
 
 <script setup>
 import { defineProps, ref, inject } from 'vue';
+import { ElMessageBox } from 'element-plus';
+import 'element-plus/es/components/message-box/style/css';
 import AssetBrowser from './AssetBrowser.vue';
 import Inspector from './Inspector.vue';
 import VfsFilePanel from './VfsFilePanel.vue';
@@ -70,13 +72,17 @@ const objectSelection = inject('objectSelection');
 // 面板控制方法
 function handleDeleteSelected() {
   if (objectSelection.hasSelection.value) {
-    if (confirm('确定要删除选中的对象吗？')) {
+    ElMessageBox.confirm('确定要删除选中的对象吗？', '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    }).then(() => {
       const selectedIds = Array.from(objectSelection.selectedObjectIds.value);
       selectedIds.forEach(id => {
         scene.removeObjectFromScene(id);
       });
       objectSelection.clearSelection();
-    }
+    }).catch(() => {});
   }
 }
 </script>

@@ -215,6 +215,8 @@
 
 <script>
 import { ref, computed } from 'vue';
+import { ElMessage } from 'element-plus';
+import 'element-plus/es/components/message/style/css';
 import VfsFilePanel from './VfsFilePanel.vue';
 import { useAssets } from '../../composables/useAssets.js';
 import { useObjectSelection } from '../../composables/useObjectSelection.js';
@@ -285,11 +287,15 @@ export default {
      * 将纹理应用到选中的对象
      * @param {Object} texture 纹理对象
      */
+    /**
+     * 将纹理应用到选中的对象
+     * @param {Object} texture 纹理对象
+     */
     function applyTextureToSelected(texture) {
       const selectedObjects = objectSelection.selectedObjects.value;
       const objectManager = useObjectManager();
       if (selectedObjects.length === 0) {
-        alert('请先选择要应用纹理的对象');
+        ElMessage.warning('请先选择要应用纹理的对象');
         return;
       }
       selectedObjects.forEach(object => {
