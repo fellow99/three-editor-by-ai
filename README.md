@@ -39,7 +39,6 @@
 three-editor-by-ai/
 ├── public/                   # 存放无需构建的静态资源
 │   ├── images/               # 图片资源目录
-│   ├── mock/                 # 静态API数据目录
 │   ├── vfs/                  # 静态资源目录（虚拟文件系统，.folder.json文件用于描述目录和文件信息）
 ├── src/
 │   ├── components/                           # Vue 组件
@@ -128,7 +127,8 @@ three-editor-by-ai/
   - 如需加载Draco压缩的glTF模型，请将node_modules/three/examples/jsm/libs/draco/目录中的文件复制到 /draco/ 目录下。
   - 如需加载KTX2纹理，请将node_modules/three/examples/jsm/libs/basis目录中的文件放入 /basis/ 目录下。
   - 如需加载Meshopt压缩的glTF模型，请将node_modules/three/examples/jsm/libs/meshopt_decoder.module.js文件放入 public/meshopt/ 目录下。
-- SceneViewer.vue中，TransformControls拖拽时会自动禁用OrbitControls，避免拖拽时镜头跟随问题。
+- TransformControls相关功能已迁移至SceneManager.js统一管理，SceneViewer.vue仅负责初始化调用。
+- SceneManager.js中，TransformControls拖拽时会自动禁用OrbitControls，避免拖拽时镜头跟随问题。
 - ObjectManager.js中，变换后分发object-transform-updated事件。
 - useScene.js中，聚焦对象时计算中心点并设置OrbitControls target。
 - useObjectSelection.js中， 内部定义了 `selectionStore`（响应式对象）：

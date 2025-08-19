@@ -27,8 +27,6 @@
  */
 import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue';
 import * as THREE from 'three';
-import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js';
-import { DirectionalLightHelper, PointLightHelper, SpotLightHelper, HemisphereLightHelper, CameraHelper } from 'three';
 import { useScene } from '../../composables/useScene.js';
 import { useObjectSelection } from '../../composables/useObjectSelection.js';
 import { useInputManager } from '../../core/InputManager.js';
@@ -99,16 +97,8 @@ export default {
     const inputManager = useInputManager();
     const transform = useTransform();
     
-    // TransformControls相关
-    let transformControls = null;
-    let helper = null;
-    let currentObject = null;
-
     // 网格辅助线
     let gridHelper = null;
-
-    // 灯光/相机helper管理
-    let currentHelper = null;
     
     // 本地状态
     // 由props控制
@@ -139,9 +129,10 @@ export default {
         }, { immediate: true });
 
         // 初始化TransformControls
-        initTransformControls();
-
-        // 不再全量添加灯光/相机helper
+        scene.sceneManager.initTransformControls({
+          objectSelection,
+          transform
+        });
 
         // 设置输入事件监听
         setupInputHandlers();
@@ -151,108 +142,6 @@ export default {
       }
     }
 
-    // 选中对象时动态添加helper
-    function updateSelectedHelper(selected) {
-      // 移除旧helper
-      if (currentHelper) {
-        scene.sceneManager.scene.remove(currentHelper);
-        if (currentHelper.dispose) currentHelper.dispose();
-        currentHelper = null;
-      }
-      if (!selected) return;
-      let helper = null;
-      if (selected.isDirectionalLight) {
-        helper = new DirectionalLightHelper(selected, 5, 0xffaa00);
-      } else if (selected.isPointLight) {
-        helper = new PointLightHelper(selected, 2, 0x00aaff);
-      } else if (selected.isSpotLight) {
-        helper = new SpotLightHelper(selected, 2, 0xaaff00);
-      } else if (selected.isHemisphereLight) {
-        helper = new HemisphereLightHelper(selected, 2);
-      } else if (selected.isCamera) {
-        helper = new CameraHelper(selected);
-      }
-      if (helper) {
-        scene.sceneManager.scene.add(helper);
-        currentHelper = helper;
-      }
-    }
-
-    // 初始化TransformControls
-    function initTransformControls() {
-      if (!scene.sceneManager.camera || !scene.sceneManager.renderer) return;
-      transformControls = new TransformControls(scene.sceneManager.camera, scene.sceneManager.renderer.domElement);
-
-      // 监听变换事件，同步属性
-      transformControls.addEventListener('objectChange', () => {
-        if (currentObject) {
-          // 变换已自动作用于对象，无需额外同步
-          // 触发对象属性同步，确保属性面板等响应式刷新
-          if (scene.objectManager && scene.objectManager.setObjectTransform) {
-            scene.objectManager.setObjectTransform(
-              currentObject.userData.id,
-              {
-                position: [currentObject.position.x, currentObject.position.y, currentObject.position.z],
-                rotation: [currentObject.rotation.x, currentObject.rotation.y, currentObject.rotation.z],
-                scale: [currentObject.scale.x, currentObject.scale.y, currentObject.scale.z]
-              }
-            );
-          }
-        }
-      });
-
-      // 拖拽时禁用OrbitControls
-      // 注意：此处禁用OrbitControls，避免被其他逻辑（如飞行控制切换）覆盖，若遇到镜头跟随问题请优先排查controls.enabled赋值冲突
-      transformControls.addEventListener('dragging-changed', function (event) {
-        if (scene.sceneManager.controls) {
-          scene.sceneManager.controls.enabled = !event.value;
-        }
-      });
-
-      // 禁止TransformControls事件冒泡到OrbitControls等
-      transformControls.addEventListener('mouseDown', function (event) {
-        event.stopPropagation?.();
-      });
-
-      // 添加辅助对象到场景
-      helper = transformControls.getHelper ? transformControls.getHelper() : null;
-      if (helper) {
-        scene.sceneManager.scene.add(helper);
-      }
-
-      // 监听transformMode变化
-      watch(() => transform.transformMode.value, (mode) => {
-        if (transformControls) {
-          transformControls.setMode(mode);
-          // 切换模式时重新attach对象，确保控件刷新
-          if (currentObject) {
-            transformControls.attach(currentObject);
-            transformControls.visible = true;
-          }
-        }
-      }, { immediate: true });
-
-      // 监听选中对象变化
-      watch(() => objectSelection.selectedObjects.value, (objs) => {
-        if (objs.length === 1) {
-          currentObject = objs[0];
-          // 锁定状态下不绑定transformControls
-          if (currentObject.userData && currentObject.userData.locked) {
-            transformControls.detach();
-            transformControls.visible = false;
-            updateSelectedHelper(currentObject);
-          } else {
-            transformControls.attach(currentObject);
-            transformControls.visible = true;
-            updateSelectedHelper(currentObject);
-          }
-        } else {
-          transformControls.detach();
-          transformControls.visible = false;
-          updateSelectedHelper(null);
-        }
-      }, { immediate: true });
-    }
     
     function setupInputHandlers() {
       // 鼠标点击选择
@@ -393,23 +282,12 @@ export default {
       }
       scene.stopRender();
       inputManager.dispose();
-      // 移除TransformControls
-      if (transformControls) {
-        scene.sceneManager.scene.remove(transformControls);
-        if (helper) scene.sceneManager.scene.remove(helper);
-        transformControls.dispose?.();
-      }
-      // 移除灯光/相机helper
-      if (currentHelper) {
-        scene.sceneManager.scene.remove(currentHelper);
-        if (currentHelper.dispose) currentHelper.dispose();
-        currentHelper = null;
-      }
-      // 移除网格辅助线
+      // 只保留网格辅助线清理
       if (gridHelper) {
         scene.sceneManager.scene.remove(gridHelper);
         gridHelper = null;
       }
+      // TransformControls及helper由SceneManager统一清理
     });
     
     return {

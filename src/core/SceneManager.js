@@ -7,9 +7,11 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 // 引入FlyControls用于飞行模式控制
 import { FlyControls } from 'three/examples/jsm/controls/FlyControls.js';
+import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js';
+import { DirectionalLightHelper, PointLightHelper, SpotLightHelper, HemisphereLightHelper, CameraHelper } from 'three';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
-import { reactive } from 'vue';
+import { reactive, watch } from 'vue';
 
 /**
  * SceneManager
@@ -28,6 +30,15 @@ class SceneManager {
     this.isFlyControlEnabled = false; // 是否启用FlyControls
     this.container = null;
     this.animationId = null;
+
+    // TransformControls相关
+    this.transformControls = null;
+    this.transformHelper = null;
+    this.currentTransformObject = null;
+    this.currentHelper = null;
+    this.transformMode = null; // 外部可绑定响应式
+    this.objectSelection = null; // 外部传入
+    this.transform = null; // 外部传入
 
     // 后处理
     this.composer = null;
@@ -49,6 +60,150 @@ class SceneManager {
     this.resizeHandler = this.handleResize.bind(this);
     
     this.init();
+  }
+
+  /**
+   * 初始化TransformControls
+   * @param {object} options { camera, renderer, objectSelection, transform }
+   */
+  initTransformControls(options = {}) {
+    if (!this.camera || !this.renderer) return;
+    if (this.transformControls) {
+      this.scene.remove(this.transformControls);
+      this.transformControls.dispose?.();
+      this.transformControls = null;
+    }
+    this.objectSelection = options.objectSelection;
+    this.transform = options.transform;
+    this.transformControls = new TransformControls(this.camera, this.renderer.domElement);
+
+    // 监听变换事件，同步属性
+    this.transformControls.addEventListener('objectChange', () => {
+      if (this.currentTransformObject) {
+        if (this.scene.objectManager && this.scene.objectManager.setObjectTransform) {
+          this.scene.objectManager.setObjectTransform(
+            this.currentTransformObject.userData.id,
+            {
+              position: [
+                this.currentTransformObject.position.x,
+                this.currentTransformObject.position.y,
+                this.currentTransformObject.position.z
+              ],
+              rotation: [
+                this.currentTransformObject.rotation.x,
+                this.currentTransformObject.rotation.y,
+                this.currentTransformObject.rotation.z
+              ],
+              scale: [
+                this.currentTransformObject.scale.x,
+                this.currentTransformObject.scale.y,
+                this.currentTransformObject.scale.z
+              ]
+            }
+          );
+        }
+      }
+    });
+
+    // 拖拽时禁用OrbitControls
+    this.transformControls.addEventListener('dragging-changed', (event) => {
+      if (this.controls) {
+        this.controls.enabled = !event.value;
+      }
+    });
+
+    // 禁止TransformControls事件冒泡到OrbitControls等
+    this.transformControls.addEventListener('mouseDown', (event) => {
+      event.stopPropagation?.();
+    });
+
+    // 添加辅助对象到场景
+    this.transformHelper = this.transformControls.getHelper ? this.transformControls.getHelper() : null;
+    if (this.transformHelper) {
+      this.scene.add(this.transformHelper);
+    }
+
+    // 监听transformMode变化
+    if (this.transform && this.transform.transformMode) {
+      watch(() => this.transform.transformMode.value, (mode) => {
+        if (this.transformControls) {
+          this.transformControls.setMode(mode);
+          if (this.currentTransformObject) {
+            this.transformControls.attach(this.currentTransformObject);
+            this.transformControls.visible = true;
+          }
+        }
+      }, { immediate: true });
+    }
+
+    // 监听选中对象变化
+    if (this.objectSelection && this.objectSelection.selectedObjects) {
+      watch(() => this.objectSelection.selectedObjects.value, (objs) => {
+        if (objs.length === 1) {
+          this.currentTransformObject = objs[0];
+          // 锁定状态下不绑定transformControls
+          if (this.currentTransformObject.userData && this.currentTransformObject.userData.locked) {
+            this.transformControls.detach();
+            this.transformControls.visible = false;
+            this.updateSelectedHelper(this.currentTransformObject);
+          } else {
+            this.transformControls.attach(this.currentTransformObject);
+            this.transformControls.visible = true;
+            this.updateSelectedHelper(this.currentTransformObject);
+          }
+        } else {
+          this.transformControls.detach();
+          this.transformControls.visible = false;
+          this.updateSelectedHelper(null);
+        }
+      }, { immediate: true });
+    }
+  }
+
+  /**
+   * 移除TransformControls及相关helper
+   */
+  disposeTransformControls() {
+    if (this.transformControls) {
+      this.scene.remove(this.transformControls);
+      if (this.transformHelper) this.scene.remove(this.transformHelper);
+      this.transformControls.dispose?.();
+      this.transformControls = null;
+    }
+    if (this.currentHelper) {
+      this.scene.remove(this.currentHelper);
+      if (this.currentHelper.dispose) this.currentHelper.dispose();
+      this.currentHelper = null;
+    }
+  }
+
+  /**
+   * 选中对象时动态添加helper
+   * @param {THREE.Object3D|null} selected
+   */
+  updateSelectedHelper(selected) {
+    if (this.currentHelper) {
+      this.scene.remove(this.currentHelper);
+      if (this.currentHelper.dispose) this.currentHelper.dispose();
+      this.currentHelper = null;
+    }
+    if (!selected) return;
+    let helper = null;
+    if (selected.isDirectionalLight) {
+      helper = new DirectionalLightHelper(selected, 5, 0xffaa00);
+    } else if (selected.isPointLight) {
+      helper = new PointLightHelper(selected, 2, 0x00aaff);
+    } else if (selected.isSpotLight) {
+      helper = new SpotLightHelper(selected, 2, 0xaaff00);
+    } else if (selected.isHemisphereLight) {
+      helper = new HemisphereLightHelper(selected, 2);
+    } else if (selected.isCamera) {
+      helper = new CameraHelper(selected);
+    }
+    if (helper) {
+      this.scene.add(helper);
+      this.currentHelper = helper;
+    }
   }
 
   /**
@@ -512,6 +667,7 @@ class SceneManager {
   clearScene() {
     // 仅移除非 gridHelper/axesHelper 的对象
     const reservedNames = ['grid_helper', 'axes_helper'];
+    console.log(this.scene.children)
     for (let i = this.scene.children.length - 1; i >= 0; i--) {
       const child = this.scene.children[i];
       if (!reservedNames.includes(child.name)) {
@@ -529,9 +685,14 @@ class SceneManager {
         }
       }
     }
-    
+
     // 添加网格地面
     this.setupGrid();
+
+    // 重新添加transformHelper
+    if (this.transformHelper && !this.scene.children.includes(this.transformHelper)) {
+      this.scene.add(this.transformHelper);
+    }
   }
   
   /**

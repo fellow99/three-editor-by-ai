@@ -162,6 +162,7 @@ export default {
       }).then(() => {
         objectSelection.clearSelection();
         transform.clearHistory();
+
         scene.clearScene();
         scene.resetScene();
       }).catch(() => {});
@@ -211,6 +212,10 @@ export default {
               // 动态引入SceneManager，调用loadScene
               const { useSceneManager } = await import('../../core/SceneManager.js');
               const sceneManager = useSceneManager();
+              
+              objectSelection.clearSelection();
+              transform.clearHistory();
+
               await sceneManager.loadScene(sceneData);
               ElMessage.success('场景加载成功');
             }).catch(() => {});
