@@ -414,27 +414,29 @@ class SceneManager {
   }
   
   /**
-   * 清空场景
+   * 清空场景，但保留网格辅助线和坐标轴辅助线
    */
   clearScene() {
-    while (this.scene.children.length > 0) {
-      const child = this.scene.children[0];
-      this.scene.remove(child);
-      
-      // 清理几何体和材质
-      if (child.geometry) {
-        child.geometry.dispose();
-      }
-      if (child.material) {
-        if (Array.isArray(child.material)) {
-          child.material.forEach(material => material.dispose());
-        } else {
-          child.material.dispose();
+    // 仅移除非 gridHelper/axesHelper 的对象
+    const reservedNames = ['grid_helper', 'axes_helper'];
+    for (let i = this.scene.children.length - 1; i >= 0; i--) {
+      const child = this.scene.children[i];
+      if (!reservedNames.includes(child.name)) {
+        this.scene.remove(child);
+        // 清理几何体和材质
+        if (child.geometry) {
+          child.geometry.dispose();
+        }
+        if (child.material) {
+          if (Array.isArray(child.material)) {
+            child.material.forEach(material => material.dispose());
+          } else {
+            child.material.dispose();
+          }
         }
       }
     }
-    
-    // 重新设置光照
+    // 重新设置光照（不会重复添加辅助对象）
     this.setupLights();
   }
   
