@@ -12,12 +12,6 @@
       <div class="drag-content">
         <span class="drag-icon">📥</span>
         <p>释放文件以上传</p>
-      <button 
-        @click="activeTab = 'vfs'" 
-        :class="['tab-btn', { active: activeTab === 'vfs' }]"
-      >
-        虚拟文件
-      </button>
     </div>
     </div>
 
@@ -64,12 +58,6 @@
         :class="['tab-btn', { active: activeTab === 'textures' }]"
       >
         纹理 ({{ filteredTextures.length }})
-      </button>
-      <button 
-        @click="activeTab = 'vfs'" 
-        :class="['tab-btn', { active: activeTab === 'vfs' }]"
-      >
-        虚拟文件
       </button>
     </div>
 
@@ -309,10 +297,6 @@
         <div v-if="filteredTextures.length === 0" class="empty-state">
           <p>没有找到纹理</p>
         </div>
-      </div>
-      <!-- 虚拟文件系统 -->
-      <div v-if="activeTab === 'vfs'" class="vfs-panel-wrap">
-        <VfsFilePanel />
       </div>
     </div>
   </div>

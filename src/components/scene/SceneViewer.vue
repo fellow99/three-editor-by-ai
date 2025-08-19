@@ -1,5 +1,15 @@
+<!--
+  SceneViewer.vue
+  功能：三维场景显示与交互组件，支持拖拽加载VFS模型文件到场景
+-->
+
 <template>
-  <div class="scene-viewer" ref="containerRef">
+  <div
+    class="scene-viewer"
+    ref="containerRef"
+    @dragover="onDragOver"
+    @drop="onDrop"
+  >
     <!-- 加载状态 -->
     <div v-if="!isInitialized" class="loading-overlay">
       <div class="loading-content">
@@ -7,12 +17,14 @@
         <p>初始化3D场景...</p>
       </div>
     </div>
-
-    
   </div>
 </template>
 
 <script>
+/**
+ * 三维场景显示与交互组件
+ * - 支持拖拽VFS模型文件到场景
+ */
 import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue';
 import * as THREE from 'three';
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js';
@@ -21,6 +33,9 @@ import { useScene } from '../../composables/useScene.js';
 import { useObjectSelection } from '../../composables/useObjectSelection.js';
 import { useInputManager } from '../../core/InputManager.js';
 import useTransform from '../../composables/useTransform.js';
+import vfsService from '../../services/vfs-service.js';
+import { useAssetLoader } from '../../core/AssetLoader.js';
+import { useAssets } from '../../composables/useAssets.js';
 
 export default {
   name: 'SceneViewer',
@@ -29,6 +44,53 @@ export default {
     showGrid: { type: Boolean, default: true }
   },
   setup(props) {
+    // 模型加载器单例
+    const assetLoader = useAssetLoader();
+    // 资源管理器
+    const { uploadModel, addModelToScene } = useAssets();
+
+    /**
+     * 拖拽进入时阻止默认，允许放置
+     * @param {DragEvent} event
+     */
+    function onDragOver(event) {
+      event.preventDefault();
+    }
+
+    /**
+     * 拖拽释放时处理模型加载
+     * @param {DragEvent} event
+     */
+    /**
+     * 拖拽释放时处理模型加载（纳入资源库并加入场景）
+     * @param {DragEvent} event
+     */
+    async function onDrop(event) {
+      event.preventDefault();
+      try {
+        // 解析拖拽数据
+        const data = event.dataTransfer.getData('application/json');
+        if (!data) return;
+        const fileInfo = JSON.parse(data);
+        // 校验类型
+        const modelExts = ['.glb', '.gltf', '.fbx', '.obj'];
+        const ext = fileInfo.name ? fileInfo.name.slice(fileInfo.name.lastIndexOf('.')).toLowerCase() : '';
+        if (fileInfo.type !== 'FILE' || !modelExts.includes(ext)) return;
+        // 获取vfs实例
+        const vfs = vfsService.getVfs(fileInfo.drive);
+        // 获取Blob对象
+        const blob = await vfs.blob(fileInfo.path + '/' + fileInfo.name);
+        // Blob转File对象
+        const file = new File([blob], fileInfo.name, { type: blob.type });
+        // 通过useAssets上传模型并纳入资源库
+        const modelInfo = await uploadModel(file);
+        // 加入场景
+        addModelToScene(modelInfo.id);
+      } catch (e) {
+        // 可根据需要弹窗提示
+        console.error('拖拽加载模型失败', e);
+      }
+    }
     const containerRef = ref(null);
     const scene = useScene();
     const objectSelection = useObjectSelection();
@@ -351,7 +413,9 @@ export default {
     return {
       // 模板引用
       containerRef,
-      
+      // 拖拽事件
+      onDragOver,
+      onDrop,
       // 状态
       isInitialized,
       fps,

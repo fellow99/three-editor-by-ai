@@ -6,6 +6,12 @@
     <!-- 标签页头部 -->
     <div class="panel-tabs">
       <button 
+        @click="props.setActiveLeftTab('file')" 
+        :class="['tab-btn', { active: props.activeLeftTab === 'file' }]"
+      >
+        📁 文件
+      </button>
+      <button 
         @click="props.setActiveLeftTab('assets')" 
         :class="['tab-btn', { active: props.activeLeftTab === 'assets' }]"
       >
@@ -19,6 +25,7 @@
       </button>
     </div>
     <div class="panel-content">
+      <VfsFilePanel v-show="props.activeLeftTab === 'file'" />
       <AssetBrowser v-show="props.activeLeftTab === 'assets'" />
       <Inspector v-show="props.activeLeftTab === 'inspector'" @delete-selected="handleDeleteSelected" />
     </div>
@@ -29,6 +36,7 @@
 import { defineProps, inject } from 'vue';
 import AssetBrowser from './AssetBrowser.vue';
 import Inspector from './Inspector.vue';
+import VfsFilePanel from './VfsFilePanel.vue';
 
 // 接收父组件传递的 props
 const props = defineProps({

@@ -18,14 +18,14 @@
       <div class="vfs-row">
         <span class="vfs-path">当前路径：{{ currentPath }}</span>
       </div>
-      <div class="vfs-row">
-        <span v-if="currentPath !== '/'">
-          <button @click="goParent">返回上一级</button>
-        </span>
-      </div>
+      
     </div>
     <!-- 目录/文件列表 -->
     <div class="vfs-listview">
+      <div v-if="currentPath !== '/'" class="vfs-item vfs-back" @click="goParent">
+        <span>⬅️</span>
+        返回上一级
+      </div>
       <div
         v-for="item in files"
         :key="item.path + '/' + item.name"
@@ -112,10 +112,23 @@ function onFileClick(file) {
   // console.log('文件点击', file);
 }
 
-/** 文件拖拽事件（预留） */
+/**
+ * 文件拖拽事件
+ * 仅支持3D模型文件，拖拽时将文件信息写入dataTransfer
+ */
 function onItemDrag(file, event) {
-  // TODO: 实现文件拖拽逻辑
-  // event.dataTransfer.setData('text/plain', JSON.stringify(file));
+  // 判断是否为支持的3D模型文件
+  const modelExts = ['.glb', '.gltf', '.fbx', '.obj'];
+  if (file.type !== 'FILE') return;
+  const ext = file.name ? file.name.slice(file.name.lastIndexOf('.')).toLowerCase() : '';
+  if (!modelExts.includes(ext)) return;
+  // 设置拖拽数据，包含drive、path、name、type
+  event.dataTransfer.setData('application/json', JSON.stringify({
+    drive: currentVfs.value?._drive,
+    path: file.path,
+    name: file.name,
+    type: file.type
+  }));
 }
 
 onMounted(() => {
