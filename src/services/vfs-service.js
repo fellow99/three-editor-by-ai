@@ -14,7 +14,6 @@ function registerVfs (opt) {
     if (type === 'static') {
         vfs = driveMap[drive] = new StaticDriveApi(opt);
     }
-    console.info('已注册文件库：' + drive);
     return vfs;
 }
 

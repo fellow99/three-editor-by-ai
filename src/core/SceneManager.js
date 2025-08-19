@@ -10,6 +10,7 @@ import { FlyControls } from 'three/examples/jsm/controls/FlyControls.js';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { reactive } from 'vue';
+import { useObjectManager } from './ObjectManager.js';
 
 /**
  * SceneManager
@@ -50,6 +51,97 @@ class SceneManager {
     
     this.init();
   }
+
+  /**
+   * 加载场景数据，根据json结构重建场景
+   * @param {object} json 场景数据
+   */
+  async loadScene(json) {
+    // 1. 清空场景
+    this.clearScene();
+
+    // 2. 恢复相机参数
+    if (json.camera && this.camera) {
+      if (Array.isArray(json.camera.position)) {
+        this.camera.position.fromArray(json.camera.position);
+      }
+      if (Array.isArray(json.camera.rotation)) {
+        this.camera.rotation.fromArray(json.camera.rotation);
+      }
+      if (typeof json.camera.fov === 'number') this.camera.fov = json.camera.fov;
+      if (typeof json.camera.near === 'number') this.camera.near = json.camera.near;
+      if (typeof json.camera.far === 'number') this.camera.far = json.camera.far;
+      this.camera.updateProjectionMatrix();
+    }
+
+    // 3. 恢复背景
+    if (json.background && this.scene) {
+      if (typeof json.background === 'number') {
+        this.scene.background = new THREE.Color(json.background);
+      }
+      // 其他类型背景可扩展
+    }
+
+    // 4. 恢复灯光
+    if (Array.isArray(json.lights)) {
+      const { useObjectManager } = await import('./ObjectManager.js');
+      const objectManager = useObjectManager();
+      json.lights.forEach(lightData => {
+        objectManager.createPrimitive?.(lightData.type, {
+          color: lightData.color,
+          intensity: lightData.intensity,
+          position: lightData.position
+        });
+      });
+    }
+
+    // 5. 恢复对象
+    if (Array.isArray(json.objects)) {
+      const { useObjectManager } = await import('./ObjectManager.js');
+      const objectManager = useObjectManager();
+      for (const objData of json.objects) {
+        // userData.fileInfo 走异步模型加载
+        if (objData.userData && objData.userData.fileInfo) {
+          // 复用SceneViewer.vue onDrop的核心逻辑
+          try {
+            const vfsService = (await import('../services/vfs-service.js')).default;
+            const { useAssets } = await import('../composables/useAssets.js');
+            const { uploadModel, addModelToScene } = useAssets();
+            const fileInfo = objData.userData.fileInfo;
+            const vfs = vfsService.getVfs(fileInfo.drive);
+            const blob = await vfs.blob(fileInfo.path + '/' + fileInfo.name);
+            const file = new File([blob], fileInfo.name, { type: blob.type });
+            file.fileInfo = fileInfo;
+            const modelInfo = await uploadModel(file);
+            await addModelToScene(modelInfo.id, {
+              name: objData.name,
+              position: objData.position,
+              rotation: objData.rotation,
+              scale: objData.scale
+            });
+          } catch (e) {
+            console.error('加载模型文件失败', e);
+          }
+        } else if (objData.userData && objData.userData.type === 'primitive' && objData.userData.primitiveType) {
+          // 普通primitive对象
+          objectManager.createPrimitive?.(objData.userData.primitiveType, {
+            name: objData.name,
+            position: objData.position,
+            rotation: objData.rotation,
+            scale: objData.scale
+          });
+        } else {
+          // 普通primitive对象
+          objectManager.createPrimitive?.(objData.type, {
+            name: objData.name,
+            position: objData.position,
+            rotation: objData.rotation,
+            scale: objData.scale
+          });
+        }
+      }
+    }
+  }
   
   /**
    * 初始化场景
@@ -59,6 +151,9 @@ class SceneManager {
     this.createRenderer();
     this.createCamera();
     this.setupLights();
+    
+    // 添加网格地面
+    this.setupGrid();
 
     // 初始化后处理
     this.initComposer();
@@ -168,33 +263,30 @@ class SceneManager {
   /**
    * 设置光照
    */
-  setupLights() {
-    // 环境光
-    const ambientLight = new THREE.AmbientLight(0x404040, 0.4);
-    this.scene.add(ambientLight);
-    
-    // 方向光
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-    directionalLight.position.set(50, 50, 50);
-    directionalLight.castShadow = true;
-    directionalLight.shadow.mapSize.width = 2048;
-    directionalLight.shadow.mapSize.height = 2048;
-    directionalLight.shadow.camera.near = 0.5;
-    directionalLight.shadow.camera.far = 500;
-    directionalLight.shadow.camera.left = -50;
-    directionalLight.shadow.camera.right = 50;
-    directionalLight.shadow.camera.top = 50;
-    directionalLight.shadow.camera.bottom = -50;
-    this.scene.add(directionalLight);
-    
-    // 点光源
-    const pointLight = new THREE.PointLight(0xffffff, 0.5, 100);
-    pointLight.position.set(-20, 20, 20);
-    pointLight.castShadow = true;
-    this.scene.add(pointLight);
-    
-    // 添加网格地面
-    this.setupGrid();
+  async setupLights() {
+      const { useObjectManager } = await import('./ObjectManager.js');
+      const objectManager = useObjectManager();
+      
+      // 环境光
+      objectManager.createPrimitive?.('AmbientLight', {
+        color: 0x404040,
+        intensity: 10
+      });
+
+      // 方向光
+      objectManager.createPrimitive?.('DirectionalLight', {
+        color: 0xffffff,
+        intensity: 1,
+        position: [50, 50, 50],
+        castShadow: true,
+        shadowMapSize: { width: 2048, height: 2048 },
+        shadowCameraNear: 0.5,
+        shadowCameraFar: 500,
+        shadowCameraLeft: -50,
+        shadowCameraRight: 50,
+        shadowCameraTop: 50,
+        shadowCameraBottom: -50
+      });
   }
   
   /**
@@ -438,6 +530,9 @@ class SceneManager {
     }
     // 重新设置光照（不会重复添加辅助对象）
     this.setupLights();
+    
+    // 添加网格地面
+    this.setupGrid();
   }
   
   /**
@@ -505,7 +600,6 @@ class SceneManager {
         });
       }
     });
-    
     return sceneData;
   }
   

@@ -85,38 +85,38 @@
     },
     {
         "category": "灯光",
-        "type": "ambient",
-        "name": "环境光",
-        "icon": "🌟",
-        "description": "创建一个环境光源"
-    },
-    {
-        "category": "灯光",
-        "type": "directional",
-        "name": "平行光",
+        "type": "DirectionalLight",
+        "name": "方向光",
         "icon": "☀️",
-        "description": "创建一个平行光源"
+        "description": "创建一个方向光源"
     },
     {
         "category": "灯光",
-        "type": "point",
+        "type": "PointLight",
         "name": "点光源",
         "icon": "💡",
         "description": "创建一个点光源"
     },
     {
         "category": "灯光",
-        "type": "spot",
+        "type": "SpotLight",
         "name": "聚光灯",
         "icon": "🔦",
         "description": "创建一个聚光灯"
     },
     {
         "category": "灯光",
-        "type": "hemisphere",
+        "type": "AmbientLight",
+        "name": "环境光",
+        "icon": "🌕",
+        "description": "创建一个环境光"
+    },
+    {
+        "category": "灯光",
+        "type": "HemisphereLight",
         "name": "半球光",
-        "icon": "🌈",
-        "description": "创建一个半球光源"
+        "icon": "🌗",
+        "description": "创建一个半球光"
     },
     {
         "category": "其他对象",

@@ -158,11 +158,19 @@ class ObjectManager {
       object = new THREE.Mesh(geometry, material);
       object.castShadow = true;
       object.receiveShadow = true;
+    
+      // 设置基本属性
+      object.userData = {
+        id: generateId(),
+        type: 'primitive',
+        primitiveType: type,
+        createdAt: new Date().toISOString()
+      };
       
-    } else if (['directionalLight', 'pointLight', 'spotLight', 'ambientLight', 'hemisphereLight'].includes(type)) {
+    } else if (['DirectionalLight', 'PointLight', 'SpotLight', 'AmbientLight', 'HemisphereLight'].includes(type)) {
       // 灯光类型
       switch (type) {
-        case 'directionalLight':
+        case 'DirectionalLight':
           object = new THREE.DirectionalLight(
             options.color || 0xffffff,
             options.intensity || 1
@@ -170,7 +178,7 @@ class ObjectManager {
           object.position.set(options.x || 5, options.y || 5, options.z || 5);
           object.castShadow = true;
           break;
-        case 'pointLight':
+        case 'PointLight':
           object = new THREE.PointLight(
             options.color || 0xffffff,
             options.intensity || 1,
@@ -180,7 +188,7 @@ class ObjectManager {
           object.position.set(options.x || 0, options.y || 2, options.z || 0);
           object.castShadow = true;
           break;
-        case 'spotLight':
+        case 'SpotLight':
           object = new THREE.SpotLight(
             options.color || 0xffffff,
             options.intensity || 1,
@@ -192,13 +200,13 @@ class ObjectManager {
           object.position.set(options.x || 0, options.y || 3, options.z || 0);
           object.castShadow = true;
           break;
-        case 'ambientLight':
+        case 'AmbientLight':
           object = new THREE.AmbientLight(
             options.color || 0x404040,
             options.intensity || 0.5
           );
           break;
-        case 'hemisphereLight':
+        case 'HemisphereLight':
           object = new THREE.HemisphereLight(
             options.skyColor || 0xffffbb,
             options.groundColor || 0x080820,
@@ -206,6 +214,14 @@ class ObjectManager {
           );
           break;
       }
+    
+      // 设置基本属性
+      object.userData = {
+        id: generateId(),
+        type: 'light',
+        primitiveType: type,
+        createdAt: new Date().toISOString()
+      };
       
     } else if (['camera', 'group', 'text', 'sprite'].includes(type)) {
       // 其他对象类型
@@ -235,6 +251,14 @@ class ObjectManager {
           object = new THREE.Sprite(spriteMaterial);
           break;
       }
+    
+      // 设置基本属性
+      object.userData = {
+        id: generateId(),
+        type: 'primitive',
+        primitiveType: type,
+        createdAt: new Date().toISOString()
+      };
     } else {
       // 默认创建立方体
       const geometry = createBoxGeometry();
@@ -242,15 +266,15 @@ class ObjectManager {
       object = new THREE.Mesh(geometry, material);
       object.castShadow = true;
       object.receiveShadow = true;
-    }
     
-    // 设置基本属性
-    object.userData = {
-      id: generateId(),
-      type: 'primitive',
-      primitiveType: type,
-      createdAt: new Date().toISOString()
-    };
+      // 设置基本属性
+      object.userData = {
+        id: generateId(),
+        type: 'primitive',
+        primitiveType: type,
+        createdAt: new Date().toISOString()
+      };
+    }
     
     if (options.name) {
       object.name = options.name;
@@ -648,10 +672,12 @@ class ObjectManager {
    * @returns {object} 对象数据
    */
   exportObjects(objectIds = []) {
-    const objects = objectIds.length > 0 
+    let objects = objectIds.length > 0 
       ? objectIds.map(id => this.getObject(id)).filter(Boolean)
       : this.getAllObjects();
     
+    // 过滤掉灯光
+    objects = objects.filter(obj => !['light'].includes(obj.userData.type));
     return {
       objects: objects.map(obj => ({
         id: obj.userData.id,

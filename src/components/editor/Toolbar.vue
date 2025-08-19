@@ -172,9 +172,10 @@ export default {
     }
     
     /**
-     * 加载场景文件（功能待实现）
+     * 加载场景文件
+     * 选择JSON文件并调用SceneManager.loadScene(json)
      */
-    function loadScene() {
+    async function loadScene() {
       const input = document.createElement('input');
       input.type = 'file';
       input.accept = '.json';
@@ -184,11 +185,12 @@ export default {
           try {
             const text = await file.text();
             const sceneData = JSON.parse(text);
-            
             if (confirm('确定要加载这个场景吗？这将替换当前场景。')) {
-              // TODO: 实现场景加载逻辑
-              console.log('加载场景数据:', sceneData);
-              alert('场景加载功能待实现');
+              // 动态引入SceneManager，调用loadScene
+              const { useSceneManager } = await import('../../core/SceneManager.js');
+              const sceneManager = useSceneManager();
+              await sceneManager.loadScene(sceneData);
+              alert('场景加载完成');
             }
           } catch (error) {
             console.error('加载场景失败:', error);
