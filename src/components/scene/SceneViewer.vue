@@ -71,6 +71,7 @@ export default {
         // 解析拖拽数据
         const data = event.dataTransfer.getData('application/json');
         if (!data) return;
+        // 拖拽数据，包含drive、path、name、type
         const fileInfo = JSON.parse(data);
         // 校验类型
         const modelExts = ['.glb', '.gltf', '.fbx', '.obj'];
@@ -82,6 +83,7 @@ export default {
         const blob = await vfs.blob(fileInfo.path + '/' + fileInfo.name);
         // Blob转File对象
         const file = new File([blob], fileInfo.name, { type: blob.type });
+        file.fileInfo = fileInfo; // 保留原始文件信息
         // 通过useAssets上传模型并纳入资源库
         const modelInfo = await uploadModel(file);
         // 加入场景

@@ -229,7 +229,7 @@ export function useAssets() {
     
     // 生成预览图
     modelInfo.preview = await generateModelPreview(model);
-    console.log(model)
+
     // 添加到资源库
     assetLibrary.models.set(modelInfo.id, modelInfo);
     

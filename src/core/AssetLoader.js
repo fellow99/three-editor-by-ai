@@ -95,16 +95,18 @@ class AssetLoader {
    */
   async loadModel(source, options = {}) {
     try {
-      let url, filename;
+      let url, filename, fileInfo;
       
       if (source instanceof File) {
         url = URL.createObjectURL(source);
         filename = source.name;
+        fileInfo = source.fileInfo || { name: filename };
       } else {
         url = source;
         filename = source.split('/').pop();
+        fileInfo = { name: filename, url: source };
       }
-      
+
       // 检查缓存
       if (this.cache.has(url) && !options.forceReload) {
         return this.cache.get(url);
@@ -133,24 +135,25 @@ class AssetLoader {
       }
       
       const result = await this.loadWithLoader(loader, url, options);
-      console.log(result)
       // 处理加载结果
       let model;
       if (result.scene) {
         // GLTF格式
         model = result.scene;
-        model.userData.animations = result.animations;
+        // 直接挂载animations到model对象，避免放入userData
+        model.animations = result.animations;
       } else {
         // OBJ/FBX格式
         model = result;
       }
       
       // 设置基本属性
-      model.userData.filename = filename;
+      model.userData.fileInfo = fileInfo;
       model.userData.loadedAt = new Date().toISOString();
       
       // 后处理
       this.postProcessModel(model, options);
+      console.log(model)
       
       // 缓存结果
       this.cache.set(url, model);
@@ -175,14 +178,16 @@ class AssetLoader {
    */
   async loadTexture(source, options = {}) {
     try {
-      let url, filename;
+      let url, filename, fileInfo;
       
       if (source instanceof File) {
         url = URL.createObjectURL(source);
         filename = source.name;
+        fileInfo = source.fileInfo || { name: filename };
       } else {
         url = source;
         filename = source.split('/').pop();
+        fileInfo = { name: filename, url: source };
       }
       
       // 检查缓存
@@ -196,8 +201,8 @@ class AssetLoader {
       
       const texture = await this.loadWithLoader(this.loaders.texture, url, options);
       
-      // 设置纹理属性
-      texture.userData.filename = filename;
+      // 设置用户数据
+      texture.userData.fileInfo = fileInfo;
       texture.userData.loadedAt = new Date().toISOString();
       
       // 应用纹理设置
