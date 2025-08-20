@@ -260,13 +260,13 @@ class SceneManager {
           try {
             const vfsService = (await import('../services/vfs-service.js')).default;
             const { useAssets } = await import('../composables/useAssets.js');
-            const { uploadModel, addModelToScene } = useAssets();
+            const { loadModel, addModelToScene } = useAssets();
             const fileInfo = objData.userData.fileInfo;
             const vfs = vfsService.getVfs(fileInfo.drive);
             const blob = await vfs.blob(fileInfo.path + '/' + fileInfo.name);
             const file = new File([blob], fileInfo.name, { type: blob.type });
             file.fileInfo = fileInfo;
-            const modelInfo = await uploadModel(file);
+            const modelInfo = await loadModel(file);
             await addModelToScene(modelInfo.id, {
               name: objData.name,
               position: objData.position,

@@ -35,12 +35,12 @@ export function useAssets() {
     categories: new Map()
   });
   
-  // 上传状态
-  const uploadState = reactive({
-    isUploading: false,
-    uploadProgress: 0,
-    uploadQueue: [],
-    failedUploads: []
+  // 加载状态
+  const loadState = reactive({
+    isLoading: false,
+    loadProgress: 0,
+    loadQueue: [],
+    failedLoads: []
   });
   
   // 拖拽状态
@@ -129,46 +129,46 @@ export function useAssets() {
   });
   
   /**
-   * 选择并上传文件
+   * 选择并加载文件
    * @param {string[]} accept 接受的文件类型
    * @param {boolean} multiple 是否允许多选
    */
-  async function selectAndUploadFiles(accept = [], multiple = true) {
+  async function selectAndLoadFiles(accept = [], multiple = true) {
     try {
       const files = await selectFiles(accept, multiple);
-      await uploadFiles(files);
+      await loadFiles(files);
     } catch (error) {
       console.error('选择文件失败:', error);
     }
   }
   
   /**
-   * 上传文件
+   * 加载文件
    * @param {FileList|File[]} files 文件列表
    */
-  async function uploadFiles(files) {
+  async function loadFiles(files) {
     const fileArray = Array.from(files);
     
-    uploadState.isUploading = true;
-    uploadState.uploadProgress = 0;
-    uploadState.uploadQueue = fileArray.map(file => ({
+    loadState.isLoading = true;
+    loadState.loadProgress = 0;
+    loadState.loadQueue = fileArray.map(file => ({
       file,
       status: 'pending',
       progress: 0,
       result: null,
       error: null
     }));
-    uploadState.failedUploads = [];
+    loadState.failedLoads = [];
     
     for (let i = 0; i < fileArray.length; i++) {
       const file = fileArray[i];
-      const queueItem = uploadState.uploadQueue[i];
+      const queueItem = loadState.loadQueue[i];
       
       try {
-        queueItem.status = 'uploading';
+        queueItem.status = 'loading';
         
         if (isSupported3DFormat(file.name)) {
-          const model = await uploadModel(file, {
+          const model = await loadModel(file, {
             onProgress: (progress) => {
               queueItem.progress = progress;
               updateOverallProgress();
@@ -177,7 +177,7 @@ export function useAssets() {
           queueItem.result = model;
           queueItem.status = 'completed';
         } else if (isTextureFormat(file.name)) {
-          const texture = await uploadTexture(file, {
+          const texture = await loadTexture(file, {
             onProgress: (progress) => {
               queueItem.progress = progress;
               updateOverallProgress();
@@ -191,22 +191,22 @@ export function useAssets() {
       } catch (error) {
         queueItem.status = 'failed';
         queueItem.error = error.message;
-        uploadState.failedUploads.push(queueItem);
+        loadState.failedLoads.push(queueItem);
       }
       
       updateOverallProgress();
     }
     
-    uploadState.isUploading = false;
+    loadState.isLoading = false;
   }
   
   /**
-   * 上传3D模型
+   * 加载3D模型
    * @param {File} file 文件对象
    * @param {object} options 选项
    * @returns {object} 模型信息
    */
-  async function uploadModel(file, options = {}) {
+  async function loadModel(file, options = {}) {
     const model = await assetLoader.loadModel(file, {
       autoScale: false,
       center: false,
@@ -237,12 +237,12 @@ export function useAssets() {
   }
   
   /**
-   * 上传纹理
+   * 加载纹理
    * @param {File} file 文件对象
    * @param {object} options 选项
    * @returns {object} 纹理信息
    */
-  async function uploadTexture(file, options = {}) {
+  async function loadTexture(file, options = {}) {
     const texture = await assetLoader.loadTexture(file, options);
     
     const textureInfo = {
@@ -454,7 +454,7 @@ export function useAssets() {
     
     const files = handleDragFiles(event);
     if (files.length > 0) {
-      await uploadFiles(files);
+      await loadFiles(files);
     }
   }
   
@@ -462,12 +462,12 @@ export function useAssets() {
    * 更新总体进度
    */
   function updateOverallProgress() {
-    const total = uploadState.uploadQueue.length;
-    const completed = uploadState.uploadQueue.filter(item => 
+    const total = loadState.loadQueue.length;
+    const completed = loadState.loadQueue.filter(item => 
       item.status === 'completed' || item.status === 'failed'
     ).length;
     
-    uploadState.uploadProgress = total > 0 ? (completed / total) * 100 : 0;
+    loadState.loadProgress = total > 0 ? (completed / total) * 100 : 0;
   }
   
   /**
@@ -540,7 +540,7 @@ export function useAssets() {
   const instance = {
     // 状态
     assetLibrary,
-    uploadState,
+    loadState,
     dragState,
     searchQuery,
     selectedCategory,
@@ -552,10 +552,10 @@ export function useAssets() {
     filteredTextures,
     
     // 方法
-    selectAndUploadFiles,
-    uploadFiles,
-    uploadModel,
-    uploadTexture,
+    selectAndLoadFiles,
+    loadFiles,
+    loadModel,
+    loadTexture,
     addModelToScene,
     deleteAsset,
     toggleFavorite,

@@ -49,7 +49,7 @@ export default {
     // 模型加载器单例
     const assetLoader = useAssetLoader();
     // 资源管理器
-    const { uploadModel, addModelToScene } = useAssets();
+    const { loadModel, addModelToScene } = useAssets();
 
     /**
      * 拖拽进入时阻止默认，允许放置
@@ -88,8 +88,8 @@ export default {
         // Blob转File对象
         const file = new File([blob], fileInfo.name, { type: blob.type });
         file.fileInfo = fileInfo; // 保留原始文件信息
-        // 通过useAssets上传模型并纳入资源库
-        const modelInfo = await uploadModel(file);
+        // 通过useAssets加载模型并纳入资源库
+        const modelInfo = await loadModel(file);
         // 加入场景
         addModelToScene(modelInfo.id);
         ElMessage.success('文件加载成功');

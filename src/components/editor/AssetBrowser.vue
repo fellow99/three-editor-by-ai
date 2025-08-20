@@ -1,6 +1,6 @@
 <template>
   <div class="asset-browser">
-    <!-- 拖拽上传区域 -->
+    <!-- 拖拽加载区域 -->
     <div 
       v-if="dragState.isDragOver"
       class="drag-overlay"
@@ -11,26 +11,26 @@
     >
       <div class="drag-content">
         <span class="drag-icon">📥</span>
-        <p>释放文件以上传</p>
+        <p>释放文件以加载</p>
       </div>
     </div>
 
-    <!-- 上传进度 -->
-    <div v-if="uploadState.isUploading" class="upload-progress">
+    <!-- 加载进度 -->
+    <div v-if="loadState.isLoading" class="load-progress">
       <div class="progress-header">
-        <span>上传中... {{ uploadState.uploadProgress.toFixed(0) }}%</span>
+        <span>加载中... {{ loadState.loadProgress.toFixed(0) }}%</span>
       </div>
       <div class="progress-bar">
         <div 
           class="progress-fill" 
-          :style="{ width: uploadState.uploadProgress + '%' }"
+          :style="{ width: loadState.loadProgress + '%' }"
         ></div>
       </div>
-      <div class="upload-queue">
+      <div class="load-queue">
         <div 
-          v-for="(item, index) in uploadState.uploadQueue" 
+          v-for="(item, index) in loadState.loadQueue" 
           :key="index"
-          class="upload-item"
+          class="load-item"
           :class="item.status"
         >
           <span class="item-name">{{ item.file.name }}</span>
@@ -64,17 +64,17 @@
       <!-- 基础几何体Tab已迁移到ResourcePanel.vue -->
       <!-- 3D模型 -->
       <div v-if="activeTab === 'models'" class="models-grid">
-        <!-- 固定上传模型按钮 -->
+        <!-- 固定加载模型按钮 -->
         <div class="asset-item model-item upload-item-fixed"
-          @click="selectAndUploadFiles(['.gltf', '.glb', '.obj', '.fbx'])"
-          title="上传模型文件">
+          @click="selectAndLoadFiles(['.gltf', '.glb', '.obj', '.fbx'])"
+          title="加载模型文件">
           <div class="asset-preview">
             <div class="preview-placeholder">
               <span class="placeholder-icon">⬆️</span>
             </div>
           </div>
           <div class="asset-info">
-            <div class="asset-name">上传模型文件</div>
+            <div class="asset-name">加载模型文件</div>
           </div>
         </div>
         <!-- 渲染模型列表 -->
@@ -144,17 +144,17 @@
 
       <!-- 纹理 -->
       <div v-if="activeTab === 'textures'" class="textures-grid">
-        <!-- 固定上传纹理按钮 -->
+        <!-- 固定加载纹理按钮 -->
         <div class="asset-item texture-item upload-item-fixed"
-          @click="selectAndUploadFiles(['.jpg', '.jpeg', '.png', '.bmp', '.gif'])"
-          title="上传纹理文件">
+          @click="selectAndLoadFiles(['.jpg', '.jpeg', '.png', '.bmp', '.gif'])"
+          title="加载纹理文件">
           <div class="asset-preview">
             <div class="preview-placeholder">
               <span class="placeholder-icon">⬆️</span>
             </div>
           </div>
           <div class="asset-info">
-            <div class="asset-name">上传纹理文件</div>
+            <div class="asset-name">加载纹理文件</div>
           </div>
         </div>
         <!-- 渲染纹理列表 -->
@@ -241,7 +241,7 @@ export default {
     // 从assets composable获取状态
     const {
       assetLibrary,
-      uploadState,
+      loadState,
       dragState,
       filteredModels,
       filteredTextures,
@@ -333,15 +333,15 @@ export default {
       return statusMap[status] || status;
     }
 
-    // 解构 selectAndUploadFiles 以便 setup 内和模板都能直接用
-    const { selectAndUploadFiles } = assets;
+    // 解构 selectAndLoadFiles 以便 setup 内和模板都能直接用
+    const { selectAndLoadFiles } = assets;
     
     return {
       // 状态
       activeTab,
       selectedAssetId,
       assetLibrary,
-      uploadState,
+      loadState,
       dragState,
       filteredModels,
       filteredTextures,
@@ -359,7 +359,7 @@ export default {
       handleDragEnter,
       handleDragLeave,
       handleDrop,
-      selectAndUploadFiles
+      selectAndLoadFiles
     };
   }
 };
@@ -581,8 +581,8 @@ export default {
   color: #fff;
 }
 
-/* 上传进度浮动蒙版样式 */
-.upload-progress {
+/* 加载进度浮动蒙版样式 */
+.load-progress {
   position: fixed;
   top: 0;
   left: 0;
@@ -596,33 +596,33 @@ export default {
   justify-content: center;
   pointer-events: auto;
 }
-.upload-progress .progress-header,
-.upload-progress .progress-bar,
-.upload-progress .upload-queue {
+.load-progress .progress-header,
+.load-progress .progress-bar,
+.load-progress .load-queue {
   width: 320px;
   max-width: 90vw;
   margin: 0 auto 16px auto;
   background: transparent;
   text-align: center;
 }
-.upload-progress .progress-header {
+.load-progress .progress-header {
   font-size: 18px;
   color: #fff;
   margin-bottom: 12px;
 }
-.upload-progress .progress-bar {
+.load-progress .progress-bar {
   height: 10px;
   background: #444;
   border-radius: 5px;
   overflow: hidden;
   margin-bottom: 12px;
 }
-.upload-progress .progress-fill {
+.load-progress .progress-fill {
   height: 100%;
   background: #007acc;
   transition: width 0.3s;
 }
-.upload-progress .upload-queue {
+.load-progress .load-queue {
   background: transparent;
   color: #fff;
   font-size: 13px;
@@ -630,22 +630,22 @@ export default {
   padding: 0;
   margin-bottom: 0;
 }
-.upload-progress .upload-item {
+.load-progress .load-item {
   display: flex;
   justify-content: space-between;
   padding: 2px 0;
   border-bottom: 1px solid #4442;
 }
-.upload-progress .upload-item:last-child {
+.load-progress .load-item:last-child {
   border-bottom: none;
 }
-.upload-progress .item-name {
+.load-progress .item-name {
   flex: 1;
   text-align: left;
   color: #fff;
   font-size: 13px;
 }
-.upload-progress .item-status {
+.load-progress .item-status {
   margin-left: 12px;
   color: #aaa;
   font-size: 13px;
