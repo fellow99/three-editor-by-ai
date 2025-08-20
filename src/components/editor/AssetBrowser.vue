@@ -83,8 +83,9 @@
           :key="model.id"
           class="asset-item model-item"
           @click="selectModel(model)"
-          @dblclick="addModelToScene(model.id)"
           :class="{ selected: selectedAssetId === model.id }"
+          draggable="true"
+          @dragstart="onModelDragStart(model)"
         >
           <div class="asset-preview">
             <img 
@@ -113,13 +114,6 @@
             </div>
             
             <div class="asset-actions">
-              <button 
-                @click.stop="addModelToScene(model.id)"
-                class="action-btn add-btn"
-                title="添加到场景"
-              >
-                <span class="icon">➕</span>
-              </button>
               <button 
                 @click.stop="showModelOptions(model)"
                 class="action-btn options-btn"
@@ -336,6 +330,23 @@ export default {
     // 解构 selectAndLoadFiles 以便 setup 内和模板都能直接用
     const { selectAndLoadFiles } = assets;
     
+    /**
+     * 拖拽模型到场景
+     * @param {Object} model 模型对象
+     */
+    /**
+     * 拖拽模型到场景，写入id、type、name（含后缀）
+     * @param {Object} model 模型对象
+     */
+    function onModelDragStart(model) {
+      event.dataTransfer.setData('application/x-model', JSON.stringify({
+        id: model.id,
+        type: model.type,
+        name: model.name // 保证带后缀
+      }));
+      event.dataTransfer.effectAllowed = 'copy';
+    }
+
     return {
       // 状态
       activeTab,
@@ -353,13 +364,13 @@ export default {
       applyTextureToSelected,
       formatFileSize,
       getStatusText,
-      addModelToScene,
       deleteAsset,
       toggleFavorite,
       handleDragEnter,
       handleDragLeave,
       handleDrop,
-      selectAndLoadFiles
+      selectAndLoadFiles,
+      onModelDragStart
     };
   }
 };

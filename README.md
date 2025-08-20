@@ -140,6 +140,7 @@ three-editor-by-ai/
   - selectionStore 生命周期与 useObjectSelection 组合式函数一致，自动随页面刷新或状态重置而清空。
 - useAssets.js 中：
   - 资源加载函数（如 loadModel、loadTexture）已实现缓存机制：若 assetLibrary 中已存在同名且大小一致的资源，则直接返回缓存，避免重复加载和内存浪费。
+- 所有资源（基础几何体、模型、资源）添加方式已统一为拖拽，点击添加功能已移除
 
 ## 💯 AI
 

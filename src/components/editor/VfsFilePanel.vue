@@ -122,8 +122,8 @@ function onItemDrag(file, event) {
   if (file.type !== 'FILE') return;
   const ext = file.name ? file.name.slice(file.name.lastIndexOf('.')).toLowerCase() : '';
   if (!modelExts.includes(ext)) return;
-  // 设置拖拽数据，包含drive、path、name、type
-  event.dataTransfer.setData('application/json', JSON.stringify({
+  // 设置拖拽数据，类型统一为application/x-model，便于SceneViewer统一处理
+  event.dataTransfer.setData('application/x-model', JSON.stringify({
     drive: currentVfs.value?._drive,
     path: file.path,
     name: file.name,

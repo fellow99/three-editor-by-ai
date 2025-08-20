@@ -34,7 +34,6 @@
       <VfsFilePanel v-show="props.activeLeftTab === 'files'" />
       <PrimitiveBrowser
         v-show="props.activeLeftTab === 'primitives'"
-        @select="addPrimitive"
       />
       <AssetBrowser v-show="props.activeLeftTab === 'assets'" />
       <Inspector v-show="props.activeLeftTab === 'inspector'" @delete-selected="handleDeleteSelected" />
@@ -52,14 +51,6 @@ import VfsFilePanel from './VfsFilePanel.vue';
 import PrimitiveBrowser from './PrimitiveBrowser.vue';
 
 const scene = inject('scene');
-function addPrimitive(type) {
-  const position = [
-    Math.random() * 4 - 2,
-    Math.random() * 2,
-    Math.random() * 4 - 2
-  ];
-  scene.createPrimitive(type, { position });
-}
 
 // 接收父组件传递的 props
 const props = defineProps({

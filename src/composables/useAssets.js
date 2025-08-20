@@ -209,31 +209,19 @@ export function useAssets() {
   /**
    * 获取已缓存的模型（根据文件名和大小）
    * @param {string} filename 文件名
-   * @param {number} size 文件大小
    * @returns {object|null} 已存在则返回模型信息，否则返回null
    */
-  function getCachedModel(filename, size) {
-    for (const model of assetLibrary.models.values()) {
-      if (model.filename === filename && model.size === size) {
-        return model;
-      }
-    }
-    return null;
+  function getCachedModel(filename) {
+    return assetLibrary.models.get(filename);
   }
 
   /**
    * 获取已缓存的纹理（根据文件名和大小）
    * @param {string} filename 文件名
-   * @param {number} size 文件大小
    * @returns {object|null} 已存在则返回纹理信息，否则返回null
    */
-  function getCachedTexture(filename, size) {
-    for (const texture of assetLibrary.textures.values()) {
-      if (texture.filename === filename && texture.size === size) {
-        return texture;
-      }
-    }
-    return null;
+  function getCachedTexture(getFileName) {
+    return assetLibrary.textures.get(filename);
   }
 
   /**

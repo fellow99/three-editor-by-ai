@@ -20,8 +20,9 @@
             v-for="primitive in group.items"
             :key="primitive.type"
             class="primitive-item"
-            @click="onSelect(primitive.type)"
             :title="primitive.description"
+            draggable="true"
+            @dragstart="onDragStart(primitive)"
           >
             <div class="primitive-preview">
               <span class="primitive-icon">{{ primitive.icon }}</span>
@@ -47,9 +48,17 @@ import { computed } from 'vue';
 // @ts-ignore
 import PRIMITIVES from '../../constants/PRIMITIVES.json';
 
-const emit = defineEmits(['select']);
-function onSelect(type) {
-  emit('select', type);
+/**
+ * 拖拽开始事件，设置拖拽数据
+ * @param {Object} primitive 拖拽的几何体/灯光对象
+ */
+function onDragStart(primitive) {
+  // 拖拽类型统一为primitive，便于SceneViewer区分
+  event.dataTransfer.setData('application/x-primitive', JSON.stringify({
+    type: primitive.type
+  }));
+  // 可选：设置拖拽效果
+  event.dataTransfer.effectAllowed = 'copy';
 }
 
 // 按category分组

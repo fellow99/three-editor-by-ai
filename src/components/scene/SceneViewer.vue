@@ -72,42 +72,99 @@ export default {
      * 拖拽释放时处理模型加载（优先判断资源是否已存在，避免重复加载）
      * @param {DragEvent} event
      */
+    /**
+     * 拖拽释放时处理不同类型的对象加载
+     * 支持VFS模型文件、资源库模型、基础几何体/灯光
+     * @param {DragEvent} event
+     */
     async function onDrop(event) {
       event.preventDefault();
       if (appState) appState.isLoading = true;
       try {
-        // 解析拖拽数据
-        const data = event.dataTransfer.getData('application/json');
-        if (!data) return;
-        // 拖拽数据，包含drive、path、name、type
-        const fileInfo = JSON.parse(data);
-        // 校验类型
-        const modelExts = ['.glb', '.gltf', '.fbx', '.obj'];
-        const ext = fileInfo.name ? fileInfo.name.slice(fileInfo.name.lastIndexOf('.')).toLowerCase() : '';
-        if (fileInfo.type !== 'FILE' || !modelExts.includes(ext)) return;
-        // 获取vfs实例
-        const vfs = vfsService.getVfs(fileInfo.drive);
-        // 获取Blob对象
-        const blob = await vfs.blob(fileInfo.path + '/' + fileInfo.name);
-        // Blob转File对象
-        const file = new File([blob], fileInfo.name, { type: blob.type });
-        file.fileInfo = fileInfo; // 保留原始文件信息
+        // 优先判断拖拽类型
+        // 1. 基础几何体/灯光
+        const primitiveData = event.dataTransfer.getData('application/x-primitive');
+        if (primitiveData) {
+          const primitive = JSON.parse(primitiveData);
+          // 触发添加基础几何体/灯光的逻辑
+          // 这里假设有scene.addPrimitive(type)方法，实际需根据项目实现
+          if (scene) {
+            await scene.createPrimitive(primitive.type);
+            ElMessage.success('已添加基础对象');
+          } else {
+            ElMessage.warning('未实现基础对象添加');
+          }
+          return;
+        }
+        // 2. 资源库/虚拟文件系统模型
+        const modelData = event.dataTransfer.getData('application/x-model');
+        if (modelData) {
+          const modelInfo = JSON.parse(modelData);
+          // 资源库模型（有id字段）
+          if (modelInfo.id) {
+            // 优先判断资源是否已存在，优先用带后缀的name
+            const fileName = modelInfo.name || modelInfo.id;
+            const cached = getCachedModel( modelInfo.id);
+            if (cached) {
+              addModelToScene(cached.id);
+              ElMessage.success('已从缓存加载');
+            } else {
+              ElMessage.error('未找到模型资源：' + fileName);
+            }
+            return;
+          }
+          // VFS模型（有drive/path/name/type字段）
+          if (modelInfo.drive && modelInfo.path && modelInfo.name) {
+            const modelExts = ['.glb', '.gltf', '.fbx', '.obj'];
+            const ext = modelInfo.name ? modelInfo.name.slice(modelInfo.name.lastIndexOf('.')).toLowerCase() : '';
+            if (modelInfo.type !== 'FILE' || !modelExts.includes(ext)) return;
+            // 获取vfs实例
+            const vfs = vfsService.getVfs(modelInfo.drive);
+            // 获取Blob对象
+            const blob = await vfs.blob(modelInfo.path + '/' + modelInfo.name);
+            // Blob转File对象
+            const file = new File([blob], modelInfo.name, { type: blob.type });
+            file.fileInfo = modelInfo; // 保留原始文件信息
 
-        // 优先判断资源是否已存在
-        // 注意：Blob对象没有size信息，需用blob.size
-        const cached = getCachedModel(file.name, blob.size);
-        if (cached) {
-          addModelToScene(cached.id);
-          ElMessage.success('已从缓存加载');
-        } else {
-          // 通过useAssets加载模型并纳入资源库
-          const modelInfo = await loadModel(file);
-          addModelToScene(modelInfo.id);
-          ElMessage.success('文件加载成功');
+            // 优先判断资源是否已存在
+            const cached = getCachedModel(file.name, blob.size);
+            if (cached) {
+              addModelToScene(cached.id);
+              ElMessage.success('已从缓存加载');
+            } else {
+              // 通过useAssets加载模型并纳入资源库
+              const loaded = await loadModel(file);
+              addModelToScene(loaded.id);
+              ElMessage.success('文件加载成功');
+            }
+            return;
+          }
+        }
+        // 3. 兼容旧的application/json拖拽（VFS面板老实现）
+        const data = event.dataTransfer.getData('application/json');
+        if (data) {
+          const fileInfo = JSON.parse(data);
+          const modelExts = ['.glb', '.gltf', '.fbx', '.obj'];
+          const ext = fileInfo.name ? fileInfo.name.slice(fileInfo.name.lastIndexOf('.')).toLowerCase() : '';
+          if (fileInfo.type !== 'FILE' || !modelExts.includes(ext)) return;
+          const vfs = vfsService.getVfs(fileInfo.drive);
+          const blob = await vfs.blob(fileInfo.path + '/' + fileInfo.name);
+          const file = new File([blob], fileInfo.name, { type: blob.type });
+          file.fileInfo = fileInfo;
+          const cached = getCachedModel(file.name, blob.size);
+          if (cached) {
+            addModelToScene(cached.id);
+            ElMessage.success('已从缓存加载');
+          } else {
+            const modelInfo = await loadModel(file);
+            addModelToScene(modelInfo.id);
+            ElMessage.success('文件加载成功');
+          }
+          return;
         }
       } catch (e) {
         // 可根据需要弹窗提示
-        console.error('拖拽加载模型失败', e);
+        console.error('拖拽加载对象失败', e);
       } finally {
         if (appState) appState.isLoading = false;
       }
