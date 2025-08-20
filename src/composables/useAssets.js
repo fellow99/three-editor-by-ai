@@ -201,18 +201,62 @@ export function useAssets() {
   }
   
   /**
-   * 加载3D模型
+   * 判断指定模型是否已存在于资源库
+   * @param {string} filename 文件名
+   * @param {number} size 文件大小
+   * @returns {object|null} 已存在则返回模型信息，否则返回null
+   */
+  /**
+   * 获取已缓存的模型（根据文件名和大小）
+   * @param {string} filename 文件名
+   * @param {number} size 文件大小
+   * @returns {object|null} 已存在则返回模型信息，否则返回null
+   */
+  function getCachedModel(filename, size) {
+    for (const model of assetLibrary.models.values()) {
+      if (model.filename === filename && model.size === size) {
+        return model;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * 获取已缓存的纹理（根据文件名和大小）
+   * @param {string} filename 文件名
+   * @param {number} size 文件大小
+   * @returns {object|null} 已存在则返回纹理信息，否则返回null
+   */
+  function getCachedTexture(filename, size) {
+    for (const texture of assetLibrary.textures.values()) {
+      if (texture.filename === filename && texture.size === size) {
+        return texture;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * 加载3D模型，带缓存机制
+   * 如果资源库中已存在同名模型则直接返回缓存，否则加载并缓存
    * @param {File} file 文件对象
    * @param {object} options 选项
    * @returns {object} 模型信息
    */
   async function loadModel(file, options = {}) {
+    // 缓存检查：按文件名查找
+    const cached = getCachedModel(file.name, file.size);
+    if (cached) {
+      // 已缓存，直接返回
+      return cached;
+    }
+
     const model = await assetLoader.loadModel(file, {
       autoScale: false,
       center: false,
       ...options
     });
-    
+
     const modelInfo = {
       id: model.userData.id || generateId(),
       name: getFileName(file.name),
@@ -226,25 +270,33 @@ export function useAssets() {
       loadedAt: new Date().toISOString(),
       isFavorite: false
     };
-    
+
     // 生成预览图
     modelInfo.preview = await generateModelPreview(model);
 
     // 添加到资源库
     assetLibrary.models.set(modelInfo.id, modelInfo);
-    
+
     return modelInfo;
   }
   
   /**
-   * 加载纹理
+   * 加载纹理，带缓存机制
+   * 如果资源库中已存在同名纹理则直接返回缓存，否则加载并缓存
    * @param {File} file 文件对象
    * @param {object} options 选项
    * @returns {object} 纹理信息
    */
   async function loadTexture(file, options = {}) {
+    // 缓存检查：按文件名查找
+    const cached = getCachedTexture(file.name, file.size);
+    if (cached) {
+      // 已缓存，直接返回
+      return cached;
+    }
+
     const texture = await assetLoader.loadTexture(file, options);
-    
+
     const textureInfo = {
       id: generateId(),
       name: getFileName(file.name),
@@ -258,10 +310,10 @@ export function useAssets() {
       loadedAt: new Date().toISOString(),
       isFavorite: false
     };
-    
+
     // 添加到资源库
     assetLibrary.textures.set(textureInfo.id, textureInfo);
-    
+
     return textureInfo;
   }
   
@@ -556,6 +608,8 @@ export function useAssets() {
     loadFiles,
     loadModel,
     loadTexture,
+    getCachedModel,
+    getCachedTexture,
     addModelToScene,
     deleteAsset,
     toggleFavorite,

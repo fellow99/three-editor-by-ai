@@ -13,6 +13,8 @@ import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { reactive, watch } from 'vue';
 
+import { useObjectManager } from './ObjectManager.js';
+
 /**
  * SceneManager
  * Three.js场景、渲染器、相机、控制器、后处理等统一管理类
@@ -80,8 +82,9 @@ class SceneManager {
     // 监听变换事件，同步属性
     this.transformControls.addEventListener('objectChange', () => {
       if (this.currentTransformObject) {
-        if (this.scene.objectManager && this.scene.objectManager.setObjectTransform) {
-          this.scene.objectManager.setObjectTransform(
+        const objectManager = useObjectManager();
+        if (objectManager && objectManager.setObjectTransform) {
+          objectManager.setObjectTransform(
             this.currentTransformObject.userData.id,
             {
               position: [
@@ -212,7 +215,7 @@ class SceneManager {
    */
   async loadScene(json) {
     // 1. 清空场景
-    this.clearScene();
+    await this.clearScene();
 
     // 2. 恢复相机参数
     if (json.camera && this.camera) {
@@ -238,7 +241,6 @@ class SceneManager {
 
     // 4. 恢复灯光
     if (Array.isArray(json.lights)) {
-      const { useObjectManager } = await import('./ObjectManager.js');
       const objectManager = useObjectManager();
       json.lights.forEach(lightData => {
         objectManager.createPrimitive?.(lightData.type, {
@@ -251,7 +253,6 @@ class SceneManager {
 
     // 5. 恢复对象
     if (Array.isArray(json.objects)) {
-      const { useObjectManager } = await import('./ObjectManager.js');
       const objectManager = useObjectManager();
       for (const objData of json.objects) {
         // userData.fileInfo 走异步模型加载
@@ -260,13 +261,20 @@ class SceneManager {
           try {
             const vfsService = (await import('../services/vfs-service.js')).default;
             const { useAssets } = await import('../composables/useAssets.js');
-            const { loadModel, addModelToScene } = useAssets();
+            const { loadModel, addModelToScene, getCachedModel } = useAssets();
             const fileInfo = objData.userData.fileInfo;
             const vfs = vfsService.getVfs(fileInfo.drive);
             const blob = await vfs.blob(fileInfo.path + '/' + fileInfo.name);
             const file = new File([blob], fileInfo.name, { type: blob.type });
             file.fileInfo = fileInfo;
-            const modelInfo = await loadModel(file);
+            // 优先判断缓存
+            const cached = getCachedModel(file.name, blob.size);
+            let modelInfo;
+            if (cached) {
+              modelInfo = cached;
+            } else {
+              modelInfo = await loadModel(file);
+            }
             await addModelToScene(modelInfo.id, {
               name: objData.name,
               position: objData.position,
@@ -692,6 +700,10 @@ class SceneManager {
     if (this.transformHelper && !this.scene.children.includes(this.transformHelper)) {
       this.scene.add(this.transformHelper);
     }
+
+    // 同步清理 ObjectManager 中的对象
+      const objectManager = useObjectManager();
+      objectManager.clear();
   }
   
   /**

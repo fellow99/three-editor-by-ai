@@ -49,7 +49,7 @@ export default {
     // 模型加载器单例
     const assetLoader = useAssetLoader();
     // 资源管理器
-    const { loadModel, addModelToScene } = useAssets();
+    const { loadModel, addModelToScene, getCachedModel } = useAssets();
 
     /**
      * 拖拽进入时阻止默认，允许放置
@@ -66,6 +66,10 @@ export default {
     /**
      * 拖拽释放时处理模型加载（纳入资源库并加入场景）
      * 增加全局loading蒙版
+     * @param {DragEvent} event
+     */
+    /**
+     * 拖拽释放时处理模型加载（优先判断资源是否已存在，避免重复加载）
      * @param {DragEvent} event
      */
     async function onDrop(event) {
@@ -88,11 +92,19 @@ export default {
         // Blob转File对象
         const file = new File([blob], fileInfo.name, { type: blob.type });
         file.fileInfo = fileInfo; // 保留原始文件信息
-        // 通过useAssets加载模型并纳入资源库
-        const modelInfo = await loadModel(file);
-        // 加入场景
-        addModelToScene(modelInfo.id);
-        ElMessage.success('文件加载成功');
+
+        // 优先判断资源是否已存在
+        // 注意：Blob对象没有size信息，需用blob.size
+        const cached = getCachedModel(file.name, blob.size);
+        if (cached) {
+          addModelToScene(cached.id);
+          ElMessage.success('已从缓存加载');
+        } else {
+          // 通过useAssets加载模型并纳入资源库
+          const modelInfo = await loadModel(file);
+          addModelToScene(modelInfo.id);
+          ElMessage.success('文件加载成功');
+        }
       } catch (e) {
         // 可根据需要弹窗提示
         console.error('拖拽加载模型失败', e);
