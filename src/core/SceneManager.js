@@ -14,6 +14,8 @@ import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { reactive, watch } from 'vue';
 
 import { useObjectManager } from './ObjectManager.js';
+import vfsService from '../services/vfs-service.js';
+import { useAssets } from '../composables/useAssets.js';
 
 /**
  * SceneManager
@@ -259,8 +261,6 @@ class SceneManager {
         if (objData.userData && objData.userData.fileInfo) {
           // 复用SceneViewer.vue onDrop的核心逻辑
           try {
-            const vfsService = (await import('../services/vfs-service.js')).default;
-            const { useAssets } = await import('../composables/useAssets.js');
             const { loadModel, addModelToScene, getCachedModel } = useAssets();
             const fileInfo = objData.userData.fileInfo;
             const vfs = vfsService.getVfs(fileInfo.drive);

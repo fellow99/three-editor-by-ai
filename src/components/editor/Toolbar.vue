@@ -112,6 +112,7 @@ import { useObjectSelection } from '../../composables/useObjectSelection.js';
 import useTransform from '../../composables/useTransform.js';
 import { useObjectManager } from '../../core/ObjectManager.js';
 import { exportJSON } from '../../utils/fileUtils.js';
+import { useSceneManager } from '../../core/SceneManager.js';
 
 export default {
   name: 'Toolbar',
@@ -217,8 +218,7 @@ export default {
               // 显示loading
               if (appState) appState.isLoading = true;
               try {
-                // 动态引入SceneManager，调用loadScene
-                const { useSceneManager } = await import('../../core/SceneManager.js');
+                // 直接调用useSceneManager
                 const sceneManager = useSceneManager();
                 
                 objectSelection.clearSelection();
