@@ -21,6 +21,7 @@
 - 虚拟文件系统，对接后端文件库
 - 文件面板拖拽模型文件到场景直接加载
 - 支持从虚拟文件系统面板拖拽模型文件到场景直接加载
+- 拖拽添加对象时，自动放置到当前视点位置
 - 后处理机制（集成Three.js EffectComposer，支持Bloom、FXAA等多种后处理效果链路，统一API动态管理Pass）
 
 ## 🚀 技术栈
@@ -59,7 +60,7 @@ three-editor-by-ai/
 │   │   ├── dialog/                           # 各类对话框组件
 │   │   │   └── TextureSelectDialog.vue       # 纹理选择对话框
 │   │   ├── scene/                            # 3D 场景组件
-│   │   │   ├── SceneViewer.vue               # 主场景视图
+│   │   │   ├── SceneViewer.vue               # 主场景视图，支持拖拽添加对象到当前视点位置
 │   │   │   ├── InteractionHints.vue          # 操作提示组件
 │   │   │   ├── ViewportControls.vue          # 视图控制面板组件
 │   │   │   ├── CubeViewportControls.vue      # 立方体视角控件

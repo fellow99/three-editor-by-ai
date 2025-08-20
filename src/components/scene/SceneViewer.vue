@@ -77,9 +77,20 @@ export default {
      * 支持VFS模型文件、资源库模型、基础几何体/灯光
      * @param {DragEvent} event
      */
+    /**
+     * 拖拽释放时处理模型加载（优先判断资源是否已存在，避免重复加载）
+     * 新增：添加对象时将其位置设为当前视点位置
+     * @param {DragEvent} event
+     */
     async function onDrop(event) {
       event.preventDefault();
       if (appState) appState.isLoading = true;
+      // 获取当前相机位置，作为新对象的position
+      let options = {};
+      if (scene && scene.sceneManager && scene.sceneManager.controls && scene.sceneManager.controls.target) {
+        const target = scene.sceneManager.controls.target;
+        options.position = [target.x, target.y, target.z];
+      }
       try {
         // 优先判断拖拽类型
         // 1. 基础几何体/灯光
@@ -89,7 +100,7 @@ export default {
           // 触发添加基础几何体/灯光的逻辑
           // 这里假设有scene.addPrimitive(type)方法，实际需根据项目实现
           if (scene) {
-            await scene.createPrimitive(primitive.type);
+            await scene.createPrimitive(primitive.type, options);
             ElMessage.success('已添加基础对象');
           } else {
             ElMessage.warning('未实现基础对象添加');
@@ -106,7 +117,7 @@ export default {
             const fileName = modelInfo.name || modelInfo.id;
             const cached = getCachedModel( modelInfo.id);
             if (cached) {
-              addModelToScene(cached.id);
+              addModelToScene(cached.id, options);
               ElMessage.success('已从缓存加载');
             } else {
               ElMessage.error('未找到模型资源：' + fileName);
@@ -129,12 +140,12 @@ export default {
             // 优先判断资源是否已存在
             const cached = getCachedModel(file.name, blob.size);
             if (cached) {
-              addModelToScene(cached.id);
+              addModelToScene(cached.id, options);
               ElMessage.success('已从缓存加载');
             } else {
               // 通过useAssets加载模型并纳入资源库
               const loaded = await loadModel(file);
-              addModelToScene(loaded.id);
+              addModelToScene(loaded.id, options);
               ElMessage.success('文件加载成功');
             }
             return;

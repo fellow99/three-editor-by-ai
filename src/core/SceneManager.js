@@ -636,6 +636,13 @@ class SceneManager {
       this.flyControls.update(0.1);
     } else if (this.controls) {
       this.controls.update();
+      // 坐标轴位置与大小同步到OrbitControls的target
+      if (this.axesHelper && this.controls && this.controls.target && this.camera) {
+        this.axesHelper.position.copy(this.controls.target);
+        const distance = this.camera.position.distanceTo(this.controls.target);
+        const scale = distance / 50;
+        this.axesHelper.scale.setScalar(scale > 0 ? scale : 0.01);
+      }
     }
     if (this.composer) {
       this.composer.render();
