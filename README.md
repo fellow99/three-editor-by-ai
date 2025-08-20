@@ -7,7 +7,8 @@
 ![截图1](public/images/screenshot01.png)
 
 ## ✅ 主要功能
-- 3D场景渲染和管理（基于 Three.js，支持灯光、相机helper自动可视化）
+
+- 3D场景渲染和管理
 - 多种基础与扩展几何体创建（立方体、球体、圆柱体、平面、圆锥体、圆环体、十二面体、二十面体、八面体、四面体、环形、管道等）
 - 完整的对象变换系统（移动、旋转、缩放）、撤销重做历史记录
 - 多格式3D模型和纹理加载与管理（GLTF、OBJ、FBX等）
@@ -35,6 +36,7 @@
   - three-viewport-gizmo - 立方体视角控件库
 
 ## 📁 项目结构
+
 ```
 three-editor-by-ai/
 ├── public/                   # 存放无需构建的静态资源
@@ -100,11 +102,11 @@ three-editor-by-ai/
 
 ### 组件层次
 
-1. **UI 层** (`components/editor/`): 负责用户界面和交互
-2. **主编辑器组件** (`Editor.vue`): 负责所有业务逻辑和UI的集成
+1. **主编辑器组件** (`Editor.vue`): 负责所有业务逻辑和UI的集成
+2. **UI 层** (`components/editor/`, `components/dialog/`): 负责用户界面和交互
 3. **3D 渲染层** (`components/scene/`): 处理 3D 场景渲染和显示
 4. **逻辑层** (`composables/`, `core/`): 业务逻辑和状态管理
-5. **API层** (`api/`): 数据请求和外部接口
+5. **服务层** (`services/`): 数据请求和外部接口
 6. **工具层** (`utils/`): 通用工具函数
 
 ### 技术特点
