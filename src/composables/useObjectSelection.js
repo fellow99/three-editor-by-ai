@@ -266,8 +266,6 @@ export function useObjectSelection() {
     } else {
       objectManager.selectObjects(id, addToSelection);
     }
-    
-    updateSelectionHighlights();
   }
   
   /**
@@ -281,7 +279,6 @@ export function useObjectSelection() {
     ).filter(Boolean);
     
     objectManager.selectObjects(ids, addToSelection);
-    updateSelectionHighlights();
   }
   
   /**
@@ -300,7 +297,6 @@ export function useObjectSelection() {
     if (!id) return;
     
     objectManager.deselectObjects(id);
-    updateSelectionHighlights();
   }
   
   /**
@@ -308,7 +304,6 @@ export function useObjectSelection() {
    */
   function clearSelection() {
     objectManager.clearSelection();
-    updateSelectionHighlights();
   }
   
   /**
@@ -340,7 +335,6 @@ export function useObjectSelection() {
     const allObjects = objectManager.getAllObjects();
     const allIds = allObjects.map(obj => obj.userData.id).filter(Boolean);
     objectManager.selectObjects(allIds);
-    updateSelectionHighlights();
   }
   
   /**
@@ -355,7 +349,6 @@ export function useObjectSelection() {
       .filter(id => id && !selectedIds.includes(id));
     
     objectManager.selectObjects(invertedIds);
-    updateSelectionHighlights();
   }
   
   /**
@@ -368,7 +361,6 @@ export function useObjectSelection() {
     
     const ids = objects.map(obj => obj.userData.id).filter(Boolean);
     objectManager.selectObjects(ids);
-    updateSelectionHighlights();
   }
   
   /**
@@ -388,7 +380,6 @@ export function useObjectSelection() {
     
     const ids = objects.map(obj => obj.userData.id).filter(Boolean);
     objectManager.selectObjects(ids);
-    updateSelectionHighlights();
   }
   
   /**
@@ -486,22 +477,11 @@ export function useObjectSelection() {
     
     if (selectedIds.length > 0) {
       objectManager.selectObjects(selectedIds);
-      updateSelectionHighlights();
     }
     
     boxSelection.isActive = false;
   }
-  
-  // 已去除选择高亮相关功能
-  
-  // 已去除选择高亮相关功能
-  
-  // 已去除选择高亮相关功能
-  
-  // 已去除悬停高亮相关功能
-  
-  // 已去除悬停高亮相关功能
-  
+
   /**
    * 获取选择边界框
    * @returns {THREE.Box3|null} 边界框

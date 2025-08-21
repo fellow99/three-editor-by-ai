@@ -5,8 +5,10 @@
 
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-// 引入FlyControls用于飞行模式控制
-import { FlyControls } from 'three/examples/jsm/controls/FlyControls.js';
+/**
+ * 引入FlyControls用于飞行模式控制（本地自定义版本）
+ */
+import { FlyControls } from '../controls/FlyControls.js';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { reactive, watch } from 'vue';

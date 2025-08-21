@@ -49,10 +49,6 @@ function onFlyControlChange(val) {
           <span class="hint-key">鼠标拖动</span>
           <span class="hint-action">旋转视角</span>
         </el-tag>
-        <el-tag class="hint-item" size="small" type="info" effect="dark">
-          <span class="hint-key">Shift</span>
-          <span class="hint-action">加速移动</span>
-        </el-tag>
       </template>
       <template v-else>
         <el-tag class="hint-item" size="small" type="info" effect="dark">
