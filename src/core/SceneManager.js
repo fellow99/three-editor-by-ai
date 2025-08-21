@@ -375,8 +375,8 @@ class SceneManager {
     if (!this.camera || !this.renderer) return;
     this.flyControls = new FlyControls(this.camera, this.renderer.domElement);
     // FlyControls参数可根据需要调整
-    this.flyControls.movementSpeed = 10;
-    this.flyControls.rollSpeed = Math.PI / 12;
+    this.flyControls.movementSpeed = 2;
+    this.flyControls.rollSpeed = Math.PI / 36;
     this.flyControls.autoForward = false;
     this.flyControls.dragToLook = true;
     this.flyControls.enabled = false;
@@ -496,6 +496,16 @@ class SceneManager {
       this.flyControls.movementSpeed = Math.max(0.5, Math.min(20, distance * 0.6));
       this.flyControls.rollSpeed = Math.max(Math.PI / 36, Math.min(Math.PI / 6, distance * 0.04));
       this.flyControls.update(0.1);
+
+      // --------- 实时同步FlyControls.target到OrbitControls.target ---------
+      // 若OrbitControls存在，实时同步target
+      if (this.controls && this.flyControls.target) {
+        // 必须用copy，不能直接赋值引用
+        this.controls.target.copy(this.flyControls.target);
+        this.controls.update();
+      }
+      // -------------------------------------------------------------
+
       // axesHelper位置与FlyControls.target同步
       if (this.axesHelper && this.flyControls.target && this.camera) {
         this.axesHelper.position.copy(this.flyControls.target);

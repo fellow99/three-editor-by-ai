@@ -37,7 +37,7 @@ defineProps({
       <!-- 当前视点（OrbitControls target） -->
       <el-tag size="small" type="info" effect="dark">
         <el-icon><Camera /></el-icon>
-        视点: ({{ cameraTarget?.x?.toFixed?.(2) ?? 'N/A' }}, {{ cameraTarget?.y?.toFixed?.(2) ?? 'N/A' }}, {{ cameraTarget?.z?.toFixed?.(2) ?? 'N/A' }})
+        目标: ({{ cameraTarget?.x?.toFixed?.(2) ?? 'N/A' }}, {{ cameraTarget?.y?.toFixed?.(2) ?? 'N/A' }}, {{ cameraTarget?.z?.toFixed?.(2) ?? 'N/A' }})
       </el-tag>
     </div>
     <div class="footer-right">
