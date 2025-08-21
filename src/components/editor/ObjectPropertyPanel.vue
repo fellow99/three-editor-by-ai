@@ -3,7 +3,15 @@
   用于展示和编辑选中对象的基本属性，包括名称、类型、变换（位置、旋转、缩放）。
 -->
 
+<!--
+  对象属性面板
+  用于展示和编辑选中对象的基本属性，包括名称、类型、变换（位置、旋转、缩放）、动画选择与播放。
+  动画功能：支持GLTF模型动画选择与播放，选中动画索引记录到userData.animationIndex。
+  新语法：引入AnimationMixer管理动画播放，动画列表通过selectedObject.value.animations获取。
+-->
+
 <script setup>
+import * as THREE from 'three'
 import { ref, reactive, computed, watch, inject, onMounted, onUnmounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useObjectSelection } from '../../composables/useObjectSelection.js'
@@ -12,6 +20,81 @@ import { radToDeg, degToRad } from '../../utils/mathUtils.js'
 
 /** 对象选择管理器 */
 const objectSelection = useObjectSelection()
+/** 当前选中对象 */
+const selectedObject = computed(() => {
+  const objects = objectSelection.selectedObjects.value
+  return objects.length === 1 ? objects[0] : null
+})
+/** 是否有选中对象 */
+const hasSelection = computed(() => objectSelection.hasSelection.value)
+/** 对象类型 */
+const objectType = computed(() => {
+  if (!selectedObject.value) return ''
+  return selectedObject.value.userData.type || selectedObject.value.type || 'Object3D'
+})
+
+/** 动画相关变量 */
+const animationIndex = ref(-1) // 当前选中动画索引，-1为无动画
+const mixer = ref(null) // AnimationMixer实例
+const activeAction = ref(null) // 当前动画Action
+
+/** 监听对象动画变化，重置动画选择 */
+watch(() => selectedObject.value, (obj) => {
+  if (!obj) {
+    animationIndex.value = -1
+    mixer.value = null
+    activeAction.value = null
+    return
+  }
+  // 读取userData.animationIndex
+  animationIndex.value = obj.userData?.animationIndex ?? -1
+  // 动画对象变化时重置mixer
+  mixer.value = null
+  activeAction.value = null
+}, { immediate: true })
+
+/** 动画列表 */
+const animationList = computed(() => {
+  const obj = selectedObject.value
+  if (obj && Array.isArray(obj.animations) && obj.animations.length > 0) {
+    return obj.animations.map((clip, idx) => ({
+      label: clip.name || `动画${idx + 1}`,
+      value: idx
+    }))
+  }
+  return []
+})
+
+/** 切换动画 */
+function onAnimationChange(idx) {
+  const obj = selectedObject.value
+  if (!obj) return
+  animationIndex.value = idx
+  // 记录到userData
+  if (!obj.userData) obj.userData = {}
+  obj.userData.animationIndex = idx
+  // 停止上一个动画
+  if (activeAction.value) {
+    activeAction.value.stop()
+    activeAction.value = null
+  }
+  // 播放新动画
+  if (idx >= 0 && obj.animations && obj.animations[idx]) {
+    if (!mixer.value) {
+      mixer.value = new THREE.AnimationMixer(obj)
+    }
+    const action = mixer.value.clipAction(obj.animations[idx])
+    action.reset().play()
+    activeAction.value = action
+  }
+}
+
+/** 动画驱动，每帧调用 */
+function updateAnimation(delta) {
+  if (mixer.value) {
+    mixer.value.update(delta)
+  }
+}
 /** 变换管理器 */
 const transformManager = useTransform()
 /** 场景对象（如有需要） */
@@ -33,19 +116,6 @@ const transform = reactive({
   scale: { x: 1, y: 1, z: 1 }
 })
 
-/** 是否有选中对象 */
-const hasSelection = computed(() => objectSelection.hasSelection.value)
-/** 当前选中对象 */
-const selectedObject = computed(() => {
-  const objects = objectSelection.selectedObjects.value
-  return objects.length === 1 ? objects[0] : null
-})
-/** 对象类型 */
-const objectType = computed(() => {
-  if (!selectedObject.value) return ''
-  return selectedObject.value.userData.type || selectedObject.value.type || 'Object3D'
-})
-
 /**
  * 刷新属性显示
  */
@@ -53,8 +123,9 @@ function refreshTransform() {
   const newObject = selectedObject.value
   if (newObject) {
     objectName.value = newObject.name || ''
-    // userData初始化为格式化JSON字符串
-    userDataText.value = JSON.stringify(newObject.userData ?? {}, null, 2)
+    // userData初始化为格式化JSON字符串，排除循环引用字段
+    const { _mixer, _activeAction, ...userDataExport } = newObject.userData ?? {}
+    userDataText.value = JSON.stringify(userDataExport, null, 2)
     userDataError.value = ''
     transform.position.x = Number(newObject.position.x.toFixed(3))
     transform.position.y = Number(newObject.position.y.toFixed(3))
@@ -168,6 +239,29 @@ function resetScale() {
           <div v-if="userDataError" style="color: #f56c6c; font-size: 12px; margin-top: 4px;">
             {{ userDataError }}
           </div>
+        </el-form-item>
+      </el-form>
+    </div>
+    <!-- 动画属性 -->
+    <div class="property-section" v-if="animationList.length > 0">
+      <h4>动画</h4>
+      <el-form label-width="60px" class="property-form">
+        <el-form-item label="动画选择">
+          <el-select
+            v-model="animationIndex"
+            placeholder="无动画"
+            @change="onAnimationChange"
+            size="small"
+            style="width: 100%;"
+            clearable
+          >
+            <el-option
+              v-for="item in animationList"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+            />
+          </el-select>
         </el-form-item>
       </el-form>
     </div>

@@ -679,15 +679,19 @@ class ObjectManager {
     // 过滤掉灯光
     objects = objects.filter(obj => !['light'].includes(obj.userData.type));
     return {
-      objects: objects.map(obj => ({
-        id: obj.userData.id,
-        name: obj.name,
-        type: obj.userData.type,
-        position: obj.position.toArray(),
-        rotation: obj.rotation.toArray(),
-        scale: obj.scale.toArray(),
-        userData: obj.userData
-      })),
+      objects: objects.map(obj => {
+        // 导出userData时，去除_mixer/_activeAction等运行时字段，仅保留animationIndex等可序列化数据
+        const { _mixer, _activeAction, ...userDataExport } = obj.userData || {};
+        return {
+          id: obj.userData.id,
+          name: obj.name,
+          type: obj.userData.type,
+          position: obj.position.toArray(),
+          rotation: obj.rotation.toArray(),
+          scale: obj.scale.toArray(),
+          userData: userDataExport
+        };
+      }),
       timestamp: new Date().toISOString()
     };
   }

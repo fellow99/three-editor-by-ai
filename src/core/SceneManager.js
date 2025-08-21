@@ -1,6 +1,8 @@
 /**
  * 场景管理器
- * 负责Three.js场景的创建、管理和渲染
+ * 负责Three.js场景的创建、管理和渲染，并统一驱动对象动画（如GLTF动画）。
+ * 动画机制：遍历场景对象，若对象有mixer（AnimationMixer实例），则在渲染循环中调用mixer.update(delta)。
+ * 新语法：为每个有动画的对象挂载mixer到object.userData._mixer，动画选择由userData.animationIndex控制。
  */
 
 import * as THREE from 'three';
@@ -35,6 +37,9 @@ class SceneManager {
     this.container = null;
     this.animationId = null;
 
+    // 动画相关
+    this.mixers = []; // 所有AnimationMixer实例
+
     // 后处理
     this.composer = null;
     this.passes = [];
@@ -50,7 +55,8 @@ class SceneManager {
     // 性能监控
     this.lastTime = 0;
     this.frameCount = 0;
-    
+    this.lastRenderTime = performance.now();
+
     // 事件监听器
     this.resizeHandler = this.handleResize.bind(this);
     
@@ -121,31 +127,44 @@ class SceneManager {
             } else {
               modelInfo = await loadModel(file);
             }
-            await addModelToScene(modelInfo.id, {
+            // 动画索引恢复
+            const addOptions = {
               name: objData.name,
               position: objData.position,
               rotation: objData.rotation,
               scale: objData.scale
-            });
+            };
+            const addedObj = await addModelToScene(modelInfo.id, addOptions);
+            if (addedObj && objData.userData && typeof objData.userData.animationIndex === 'number') {
+              addedObj.userData.animationIndex = objData.userData.animationIndex;
+            }
           } catch (e) {
             console.error('加载模型文件失败', e);
           }
         } else if (objData.userData && objData.userData.type === 'primitive' && objData.userData.primitiveType) {
           // 普通primitive对象
-          objectManager.createPrimitive?.(objData.userData.primitiveType, {
+          const primitiveObj = objectManager.createPrimitive?.(objData.userData.primitiveType, {
             name: objData.name,
             position: objData.position,
             rotation: objData.rotation,
             scale: objData.scale
           });
+          // 动画索引恢复
+          if (primitiveObj && objData.userData && typeof objData.userData.animationIndex === 'number') {
+            primitiveObj.userData.animationIndex = objData.userData.animationIndex;
+          }
         } else {
           // 普通primitive对象
-          objectManager.createPrimitive?.(objData.type, {
+          const primitiveObj2 = objectManager.createPrimitive?.(objData.type, {
             name: objData.name,
             position: objData.position,
             rotation: objData.rotation,
             scale: objData.scale
           });
+          // 动画索引恢复
+          if (primitiveObj2 && objData.userData && typeof objData.userData.animationIndex === 'number') {
+            primitiveObj2.userData.animationIndex = objData.userData.animationIndex;
+          }
         }
       }
     }
@@ -466,6 +485,7 @@ class SceneManager {
   
   /**
    * 动画循环
+   * 新增：统一驱动所有对象动画
    */
   animate() {
     this.animationId = requestAnimationFrame(() => this.animate());
@@ -477,8 +497,51 @@ class SceneManager {
       this.frameCount = 0;
       this.lastTime = currentTime;
     }
+    // 计算delta
+    const now = performance.now();
+    const delta = (now - this.lastRenderTime) / 1000;
+    this.lastRenderTime = now;
+    // 动画驱动
+    this.updateAllMixers(delta);
     this.render();
     this.state.frameCount++;
+  }
+
+  /**
+   * 统一驱动所有对象动画
+   * @param {number} delta 秒
+   */
+  updateAllMixers(delta) {
+    this.mixers = [];
+    this.scene.traverse(obj => {
+      if (obj.animations && Array.isArray(obj.animations) && obj.animations.length > 0) {
+        // 若未挂载mixer则自动挂载
+        if (!obj.userData._mixer) {
+          obj.userData._mixer = new THREE.AnimationMixer(obj);
+        }
+        this.mixers.push(obj.userData._mixer);
+        // 动画切换
+        const idx = typeof obj.userData.animationIndex === 'number' ? obj.userData.animationIndex : -1;
+        if (idx >= 0 && obj.animations[idx]) {
+          // 若当前action未激活则激活
+          if (!obj.userData._activeAction || obj.userData._activeAction._clip !== obj.animations[idx]) {
+            if (obj.userData._activeAction) {
+              obj.userData._activeAction.stop();
+            }
+            obj.userData._activeAction = obj.userData._mixer.clipAction(obj.animations[idx]);
+            obj.userData._activeAction.reset().play();
+          }
+        } else {
+          // 无动画或无效索引，停止所有action
+          if (obj.userData._activeAction) {
+            obj.userData._activeAction.stop();
+            obj.userData._activeAction = null;
+          }
+        }
+      }
+    });
+    // 统一update
+    this.mixers.forEach(mixer => mixer.update(delta));
   }
 
   /**
