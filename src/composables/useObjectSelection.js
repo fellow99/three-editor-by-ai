@@ -132,6 +132,10 @@ export function useObjectSelection() {
       watch(selectedObjects, (objs) => {
         if (objs.length === 1) {
           currentTransformObject = objs[0];
+          // 检查transformHelper是否已挂载到场景，若未挂载则重新添加
+          if (transformHelper && scene && !scene.children.includes(transformHelper)) {
+            scene.add(transformHelper);
+          }
           // 锁定状态下不绑定transformControls
           if (currentTransformObject.userData && currentTransformObject.userData.locked) {
             transformControls.detach();
