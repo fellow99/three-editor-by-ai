@@ -389,7 +389,23 @@ class SceneManager {
   setFlyControlEnabled(enabled) {
     this.isFlyControlEnabled = enabled;
     if (this.flyControls) this.flyControls.enabled = enabled;
-    if (this.controls) this.controls.enabled = !enabled;
+    if (this.controls) {
+      this.controls.enabled = !enabled;
+      // 从FlyControls切换回OrbitControls时，同步相机位置和target
+      if (!enabled) {
+        // 设置OrbitControls的target为相机前方一定距离
+        const camera = this.camera;
+        const controls = this.controls;
+        if (camera && controls) {
+          // 取相机朝向
+          const dir = new THREE.Vector3();
+          camera.getWorldDirection(dir);
+          // target设为相机位置+朝向向量*10（可根据实际场景调整距离）
+          controls.target.copy(camera.position).add(dir.multiplyScalar(10));
+          controls.update();
+        }
+      }
+    }
   }
   
   /**
@@ -473,13 +489,19 @@ class SceneManager {
     // 更新控制器
     if (this.isFlyControlEnabled && this.flyControls) {
       // 动态调整速度：根据相机到视点距离
-      let target = this.controls ? this.controls.target : new THREE.Vector3(0, 0, 0);
+      let target = this.flyControls.target ? this.flyControls.target : (this.controls ? this.controls.target : new THREE.Vector3(0, 0, 0));
       let camPos = this.camera ? this.camera.position : new THREE.Vector3(0, 0, 0);
       let distance = camPos.distanceTo(target);
       // 距离越远速度越快，越近越慢（限制最小最大值）
       this.flyControls.movementSpeed = Math.max(0.5, Math.min(20, distance * 0.6));
       this.flyControls.rollSpeed = Math.max(Math.PI / 36, Math.min(Math.PI / 6, distance * 0.04));
       this.flyControls.update(0.1);
+      // axesHelper位置与FlyControls.target同步
+      if (this.axesHelper && this.flyControls.target && this.camera) {
+        this.axesHelper.position.copy(this.flyControls.target);
+        const scale = distance / 50;
+        this.axesHelper.scale.setScalar(scale > 0 ? scale : 0.01);
+      }
     } else if (this.controls) {
       this.controls.update();
       // 坐标轴位置与大小同步到OrbitControls的target

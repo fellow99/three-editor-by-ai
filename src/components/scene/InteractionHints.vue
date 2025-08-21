@@ -35,19 +35,23 @@ function onFlyControlChange(val) {
       <template v-if="flyControlEnabled">
         <el-tag class="hint-item" size="small" type="info" effect="dark">
           <span class="hint-key">W / S</span>
-          <span class="hint-action">前进 / 后退</span>
+          <span class="hint-action">前进后退</span>
         </el-tag>
         <el-tag class="hint-item" size="small" type="info" effect="dark">
           <span class="hint-key">A / D</span>
-          <span class="hint-action">左移 / 右移</span>
+          <span class="hint-action">左右平移</span>
         </el-tag>
         <el-tag class="hint-item" size="small" type="info" effect="dark">
           <span class="hint-key">Q / E</span>
-          <span class="hint-action">下移 / 上移</span>
+          <span class="hint-action">镜头旋转</span>
         </el-tag>
         <el-tag class="hint-item" size="small" type="info" effect="dark">
-          <span class="hint-key">鼠标拖动</span>
-          <span class="hint-action">旋转视角</span>
+          <span class="hint-key">左键</span>
+          <span class="hint-action">镜头移动</span>
+        </el-tag>
+        <el-tag class="hint-item" size="small" type="info" effect="dark">
+          <span class="hint-key">右键</span>
+          <span class="hint-action">目标移动</span>
         </el-tag>
       </template>
       <template v-else>
@@ -62,10 +66,6 @@ function onFlyControlChange(val) {
         <el-tag class="hint-item" size="small" type="info" effect="dark">
           <span class="hint-key">滚轮</span>
           <span class="hint-action">缩放</span>
-        </el-tag>
-        <el-tag class="hint-item" size="small" type="info" effect="dark">
-          <span class="hint-key">中键</span>
-          <span class="hint-action">平移</span>
         </el-tag>
       </template>
       <!-- 键盘漫游勾选，用于启停FlyControls，放在底部 -->

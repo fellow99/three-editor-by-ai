@@ -81,6 +81,8 @@ three-editor-by-ai/
 │   │   ├── vfs-service.js    # 虚拟文件系统服务，用于读写文件
 │   ├── constants/            # 常量与预定义数据
 │   │   └── PRIMITIVES.json      # 预定义几何体与灯光类型数据
+│   ├── controls/             # 控制器
+│   │   ├── FlyControls.js    # 飞行控制器
 │   ├── utils/                # 工具函数
 │   │   ├── mathUtils.js      # 数学工具
 │   │   ├── geometryUtils.js  # 几何工具
@@ -137,11 +139,15 @@ three-editor-by-ai/
 - useScene.js中：
   - 聚焦对象时计算中心点并设置OrbitControls target。
 - useObjectSelection.js中：
-- 内部定义了 `selectionStore`（响应式对象）：
-  - 用于存储选中对象的临时材质信息，key 为对象 id。
-  - selectionStore 生命周期与 useObjectSelection 组合式函数一致，自动随页面刷新或状态重置而清空。
-- TransformControls与选中对象辅助功能已迁移至useObjectSelection.js统一管理，SceneManager.js仅负责场景本身，SceneViewer.vue仅负责初始化调用。
- - TransformControls拖拽时会自动禁用OrbitControls，避免拖拽时镜头跟随问题。（已迁移至useObjectSelection.js）
+  - 内部定义了 `selectionStore`（响应式对象）：
+    - 用于存储选中对象的临时材质信息，key 为对象 id。
+    - selectionStore 生命周期与 useObjectSelection 组合式函数一致，自动随页面刷新或状态重置而清空。
+  - TransformControls与选中对象辅助功能已迁移至useObjectSelection.js统一管理，SceneManager.js仅负责场景本身，SceneViewer.vue仅负责初始化调用。
+  - TransformControls拖拽时会自动禁用OrbitControls，避免拖拽时镜头跟随问题。（已迁移至useObjectSelection.js）
+- FlyControls.js中，修改了部分操作逻辑：
+    - 按键Q/E：目标点围绕镜头旋转，即镜头原地旋转；
+    - 鼠标左键点击拖动：目标点位置不动，镜头围绕目标点运动；
+    - 鼠标右键点击拖动：镜头位置不动，目标点运动，镜头始终看向目标点；
 - useAssets.js 中：
   - 资源加载函数（如 loadModel、loadTexture）已实现缓存机制：若 assetLibrary 中已存在同名且大小一致的资源，则直接返回缓存，避免重复加载和内存浪费。
 - 所有资源（基础几何体、模型、资源）添加方式已统一为拖拽，点击添加功能已移除
