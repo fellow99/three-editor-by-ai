@@ -49,7 +49,7 @@ three-editor-by-ai/
 │   │   │   ├── PropertyPanel.vue             # 属性面板
 │   │   │   ├── ScenePropertyPanel.vue        # 场景属性面板
 │   ├── core/                  # 核心 Three.js 逻辑
-│   │   ├── SceneManager.js    # 场景管理器（选中对象时，非光源和镜头将添加BoxHelper辅助对象）
+│   │   ├── SceneManager.js    # 场景管理器
 │   │   │   ├── ObjectPropertyPanel.vue       # 对象基本属性面板
 │   │   │   ├── MaterialPropertyPanel.vue     # 材质编辑面板
 │   │   │   ├── Toolbar.vue                   # 工具栏
@@ -68,7 +68,7 @@ three-editor-by-ai/
 │   │   │   ├── CubeViewportControls.vue      # 立方体视角控件
 │   ├── composables/           # Vue Composition API 可组合函数
 │   │   ├── useScene.js        # 场景管理
-│   │   ├── useObjectSelection.js  # 对象选择（已去除选择高亮和悬停高亮功能）
+│   │   ├── useObjectSelection.js  # 对象选择、TransformControls与选中对象辅助功能
 │   │   ├── useTransform.js    # 变换操作
 │   │   └── useAssets.js       # 资源管理，包含模型/纹理等资源的加载、缓存与去重机制
 │   ├── core/                  # 核心 Three.js 逻辑
@@ -132,14 +132,16 @@ three-editor-by-ai/
   - 如需加载Draco压缩的glTF模型，请将node_modules/three/examples/jsm/libs/draco/目录中的文件复制到 /draco/ 目录下。
   - 如需加载KTX2纹理，请将node_modules/three/examples/jsm/libs/basis目录中的文件放入 /basis/ 目录下。
   - 如需加载Meshopt压缩的glTF模型，请将node_modules/three/examples/jsm/libs/meshopt_decoder.module.js文件放入 public/meshopt/ 目录下。
-- TransformControls相关功能已迁移至SceneManager.js统一管理，SceneViewer.vue仅负责初始化调用。
-- SceneManager.js中，TransformControls拖拽时会自动禁用OrbitControls，避免拖拽时镜头跟随问题。
-- ObjectManager.js中，变换后分发object-transform-updated事件。
-- useScene.js中，聚焦对象时计算中心点并设置OrbitControls target。
-- useObjectSelection.js中， 内部定义了 `selectionStore`（响应式对象）：
-  - 用于存储选中对象的临时材质信息（如 originalMaterial、selectionMaterial、hoverMaterial），key 为对象 id。
-  - 所有高亮、悬停等临时材质状态均集中存储于 selectionStore，不再污染 three.js 对象的 userData 字段，便于维护和调试。
+- ObjectManager.js中：
+  - 变换后分发object-transform-updated事件。
+- useScene.js中：
+  - 聚焦对象时计算中心点并设置OrbitControls target。
+- useObjectSelection.js中：
+- 内部定义了 `selectionStore`（响应式对象）：
+  - 用于存储选中对象的临时材质信息，key 为对象 id。
   - selectionStore 生命周期与 useObjectSelection 组合式函数一致，自动随页面刷新或状态重置而清空。
+- TransformControls与选中对象辅助功能已迁移至useObjectSelection.js统一管理，SceneManager.js仅负责场景本身，SceneViewer.vue仅负责初始化调用。
+ - TransformControls拖拽时会自动禁用OrbitControls，避免拖拽时镜头跟随问题。（已迁移至useObjectSelection.js）
 - useAssets.js 中：
   - 资源加载函数（如 loadModel、loadTexture）已实现缓存机制：若 assetLibrary 中已存在同名且大小一致的资源，则直接返回缓存，避免重复加载和内存浪费。
 - 所有资源（基础几何体、模型、资源）添加方式已统一为拖拽，点击添加功能已移除

@@ -199,8 +199,11 @@ export default {
         }, { immediate: true });
 
         // 初始化TransformControls
-        scene.sceneManager.initTransformControls({
-          objectSelection,
+        objectSelection.initTransformControls({
+          scene: scene.sceneManager.scene,
+          camera: scene.sceneManager.camera,
+          renderer: scene.sceneManager.renderer,
+          controls: scene.sceneManager.controls,
           transform
         });
 

@@ -1,10 +1,12 @@
 /**
- * 对象选择管理 Composable
- * 提供对象选择相关的响应式状态和操作方法
+ * 对象选择与变换控制管理 Composable
+ * 提供对象选择、TransformControls、选中对象辅助显示等功能
  */
 
 import { ref, reactive, computed, watch } from 'vue';
 import * as THREE from 'three';
+import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js';
+import { DirectionalLightHelper, PointLightHelper, SpotLightHelper, HemisphereLightHelper, CameraHelper, BoxHelper } from 'three';
 
 /**
  * selectionStore
@@ -16,12 +18,193 @@ import { useInputManager } from '../core/InputManager.js';
 
 /**
  * useObjectSelection
- * 3D对象选择管理的组合式函数，提供响应式选择状态和多种选择操作
+ * 3D对象选择与变换控制管理的组合式函数，提供响应式选择状态、TransformControls与辅助对象管理
  * @returns {object} 选择相关状态与方法
  */
 export function useObjectSelection() {
   const objectManager = useObjectManager();
   const inputManager = useInputManager();
+
+  // TransformControls及辅助对象相关
+  /** @type {TransformControls|null} */
+  let transformControls = null;
+  /** @type {THREE.Object3D|null} */
+  let transformHelper = null;
+  /** @type {THREE.Object3D|null} */
+  let currentTransformObject = null;
+  /** @type {THREE.Object3D|null} */
+  let currentHelper = null;
+  /** @type {object|null} */
+  let transform = null; // 外部传入响应式transform对象
+  /** @type {object|null} */
+  let scene = null; // 外部传入Three.js场景对象
+  /** @type {object|null} */
+  let camera = null; // 外部传入Three.js相机对象
+  /** @type {object|null} */
+  let renderer = null; // 外部传入Three.js渲染器对象
+  /** @type {object|null} */
+  let controls = null; // OrbitControls实例
+
+  /**
+   * 初始化TransformControls及辅助对象
+   * @param {object} options { scene, camera, renderer, controls, objectSelection, transform }
+   */
+  function initTransformControls(options = {}) {
+    scene = options.scene;
+    camera = options.camera;
+    renderer = options.renderer;
+    controls = options.controls;
+    transform = options.transform;
+
+    if (!scene || !camera || !renderer) return;
+    if (transformControls) {
+      scene.remove(transformControls);
+      transformControls.dispose?.();
+      transformControls = null;
+    }
+    transformControls = new TransformControls(camera, renderer.domElement);
+
+    // 监听变换事件，同步属性
+    transformControls.addEventListener('objectChange', () => {
+      if (currentTransformObject) {
+        // 变换时动态更新BoxHelper
+        if (currentHelper && currentHelper instanceof BoxHelper) {
+          currentHelper.update();
+        }
+        if (objectManager && objectManager.setObjectTransform) {
+          objectManager.setObjectTransform(
+            currentTransformObject.userData.id,
+            {
+              position: [
+                currentTransformObject.position.x,
+                currentTransformObject.position.y,
+                currentTransformObject.position.z
+              ],
+              rotation: [
+                currentTransformObject.rotation.x,
+                currentTransformObject.rotation.y,
+                currentTransformObject.rotation.z
+              ],
+              scale: [
+                currentTransformObject.scale.x,
+                currentTransformObject.scale.y,
+                currentTransformObject.scale.z
+              ]
+            }
+          );
+        }
+      }
+    });
+
+    // 拖拽时禁用OrbitControls
+    transformControls.addEventListener('dragging-changed', (event) => {
+      if (controls) {
+        controls.enabled = !event.value;
+      }
+    });
+
+    // 禁止TransformControls事件冒泡到OrbitControls等
+    transformControls.addEventListener('mouseDown', (event) => {
+      event.stopPropagation?.();
+    });
+
+    // 添加辅助对象到场景
+    transformHelper = transformControls.getHelper ? transformControls.getHelper() : null;
+    if (transformHelper) {
+      scene.add(transformHelper);
+    }
+
+    // 监听transformMode变化
+    if (transform && transform.transformMode) {
+      watch(() => transform.transformMode.value, (mode) => {
+        if (transformControls) {
+          transformControls.setMode(mode);
+          if (currentTransformObject) {
+            transformControls.attach(currentTransformObject);
+            transformControls.visible = true;
+          }
+        }
+      }, { immediate: true });
+    }
+
+    // 监听选中对象变化
+    if (selectedObjects) {
+      watch(selectedObjects, (objs) => {
+        if (objs.length === 1) {
+          currentTransformObject = objs[0];
+          // 锁定状态下不绑定transformControls
+          if (currentTransformObject.userData && currentTransformObject.userData.locked) {
+            transformControls.detach();
+            transformControls.visible = false;
+            updateSelectedHelper(currentTransformObject);
+          } else {
+            transformControls.attach(currentTransformObject);
+            transformControls.visible = true;
+            updateSelectedHelper(currentTransformObject);
+          }
+        } else {
+          transformControls.detach();
+          transformControls.visible = false;
+          updateSelectedHelper(null);
+        }
+      }, { immediate: true });
+    }
+
+    // 新版three.js写法：只添加transformHelper
+    transformHelper = transformControls.getHelper ? transformControls.getHelper() : null;
+    if (transformHelper) {
+      scene.add(transformHelper);
+    }
+  }
+
+  /**
+   * 移除TransformControls及相关helper
+   */
+  function disposeTransformControls() {
+    if (transformControls && scene) {
+      scene.remove(transformControls);
+      if (transformHelper) scene.remove(transformHelper);
+      transformControls.dispose?.();
+      transformControls = null;
+    }
+    if (currentHelper && scene) {
+      scene.remove(currentHelper);
+      if (currentHelper.dispose) currentHelper.dispose();
+      currentHelper = null;
+    }
+  }
+
+  /**
+   * 选中对象时动态添加helper
+   * @param {THREE.Object3D|null} selected
+   */
+  function updateSelectedHelper(selected) {
+    if (currentHelper && scene) {
+      scene.remove(currentHelper);
+      if (currentHelper.dispose) currentHelper.dispose();
+      currentHelper = null;
+    }
+    if (!selected || !scene) return;
+    let helper = null;
+    if (selected.isDirectionalLight) {
+      helper = new DirectionalLightHelper(selected, 5, 0xffaa00);
+    } else if (selected.isPointLight) {
+      helper = new PointLightHelper(selected, 2, 0x00aaff);
+    } else if (selected.isSpotLight) {
+      helper = new SpotLightHelper(selected, 2, 0xaaff00);
+    } else if (selected.isHemisphereLight) {
+      helper = new HemisphereLightHelper(selected, 2);
+    } else if (selected.isCamera) {
+      helper = new CameraHelper(selected);
+    } else {
+      // 非光源和镜头，添加包围盒辅助对象
+      helper = new BoxHelper(selected, 0xffff00);
+    }
+    if (helper) {
+      scene.add(helper);
+      currentHelper = helper;
+    }
+  }
   
   // 响应式状态
   const selectedObjects = computed(() => 
@@ -360,7 +543,15 @@ export function useObjectSelection() {
     boxSelection,
     selectionConfig,
     hoveredObject,
-    
+
+    // TransformControls相关
+    initTransformControls,
+    disposeTransformControls,
+    updateSelectedHelper,
+    get transformControls() { return transformControls; },
+    get currentTransformObject() { return currentTransformObject; },
+    get currentHelper() { return currentHelper; },
+
     // 方法
     selectObject,
     selectObjects,
