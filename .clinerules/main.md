@@ -3,7 +3,7 @@
 
 ### Vue代码规范
 - Vue代码文件最前端放该文件功能的注释；
-- 先放template标签，再放script标签，最后放style标签；
+- 新建vue文件时使用&lt;script setup&gt;写法，先放script标签，再放template标签，最后放style标签；
 - 每个ref或shallowRef变量都要加注释，说明用途；
 - 每个函数顶部都添加必要的注释；
 

@@ -1,4 +1,5 @@
 /**
+ * @class StaticDriveApi
  * 静态文件系统封装类
  */
 export class StaticDriveApi {

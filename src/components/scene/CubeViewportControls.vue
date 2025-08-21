@@ -2,10 +2,6 @@
   视口方向控制器组件
   使用 three-viewport-gizmo 实现相机方向可视化与交互，支持与主相机和 OrbitControls 联动
 -->
-<template>
-  <div ref="gizmoContainer" class="cube-viewport-controls"></div>
-</template>
-
 <script setup>
 import { ref, onMounted, onUnmounted, watch, defineProps, defineEmits } from 'vue'
 import * as THREE from 'three'
@@ -81,6 +77,10 @@ watch(
   { deep: true }
 )
 </script>
+
+<template>
+  <div ref="gizmoContainer" class="cube-viewport-controls"></div>
+</template>
 
 <style scoped>
 .cube-viewport-controls {

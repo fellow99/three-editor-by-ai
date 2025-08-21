@@ -64,7 +64,6 @@ three-editor-by-ai/
 │   │   │   ├── InteractionHints.vue          # 操作提示组件
 │   │   │   ├── ViewportControls.vue          # 视图控制面板组件
 │   │   │   ├── CubeViewportControls.vue      # 立方体视角控件
-│   │   │   ├── ObjectGizmo.vue               # 对象操作控制器
 │   ├── composables/           # Vue Composition API 可组合函数
 │   │   ├── useScene.js        # 场景管理
 │   │   ├── useObjectSelection.js  # 对象选择

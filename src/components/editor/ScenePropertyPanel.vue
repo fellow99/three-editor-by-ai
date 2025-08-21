@@ -1,67 +1,8 @@
 <!--
-  ScenePropertyPanel.vue
-  场景属性面板：用于查看和编辑当前场景的基础属性（如名称、背景色、userData等）。
+  场景属性面板
+  用于查看和编辑当前场景的基础属性（如名称、背景色、userData等）。
 -->
-
-<template>
-  <div class="scene-property-panel">
-    <!-- 场景统计信息 -->
-    <div class="scene-stats">
-      <div class="stat-item">
-        <span class="stat-label">对象数量:</span>
-        <span class="stat-value">{{ sceneStats.objects }}</span>
-      </div>
-      <div class="stat-item">
-        <span class="stat-label">三角形:</span>
-        <span class="stat-value">{{ formatNumber(sceneStats.triangles) }}</span>
-      </div>
-      <div class="stat-item">
-        <span class="stat-label">顶点:</span>
-        <span class="stat-value">{{ formatNumber(sceneStats.vertices) }}</span>
-      </div>
-      <div class="stat-item">
-        <span class="stat-label">材质:</span>
-        <span class="stat-value">{{ sceneStats.materials }}</span>
-      </div>
-      <div class="stat-item">
-        <span class="stat-label">纹理:</span>
-        <span class="stat-value">{{ sceneStats.textures }}</span>
-      </div>
-      <div class="stat-item">
-        <span class="stat-label">FPS:</span>
-        <span class="stat-value">{{ sceneStats.fps }}</span>
-      </div>
-    </div>
-
-    <el-form class="scene-form" label-width="70px">
-      <el-form-item label="场景名称">
-        <el-input v-model="sceneName" placeholder="请输入场景名称" />
-      </el-form-item>
-      <el-form-item label="背景色">
-        <el-color-picker v-model="backgroundColor" />
-      </el-form-item>
-      <el-form-item label="userData">
-        <el-input
-          type="textarea"
-          v-model="userDataText"
-          :rows="4"
-          placeholder="请输入合法的JSON"
-          @blur="onUserDataBlur"
-        />
-        <div v-if="userDataError" style="color: #f56c6c; font-size: 12px; margin-top: 4px;">
-          {{ userDataError }}
-        </div>
-      </el-form-item>
-    </el-form>
-  </div>
-</template>
-
 <script setup>
-/**
- * 用于管理场景属性的编辑和应用
- * - 移除“应用修改”按钮
- * - 属性修改后立即生效
- */
 import { ref, computed, watch } from 'vue'
 import { useScene } from '../../composables/useScene'
 
@@ -130,6 +71,59 @@ function onUserDataBlur() {
 }
 
 </script>
+
+<template>
+  <div class="scene-property-panel">
+    <!-- 场景统计信息 -->
+    <div class="scene-stats">
+      <div class="stat-item">
+        <span class="stat-label">对象数量:</span>
+        <span class="stat-value">{{ sceneStats.objects }}</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">三角形:</span>
+        <span class="stat-value">{{ formatNumber(sceneStats.triangles) }}</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">顶点:</span>
+        <span class="stat-value">{{ formatNumber(sceneStats.vertices) }}</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">材质:</span>
+        <span class="stat-value">{{ sceneStats.materials }}</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">纹理:</span>
+        <span class="stat-value">{{ sceneStats.textures }}</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">FPS:</span>
+        <span class="stat-value">{{ sceneStats.fps }}</span>
+      </div>
+    </div>
+
+    <el-form class="scene-form" label-width="70px">
+      <el-form-item label="场景名称">
+        <el-input v-model="sceneName" placeholder="请输入场景名称" />
+      </el-form-item>
+      <el-form-item label="背景色">
+        <el-color-picker v-model="backgroundColor" />
+      </el-form-item>
+      <el-form-item label="userData">
+        <el-input
+          type="textarea"
+          v-model="userDataText"
+          :rows="4"
+          placeholder="请输入合法的JSON"
+          @blur="onUserDataBlur"
+        />
+        <div v-if="userDataError" style="color: #f56c6c; font-size: 12px; margin-top: 4px;">
+          {{ userDataError }}
+        </div>
+      </el-form-item>
+    </el-form>
+  </div>
+</template>
 
 <style scoped>
 .scene-property-panel {

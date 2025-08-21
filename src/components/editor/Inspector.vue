@@ -1,8 +1,9 @@
+<!--
+  对象检查器
+  查看和操作场景中的对象，包括层级、属性统计、搜索和右键菜单操作
+-->
 <template>
   <div class="inspector">
-<!-- inspector-header已移除 -->
-
-
     <!-- 搜索框 -->
     <div class="search-section">
       <div class="search-box">

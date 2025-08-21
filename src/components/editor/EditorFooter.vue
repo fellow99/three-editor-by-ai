@@ -1,3 +1,22 @@
+<!--
+  编辑器底部状态栏组件
+  展示选中对象、相机参数、FPS等实时信息
+-->
+<script setup>
+import { ElTag, ElIcon } from 'element-plus';
+import { Box, Camera, Cpu, Position } from '@element-plus/icons-vue';
+
+defineProps({
+  objectSelection: { type: Object, required: true },
+  scene: { type: Object, required: true },
+  cameraPosition: { type: Object, required: true },
+  /**
+   * @description OrbitControls target（即视点目标点），用于显示当前视点
+   */
+  cameraTarget: { type: Object, required: true }
+});
+</script>
+
 <template>
   <footer class="editor-footer">
     <div class="footer-left">
@@ -33,29 +52,6 @@
     </div>
   </footer>
 </template>
-
-<!--
-  编辑器底部状态栏组件
-  展示选中对象、相机参数、FPS等实时信息
--->
-<!--
-  编辑器底部状态栏组件
-  展示选中对象、相机参数、FPS等实时信息
--->
-<script setup>
-import { ElTag, ElIcon } from 'element-plus';
-import { Box, Camera, Cpu, Position } from '@element-plus/icons-vue';
-
-defineProps({
-  objectSelection: { type: Object, required: true },
-  scene: { type: Object, required: true },
-  cameraPosition: { type: Object, required: true },
-  /**
-   * @description OrbitControls target（即视点目标点），用于显示当前视点
-   */
-  cameraTarget: { type: Object, required: true }
-});
-</script>
 
 <style scoped>
 .editor-footer {

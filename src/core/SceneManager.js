@@ -18,7 +18,7 @@ import vfsService from '../services/vfs-service.js';
 import { useAssets } from '../composables/useAssets.js';
 
 /**
- * SceneManager
+ * @class SceneManager
  * Three.js场景、渲染器、相机、控制器、后处理等统一管理类
  */
 class SceneManager {

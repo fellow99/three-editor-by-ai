@@ -1,3 +1,7 @@
+<!--
+  资源浏览器组件
+  提供模型、纹理、几何体的浏览与管理功能
+-->
 <template>
   <div class="asset-browser">
     <!-- 拖拽加载区域 -->
@@ -85,7 +89,7 @@
           @click="selectModel(model)"
           :class="{ selected: selectedAssetId === model.id }"
           draggable="true"
-          @dragstart="onModelDragStart(model)"
+          @dragstart="onModelDragStart($event, model)"
         >
           <div class="asset-preview">
             <img 
@@ -219,10 +223,6 @@ import { useObjectManager } from '../../core/ObjectManager.js';
 export default {
   name: 'AssetBrowser',
   components: { VfsFilePanel },
-  /**
-   * 资源浏览器组件
-   * 提供模型、纹理、几何体的浏览与管理功能
-   */
   setup() {
     const assets = useAssets();
     const objectSelection = useObjectSelection();
@@ -249,9 +249,6 @@ export default {
       handleDrop
     } = assets;
     
-    // 计算属性
-    // categories、toggleSortOrder等已移除
-    
     /**
      * 选中模型
      * @param {Object} model 模型对象
@@ -277,10 +274,6 @@ export default {
       console.log('显示模型选项:', model);
     }
     
-    /**
-     * 将纹理应用到选中的对象
-     * @param {Object} texture 纹理对象
-     */
     /**
      * 将纹理应用到选中的对象
      * @param {Object} texture 纹理对象
@@ -334,15 +327,11 @@ export default {
      * 拖拽模型到场景
      * @param {Object} model 模型对象
      */
-    /**
-     * 拖拽模型到场景，写入id、type、name（含后缀）
-     * @param {Object} model 模型对象
-     */
-    function onModelDragStart(model) {
+    function onModelDragStart(event, model) {
       event.dataTransfer.setData('application/x-model', JSON.stringify({
         id: model.id,
         type: model.type,
-        name: model.name // 保证带后缀
+        name: model.name
       }));
       event.dataTransfer.effectAllowed = 'copy';
     }

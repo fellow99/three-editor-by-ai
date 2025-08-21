@@ -21,7 +21,7 @@ import { useSceneManager } from './SceneManager.js';
 import { useObjectSelection } from '../composables/useObjectSelection.js';
 
 /**
- * ObjectManager
+ * @class ObjectManager
  * 统一的3D对象创建、管理、变换、选择与批量操作管理类
  */
 class ObjectManager {

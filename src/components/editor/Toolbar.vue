@@ -1,3 +1,7 @@
+<!--
+  主工具栏组件
+  提供场景文件、编辑、对象变换等操作入口
+-->
 <template>
   <div class="ribbon-toolbar dark">
     <div class="ribbon-content">

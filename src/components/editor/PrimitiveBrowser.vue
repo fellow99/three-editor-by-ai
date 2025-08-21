@@ -1,13 +1,9 @@
 <!--
-  PrimitiveBrowser.vue
   基础几何体与灯光浏览组件
   用于展示和选择预定义的几何体、灯光等对象
+  直接从PRIMITIVES.json读取并分组渲染
 -->
 <template>
-  <!--
-    基础几何体与灯光浏览组件
-    直接从PRIMITIVES.json读取并分组渲染
-  -->
   <div class="primitives-grid">
     <template v-for="(group, idx) in groupedPrimitives" :key="group.category">
       <div
@@ -38,12 +34,6 @@
 </template>
 
 <script setup>
-/**
- * 基础几何体与灯光浏览组件
- * 直接从PRIMITIVES.json读取并分组渲染
- * emits:
- *   - select(type: string)
- */
 import { computed } from 'vue';
 // @ts-ignore
 import PRIMITIVES from '../../constants/PRIMITIVES.json';

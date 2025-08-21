@@ -1,22 +1,11 @@
 <!--
-  ObjectPropertyPanel.vue
-  对象属性面板：用于展示和编辑选中对象的基本属性，包括名称、类型、变换（位置、旋转、缩放）。
-  - 使用组合式 API
-  - UI组件采用 element-plus
-  - 图标按 element-plus 方式
-  - 标签顺序：script > template > style
+  对象属性面板
+  用于展示和编辑选中对象的基本属性，包括名称、类型、变换（位置、旋转、缩放）。
 -->
 
 <script setup>
-/**
- * 用于展示和编辑选中对象的基本属性，包括名称、类型、变换（位置、旋转、缩放）、userData(JSON)。
- * - 属性修改后立即生效
- * - 支持重置缩放
- * - 支持userData编辑及JSON校验
- */
 import { ref, reactive, computed, watch, inject, onMounted, onUnmounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Refresh } from '@element-plus/icons-vue'
 import { useObjectSelection } from '../../composables/useObjectSelection.js'
 import { useTransform } from '../../composables/useTransform.js'
 import { radToDeg, degToRad } from '../../utils/mathUtils.js'

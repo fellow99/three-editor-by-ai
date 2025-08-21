@@ -1,41 +1,8 @@
-<template>
-  <div class="texture-dialog-mask" v-if="visible">
-    <div class="texture-dialog">
-      <div class="texture-dialog-header">
-        <span>选择纹理</span>
-        <button class="close-btn" @click="close">×</button>
-      </div>
-      <div class="texture-list">
-        <div v-if="textures.length === 0" class="empty-tip">暂无纹理资源</div>
-        <div class="textures-grid">
-          <div
-            v-for="texture in textures"
-            :key="texture.id"
-            class="texture-card"
-            @click="select(texture)"
-          >
-            <div class="card-preview">
-              <img :src="texture.preview" :alt="texture.name" class="preview-image" />
-            </div>
-            <div class="card-info">
-              <div class="card-name" :title="texture.name">{{ texture.name }}</div>
-              <div class="card-meta">
-                <span class="card-resolution">{{ texture.width }}×{{ texture.height }}</span>
-                <span class="card-size">{{ formatFileSize(texture.size) }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</template>
-
+<!--
+  纹理选择对话框
+  用于展示所有已加载纹理，供用户选择
+-->
 <script setup>
-/**
- * 纹理选择对话框
- * 用于展示所有已加载纹理，供用户选择
- */
 import { ref, computed } from 'vue';
 import { useAssets } from '../../composables/useAssets.js';
 
@@ -69,6 +36,39 @@ function select(texture) {
   emits('select', texture);
 }
 </script>
+
+<template>
+  <div class="texture-dialog-mask" v-if="visible">
+    <div class="texture-dialog">
+      <div class="texture-dialog-header">
+        <span>选择纹理</span>
+        <button class="close-btn" @click="close">×</button>
+      </div>
+      <div class="texture-list">
+        <div v-if="textures.length === 0" class="empty-tip">暂无纹理资源</div>
+        <div class="textures-grid">
+          <div
+            v-for="texture in textures"
+            :key="texture.id"
+            class="texture-card"
+            @click="select(texture)"
+          >
+            <div class="card-preview">
+              <img :src="texture.preview" :alt="texture.name" class="preview-image" />
+            </div>
+            <div class="card-info">
+              <div class="card-name" :title="texture.name">{{ texture.name }}</div>
+              <div class="card-meta">
+                <span class="card-resolution">{{ texture.width }}×{{ texture.height }}</span>
+                <span class="card-size">{{ formatFileSize(texture.size) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
 
 <style scoped>
 .texture-dialog-mask {

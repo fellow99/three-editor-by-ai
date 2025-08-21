@@ -1,6 +1,6 @@
 import mime from 'mime';
 
-import { StaticDriveApi} from './static-drive-api';
+import { StaticDriveApi} from './static-drive-api'; // 静态文件系统API
 
 const driveMap = {};
 

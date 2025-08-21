@@ -1,3 +1,21 @@
+<!--
+  视口控制按钮组件
+  提供重置视图、适应屏幕、切换线框模式和网格显示功能
+-->
+<script setup>
+import { ElButton, ElIcon } from 'element-plus';
+import { House, ZoomIn, Box, Grid } from '@element-plus/icons-vue';
+
+defineProps({
+  showWireframe: { type: Boolean, required: true },
+  showGrid: { type: Boolean, required: true },
+  resetView: { type: Function, required: true },
+  fitToScreen: { type: Function, required: true },
+  toggleWireframe: { type: Function, required: true },
+  toggleGrid: { type: Function, required: true }
+});
+</script>
+
 <template>
   <div class="viewport-controls">
     <div class="control-group">
@@ -45,20 +63,6 @@
     </div>
   </div>
 </template>
-
-<script setup>
-import { ElButton, ElIcon } from 'element-plus';
-import { House, ZoomIn, Box, Grid } from '@element-plus/icons-vue';
-
-defineProps({
-  showWireframe: { type: Boolean, required: true },
-  showGrid: { type: Boolean, required: true },
-  resetView: { type: Function, required: true },
-  fitToScreen: { type: Function, required: true },
-  toggleWireframe: { type: Function, required: true },
-  toggleGrid: { type: Function, required: true }
-});
-</script>
 
 <style scoped>
 .viewport-controls {

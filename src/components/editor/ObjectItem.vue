@@ -1,3 +1,7 @@
+<!--
+  对象树节点组件
+  递归渲染场景对象层级，支持选择、展开、可见性切换等
+-->
 <template>
   <div class="object-item" :style="{ paddingLeft: (level * 16 + 8) + 'px' }">
     <div 

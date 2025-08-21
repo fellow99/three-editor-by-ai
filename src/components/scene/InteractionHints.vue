@@ -3,6 +3,27 @@
   固定显示在视口，提示用户常用鼠标操作说明
   新增：支持切换FlyControls键盘控制
 -->
+<script setup>
+import { ElTag, ElCheckbox, ElIcon } from 'element-plus';
+import { InfoFilled } from '@element-plus/icons-vue';
+import { ref } from 'vue';
+import { useSceneManager } from '../../core/SceneManager.js';
+
+// 用于控制FlyControls启停
+const flyControlEnabled = ref(false);
+// 控制悬停展开
+const isHovered = ref(false);
+
+/**
+ * 切换FlyControls启停
+ * @param {boolean} val 是否启用FlyControls
+ */
+function onFlyControlChange(val) {
+  const sceneManager = useSceneManager();
+  sceneManager.setFlyControlEnabled(val);
+}
+</script>
+
 <template>
   <div
     class="interaction-hints"
@@ -70,31 +91,6 @@
     </template>
   </div>
 </template>
-
-<script setup>
-/**
- * 交互操作提示组件
- * 新增：支持切换FlyControls键盘控制
- */
-import { ElTag, ElCheckbox, ElIcon } from 'element-plus';
-import { InfoFilled } from '@element-plus/icons-vue';
-import { ref } from 'vue';
-import { useSceneManager } from '../../core/SceneManager.js';
-
-// 用于控制FlyControls启停
-const flyControlEnabled = ref(false);
-// 控制悬停展开
-const isHovered = ref(false);
-
-/**
- * 切换FlyControls启停
- * @param {boolean} val 是否启用FlyControls
- */
-function onFlyControlChange(val) {
-  const sceneManager = useSceneManager();
-  sceneManager.setFlyControlEnabled(val);
-}
-</script>
 
 <style scoped>
 .interaction-hints {

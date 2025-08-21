@@ -1,6 +1,44 @@
 <!--
-  资源面板，包含资源/层级标签页和折叠按钮
+  资源面板
+  包含资源/层级标签页和折叠按钮
 -->
+<script setup>
+import { defineProps, ref, inject } from 'vue';
+import { ElMessageBox } from 'element-plus';
+import 'element-plus/es/components/message-box/style/css';
+import AssetBrowser from './AssetBrowser.vue';
+import Inspector from './Inspector.vue';
+import VfsFilePanel from './VfsFilePanel.vue';
+import PrimitiveBrowser from './PrimitiveBrowser.vue';
+
+const scene = inject('scene');
+
+// 接收父组件传递的 props
+const props = defineProps({
+  activeLeftTab: String,
+  setActiveLeftTab: Function
+});
+
+const objectSelection = inject('objectSelection');
+
+// 面板控制方法
+function handleDeleteSelected() {
+  if (objectSelection.hasSelection.value) {
+    ElMessageBox.confirm('确定要删除选中的对象吗？', '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    }).then(() => {
+      const selectedIds = Array.from(objectSelection.selectedObjectIds.value);
+      selectedIds.forEach(id => {
+        scene.removeObjectFromScene(id);
+      });
+      objectSelection.clearSelection();
+    }).catch(() => {});
+  }
+}
+</script>
+
 <template>
   <div class="resource-panel">
     <!-- 标签页头部 -->
@@ -40,43 +78,6 @@
     </div>
   </div>
 </template>
-
-<script setup>
-import { defineProps, ref, inject } from 'vue';
-import { ElMessageBox } from 'element-plus';
-import 'element-plus/es/components/message-box/style/css';
-import AssetBrowser from './AssetBrowser.vue';
-import Inspector from './Inspector.vue';
-import VfsFilePanel from './VfsFilePanel.vue';
-import PrimitiveBrowser from './PrimitiveBrowser.vue';
-
-const scene = inject('scene');
-
-// 接收父组件传递的 props
-const props = defineProps({
-  activeLeftTab: String,
-  setActiveLeftTab: Function
-});
-
-const objectSelection = inject('objectSelection');
-
-// 面板控制方法
-function handleDeleteSelected() {
-  if (objectSelection.hasSelection.value) {
-    ElMessageBox.confirm('确定要删除选中的对象吗？', '提示', {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'warning'
-    }).then(() => {
-      const selectedIds = Array.from(objectSelection.selectedObjectIds.value);
-      selectedIds.forEach(id => {
-        scene.removeObjectFromScene(id);
-      });
-      objectSelection.clearSelection();
-    }).catch(() => {});
-  }
-}
-</script>
 
 <style scoped>
 .resource-panel {

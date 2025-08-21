@@ -1,8 +1,7 @@
 <!--
-  VfsFilePanel.vue
-  功能：虚拟文件系统面板组件，支持多文件系统切换、目录浏览、文件/目录点击、返回上级、预留文件点击和拖拽接口。
+  虚拟文件系统面板组件
+  支持多文件系统切换、目录浏览、文件/目录点击、返回上级、预留文件点击和拖拽接口。
 -->
-
 <template>
   <div class="vfs-file-panel">
     <!-- 文件系统选择 -->
@@ -45,12 +44,6 @@
 </template>
 
 <script setup>
-/**
- * 虚拟文件系统面板组件逻辑
- * - 加载所有已注册虚拟文件系统
- * - 支持切换、浏览目录、返回上级
- * - 预留文件点击、拖拽接口
- */
 import { ref, shallowRef, onMounted, watch } from 'vue';
 import vfsService from '../../services/vfs-service.js';
 

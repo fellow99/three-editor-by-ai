@@ -1,8 +1,7 @@
 <!--
-  SceneViewer.vue
-  功能：三维场景显示与交互组件，支持拖拽加载VFS模型文件到场景
+  三维场景显示与交互组件
+  支持拖拽加载、基础几何体、模型资源、模型文件到场景
 -->
-
 <template>
   <div
     class="scene-viewer"
@@ -60,26 +59,8 @@ export default {
     }
 
     /**
-     * 拖拽释放时处理模型加载
-     * @param {DragEvent} event
-     */
-    /**
-     * 拖拽释放时处理模型加载（纳入资源库并加入场景）
-     * 增加全局loading蒙版
-     * @param {DragEvent} event
-     */
-    /**
-     * 拖拽释放时处理模型加载（优先判断资源是否已存在，避免重复加载）
-     * @param {DragEvent} event
-     */
-    /**
      * 拖拽释放时处理不同类型的对象加载
      * 支持VFS模型文件、资源库模型、基础几何体/灯光
-     * @param {DragEvent} event
-     */
-    /**
-     * 拖拽释放时处理模型加载（优先判断资源是否已存在，避免重复加载）
-     * 新增：添加对象时将其位置设为当前视点位置
      * @param {DragEvent} event
      */
     async function onDrop(event) {
@@ -272,90 +253,6 @@ export default {
         animationId = requestAnimationFrame(updateCameraPosition);
       }
       updateCameraPosition();
-    }
-    
-    function resetView() {
-      scene.updateCameraConfig({
-        position: { x: 5, y: 5, z: 5 },
-        target: { x: 0, y: 0, z: 0 }
-      });
-    }
-    
-    function fitToScreen() {
-      const objects = scene.objectManager.getAllObjects();
-      if (objects.length > 0) {
-        // 计算所有对象的包围盒
-        const box = new THREE.Box3();
-        objects.forEach(obj => {
-          box.expandByObject(obj);
-        });
-        
-        if (!box.isEmpty()) {
-          const center = box.getCenter(new THREE.Vector3());
-          const size = box.getSize(new THREE.Vector3());
-          const maxSize = Math.max(size.x, size.y, size.z);
-          const distance = maxSize * 2;
-          
-          scene.updateCameraConfig({
-            position: { 
-              x: center.x + distance, 
-              y: center.y + distance, 
-              z: center.z + distance 
-            },
-            target: { x: center.x, y: center.y, z: center.z }
-          });
-        }
-      }
-    }
-    
-    function toggleWireframe() {
-      showWireframe.value = !showWireframe.value;
-      
-      // 线框模式由App.vue控制，这里不再处理
-    }
-    
-    // 网格显示由props控制，不再在本地切换
-    
-    function setViewAngle(angle) {
-      const distance = 10;
-      let position;
-      
-      switch (angle) {
-        case 'front':
-          position = { x: 0, y: 0, z: distance };
-          break;
-        case 'back':
-          position = { x: 0, y: 0, z: -distance };
-          break;
-        case 'left':
-          position = { x: -distance, y: 0, z: 0 };
-          break;
-        case 'right':
-          position = { x: distance, y: 0, z: 0 };
-          break;
-        case 'top':
-          position = { x: 0, y: distance, z: 0 };
-          break;
-        case 'bottom':
-          position = { x: 0, y: -distance, z: 0 };
-          break;
-        default:
-          return;
-      }
-      
-      scene.updateCameraConfig({
-        position,
-        target: { x: 0, y: 0, z: 0 }
-      });
-    }
-    
-    function formatNumber(num) {
-      if (num >= 1000000) {
-        return (num / 1000000).toFixed(1) + 'M';
-      } else if (num >= 1000) {
-        return (num / 1000).toFixed(1) + 'K';
-      }
-      return num.toString();
     }
     
     // 生命周期

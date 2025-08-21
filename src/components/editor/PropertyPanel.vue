@@ -1,10 +1,10 @@
+<!--
+  属性面板组件
+  功能：根据对象选择状态，动态切换属性面板Tab。
+  - 未选对象时，仅显示“场景属性”Tab（ScenePropertyPanel）
+  - 选中对象时，显示“对象属性”“材质属性”两个Tab
+-->
 <template>
-  <!--
-    PropertyPanel.vue
-    功能：根据对象选择状态，动态切换属性面板Tab。
-    - 未选对象时，仅显示“场景属性”Tab（ScenePropertyPanel）
-    - 选中对象时，显示“对象属性”“材质属性”两个Tab
-  -->
   <div class="property-panel">
     <div class="property-content">
       <div class="tabs">

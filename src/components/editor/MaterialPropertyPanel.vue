@@ -1,12 +1,15 @@
+<!--
+  材质属性面板
+  用于编辑选中对象的材质属性，包括颜色、纹理、粗糙度等
+  支持多种材质类型（标准、物理、Phong等）
+-->
 <script setup>
-// 材质属性面板
 import { ref, watch } from 'vue';
 import TextureSelectDialog from '../dialog/TextureSelectDialog.vue';
 import { useObjectSelection } from '../../composables/useObjectSelection.js';
 import { useObjectManager } from '../../core/ObjectManager.js';
 // 引入element-plus组件
 import { ElSelect, ElOption, ElColorPicker, ElSlider, ElButton } from 'element-plus';
-import { Close } from '@element-plus/icons-vue';
 
 const objectSelection = useObjectSelection();
 const objectManager = useObjectManager();
