@@ -459,7 +459,7 @@ class SceneManager {
   setupGrid() {
     // 只创建一次
     if (!this.gridHelper) {
-      this.gridHelper = new THREE.GridHelper(20, 20, 0x888888, 0x444444);
+      this.gridHelper = new THREE.GridHelper(1000, 1000, 0x666666, 0x333333);
       this.gridHelper.name = 'grid_helper';
       this.scene.add(this.gridHelper);
     }
