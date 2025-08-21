@@ -48,6 +48,8 @@ three-editor-by-ai/
 │   │   ├── editor/                           # 编辑器 UI 组件
 │   │   │   ├── PropertyPanel.vue             # 属性面板
 │   │   │   ├── ScenePropertyPanel.vue        # 场景属性面板
+│   ├── core/                  # 核心 Three.js 逻辑
+│   │   ├── SceneManager.js    # 场景管理器（选中对象时，非光源和镜头将添加BoxHelper辅助对象）
 │   │   │   ├── ObjectPropertyPanel.vue       # 对象基本属性面板
 │   │   │   ├── MaterialPropertyPanel.vue     # 材质编辑面板
 │   │   │   ├── Toolbar.vue                   # 工具栏
@@ -66,7 +68,7 @@ three-editor-by-ai/
 │   │   │   ├── CubeViewportControls.vue      # 立方体视角控件
 │   ├── composables/           # Vue Composition API 可组合函数
 │   │   ├── useScene.js        # 场景管理
-│   │   ├── useObjectSelection.js  # 对象选择
+│   │   ├── useObjectSelection.js  # 对象选择（已去除选择高亮和悬停高亮功能）
 │   │   ├── useTransform.js    # 变换操作
 │   │   └── useAssets.js       # 资源管理，包含模型/纹理等资源的加载、缓存与去重机制
 │   ├── core/                  # 核心 Three.js 逻辑

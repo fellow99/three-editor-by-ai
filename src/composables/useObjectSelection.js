@@ -54,13 +54,9 @@ export function useObjectSelection() {
     endY: 0
   });
   
-  // 选择配置
+  // 选择配置（已去除高亮相关）
   const selectionConfig = reactive({
-    highlightSelected: false, // 是否高亮选中对象，默认否
-    highlightColor: 0x00ff00,
-    showBoundingBox: true,
-    enableHover: true,
-    hoverColor: 0xffff00
+    showBoundingBox: true
   });
   
   // 悬停状态
@@ -244,33 +240,7 @@ export function useObjectSelection() {
     }
   }
   
-  /**
-   * 处理鼠标悬停
-   * @param {object} event 鼠标事件数据
-   * @param {THREE.Camera} camera 相机
-   */
-  function handleHover(event, camera) {
-    if (!selectionConfig.enableHover || !camera) return;
-    
-    const raycaster = inputManager.getRaycaster(camera);
-    const intersectedObjects = objectManager.getIntersectedObjects(raycaster);
-    
-    const newHoveredObject = intersectedObjects.length > 0 ? intersectedObjects[0] : null;
-    
-    if (hoveredObject.value !== newHoveredObject) {
-      // 清除之前的悬停高亮
-      if (hoveredObject.value) {
-        removeHoverHighlight(hoveredObject.value);
-      }
-      
-      hoveredObject.value = newHoveredObject;
-      
-      // 添加新的悬停高亮
-      if (hoveredObject.value) {
-        addHoverHighlight(hoveredObject.value);
-      }
-    }
-  }
+  // 已去除悬停高亮相关功能
   
   /**
    * 开始框选
@@ -339,142 +309,15 @@ export function useObjectSelection() {
     boxSelection.isActive = false;
   }
   
-  /**
-   * 更新选择高亮
-   */
-  function updateSelectionHighlights() {
-    if (!selectionConfig.highlightSelected) return;
-    
-    // 移除所有高亮
-    objectManager.getAllObjects().forEach(object => {
-      removeSelectionHighlight(object);
-    });
-    
-    // 为选中的对象添加高亮
-    selectedObjects.value.forEach(object => {
-      addSelectionHighlight(object);
-    });
-  }
+  // 已去除选择高亮相关功能
   
-  /**
-   * 添加选择高亮
-   * @param {THREE.Object3D} object 对象
-   */
-  /**
-   * 添加选择高亮
-   * @param {THREE.Object3D} object 对象
-   */
-  function addSelectionHighlight(object) {
-    object.traverse(child => {
-      if (child.isMesh && child.material && child.userData.id) {
-        const id = child.userData.id;
-        if (!selectionStore[id]) selectionStore[id] = {};
-        // 保存原始材质
-        if (!selectionStore[id].originalMaterial) {
-          selectionStore[id].originalMaterial = child.material;
-        }
-        // 创建高亮材质并记录
-        if (!selectionStore[id].selectionMaterial) {
-          const highlightMaterial = child.material.clone();
-          highlightMaterial.emissive = new THREE.Color(selectionConfig.highlightColor);
-          highlightMaterial.emissiveIntensity = 0.3;
-          selectionStore[id].selectionMaterial = highlightMaterial;
-        }
-        child.material = selectionStore[id].selectionMaterial;
-      }
-    });
-  }
+  // 已去除选择高亮相关功能
   
-  /**
-   * 移除选择高亮
-   * @param {THREE.Object3D} object 对象
-   */
-  /**
-   * 移除选择高亮
-   * @param {THREE.Object3D} object 对象
-   */
-  function removeSelectionHighlight(object) {
-    object.traverse(child => {
-      if (child.isMesh && child.userData.id) {
-        const id = child.userData.id;
-        if (selectionStore[id]?.originalMaterial) {
-          child.material = selectionStore[id].originalMaterial;
-          delete selectionStore[id].originalMaterial;
-        }
-        if (selectionStore[id]?.selectionMaterial) {
-          delete selectionStore[id].selectionMaterial;
-        }
-        // 如果 hoverMaterial 也被移除，且 selectionStore[id] 为空对象，则清理
-        if (
-          selectionStore[id] &&
-          Object.keys(selectionStore[id]).length === 0
-        ) {
-          delete selectionStore[id];
-        }
-      }
-    });
-  }
+  // 已去除选择高亮相关功能
   
-  /**
-   * 添加悬停高亮
-   * @param {THREE.Object3D} object 对象
-   */
-  /**
-   * 添加悬停高亮
-   * @param {THREE.Object3D} object 对象
-   */
-  function addHoverHighlight(object) {
-    object.traverse(child => {
-      if (child.isMesh && child.material && child.userData.id) {
-        const id = child.userData.id;
-        if (!selectionStore[id]) selectionStore[id] = {};
-        // 保存原始材质
-        if (!selectionStore[id].originalMaterial) {
-          selectionStore[id].originalMaterial = child.material;
-        }
-        // 创建悬停材质并记录
-        if (!selectionStore[id].hoverMaterial) {
-          const hoverMaterial = child.material.clone();
-          hoverMaterial.emissive = new THREE.Color(selectionConfig.hoverColor);
-          hoverMaterial.emissiveIntensity = 0.2;
-          selectionStore[id].hoverMaterial = hoverMaterial;
-        }
-        child.material = selectionStore[id].hoverMaterial;
-      }
-    });
-  }
+  // 已去除悬停高亮相关功能
   
-  /**
-   * 移除悬停高亮
-   * @param {THREE.Object3D} object 对象
-   */
-  /**
-   * 移除悬停高亮
-   * @param {THREE.Object3D} object 对象
-   */
-  function removeHoverHighlight(object) {
-    object.traverse(child => {
-      if (child.isMesh && child.userData.id) {
-        const id = child.userData.id;
-        // 如果对象被选中，恢复 selectionMaterial
-        if (selectionStore[id]?.selectionMaterial) {
-          child.material = selectionStore[id].selectionMaterial;
-        } else if (selectionStore[id]?.originalMaterial) {
-          child.material = selectionStore[id].originalMaterial;
-        }
-        if (selectionStore[id]?.hoverMaterial) {
-          delete selectionStore[id].hoverMaterial;
-        }
-        // 如果 selectionStore[id] 为空对象，则清理
-        if (
-          selectionStore[id] &&
-          Object.keys(selectionStore[id]).length === 0
-        ) {
-          delete selectionStore[id];
-        }
-      }
-    });
-  }
+  // 已去除悬停高亮相关功能
   
   /**
    * 获取选择边界框
@@ -529,11 +372,9 @@ export function useObjectSelection() {
     selectByType,
     selectByName,
     handleClickSelection,
-    handleHover,
     startBoxSelection,
     updateBoxSelection,
     endBoxSelection,
-    updateSelectionHighlights,
     getSelectionBounds,
     getSelectionCenter
   };

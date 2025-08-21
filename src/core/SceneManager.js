@@ -8,7 +8,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 // 引入FlyControls用于飞行模式控制
 import { FlyControls } from 'three/examples/jsm/controls/FlyControls.js';
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js';
-import { DirectionalLightHelper, PointLightHelper, SpotLightHelper, HemisphereLightHelper, CameraHelper } from 'three';
+import { DirectionalLightHelper, PointLightHelper, SpotLightHelper, HemisphereLightHelper, CameraHelper, BoxHelper } from 'three';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { reactive, watch } from 'vue';
@@ -84,6 +84,10 @@ class SceneManager {
     // 监听变换事件，同步属性
     this.transformControls.addEventListener('objectChange', () => {
       if (this.currentTransformObject) {
+        // 变换时动态更新BoxHelper
+        if (this.currentHelper && this.currentHelper instanceof BoxHelper) {
+          this.currentHelper.update();
+        }
         const objectManager = useObjectManager();
         if (objectManager && objectManager.setObjectTransform) {
           objectManager.setObjectTransform(
@@ -204,6 +208,9 @@ class SceneManager {
       helper = new HemisphereLightHelper(selected, 2);
     } else if (selected.isCamera) {
       helper = new CameraHelper(selected);
+    } else {
+      // 非光源和镜头，添加包围盒辅助对象
+      helper = new BoxHelper(selected, 0xffff00);
     }
     if (helper) {
       this.scene.add(helper);
