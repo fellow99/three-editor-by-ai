@@ -70,7 +70,7 @@ function select(texture) {
   </div>
 </template>
 
-<style scoped>
+<style lang="scss" scoped>
 .texture-dialog-mask {
   position: fixed;
   left: 0; top: 0; right: 0; bottom: 0;

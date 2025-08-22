@@ -82,7 +82,7 @@ watch(
   <div ref="gizmoContainer" class="cube-viewport-controls"></div>
 </template>
 
-<style scoped>
+<style lang="scss" scoped>
 .cube-viewport-controls {
   width: 100px;
   height: 100px;

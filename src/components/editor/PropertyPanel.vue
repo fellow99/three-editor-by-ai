@@ -91,7 +91,7 @@ export default {
 };
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .property-panel {
   width: 300px;
   height: 100%;

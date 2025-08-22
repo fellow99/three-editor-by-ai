@@ -30,6 +30,7 @@
 - **前端框架**: Vue 3 + Vite
 - **3D引擎**: Three.js
 - **构建工具**: Vite
+- **样式**: Sass
 - **网络请求**: Fetch API
 - **工具库**: 
   - Element Plus - 主流UI组件库
@@ -93,7 +94,7 @@ three-editor-by-ai/
 │   ├── App.vue               # 根组件（仅负责引入Editor.vue）
 │   ├── Editor.vue            # 主编辑器组件（包含全部业务与UI）
 │   ├── main.js               # 应用入口
-│   └── style.css             # 全局样式
+│   └── style.scss            # 全局样式
 ├── .gitignore                # Git 忽略文件
 ├── index.html                # HTML 模板
 ├── package.json              # 项目配置

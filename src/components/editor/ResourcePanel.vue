@@ -79,7 +79,7 @@ function handleDeleteSelected() {
   </div>
 </template>
 
-<style scoped>
+<style lang="scss" scoped>
 .resource-panel {
   width: 300px;
   height: 100%;

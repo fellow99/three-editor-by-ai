@@ -133,7 +133,7 @@ watch([currentVfs, currentPath], () => {
 });
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .vfs-file-panel {
   width: 100%;
   height: 100%;

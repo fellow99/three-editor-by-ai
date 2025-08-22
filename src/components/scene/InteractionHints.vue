@@ -88,7 +88,7 @@ function onFlyControlChange(val) {
   </div>
 </template>
 
-<style scoped>
+<style lang="scss" scoped>
 .interaction-hints {
   position: absolute;
   bottom: 20px;

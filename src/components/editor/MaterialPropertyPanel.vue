@@ -281,7 +281,7 @@ function getTexturePreviewSrc(image) {
   </div>
 </template>
 
-<style scoped>
+<style lang="scss" scoped>
 .property-section {
   padding: 8px;
   overflow-y: auto;

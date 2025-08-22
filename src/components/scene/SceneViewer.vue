@@ -297,7 +297,7 @@ export default {
 };
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .scene-viewer {
   position: relative;
   width: 100%;

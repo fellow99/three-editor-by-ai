@@ -53,7 +53,7 @@ defineProps({
   </footer>
 </template>
 
-<style scoped>
+<style lang="scss" scoped>
 .editor-footer {
   height: 28px;
   background: #2a2a2a;

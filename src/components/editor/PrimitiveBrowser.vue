@@ -72,7 +72,7 @@ const groupedPrimitives = computed(() => {
 });
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 /* 复用AssetBrowser中的样式 */
 .primitives-grid {
   display: flex;

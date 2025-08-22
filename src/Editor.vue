@@ -414,7 +414,7 @@ onUnmounted(() => {
 });
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .editor-container {
   height: 100vh;
   display: flex;

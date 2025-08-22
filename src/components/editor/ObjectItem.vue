@@ -242,7 +242,7 @@ export default {
 };
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .object-item {
   user-select: none;
 }

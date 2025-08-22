@@ -373,7 +373,7 @@ function resetScale() {
   </div>
 </template>
 
-<style scoped>
+<style lang="scss" scoped>
 .object-property-panel {
   width: 100%;
   height: 100%;

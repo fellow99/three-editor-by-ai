@@ -64,7 +64,7 @@ defineProps({
   </div>
 </template>
 
-<style scoped>
+<style lang="scss" scoped>
 .viewport-controls {
   position: absolute;
   top: 20px;

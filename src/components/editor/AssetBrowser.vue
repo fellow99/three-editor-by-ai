@@ -365,7 +365,7 @@ export default {
 };
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .asset-tabs {
   display: flex;
   border-bottom: 1px solid #444;

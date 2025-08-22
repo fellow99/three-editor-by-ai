@@ -125,7 +125,7 @@ function onUserDataBlur() {
   </div>
 </template>
 
-<style scoped>
+<style lang="scss" scoped>
 .scene-property-panel {
   padding: 16px;
 }

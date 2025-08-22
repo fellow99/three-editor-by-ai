@@ -336,7 +336,7 @@ export default {
 };
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .ribbon-toolbar.dark {
   background: #23272e;
   color: #f3f3f3;
