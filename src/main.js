@@ -9,14 +9,9 @@ import './style.scss'
 import App from './App.vue'
 import pkg from '../package.json'
 
-import vfsService from './services/vfs-service';
+import { register as registerVfs } from './vfs';
 
-vfsService.registerVfs({
-    type: 'static',
-    drive: 'static',
-    baseURL: `/${pkg.name}`,
-    root: '/vfs',
-});
+await registerVfs(`/${pkg.name}/vfs.json`);
 
 const app = createApp(App)
 app.use(ElementPlus)
