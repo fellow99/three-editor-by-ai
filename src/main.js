@@ -1,5 +1,5 @@
 /**
- * 引入Element Plus并注册为全局组件库
+ * 应用入口文件
  */
 import { createApp } from 'vue'
 import ElementPlus from 'element-plus'
@@ -9,10 +9,12 @@ import './style.scss'
 import App from './App.vue'
 import pkg from '../package.json'
 
-import { register as registerVfs } from './vfs';
+import { registerVfsFromURL } from './main-func'; // 应用入口文件相关的功能函数
 
-await registerVfs(`/${pkg.name}/vfs.json`);
+// 注册虚拟文件系统
+await registerVfsFromURL(`/${pkg.name}/vfs.json`);
 
+// 创建Vue应用
 const app = createApp(App)
 app.use(ElementPlus)
 app.mount('#app')

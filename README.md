@@ -94,6 +94,7 @@ three-editor-by-ai/
 │   ├── App.vue               # 根组件（仅负责引入Editor.vue）
 │   ├── Editor.vue            # 主编辑器组件（包含全部业务与UI）
 │   ├── main.js               # 应用入口
+│   ├── main-func.js          # 应用入口文件相关的功能函数
 │   └── style.scss            # 全局样式
 ├── .gitignore                # Git 忽略文件
 ├── index.html                # HTML 模板
@@ -158,7 +159,7 @@ three-editor-by-ai/
 
 ## 💯 AI
 
-- 本工程完全使用AI自行编写代码（人工编写代码目前少于10行）；
+- 本工程基本使用AI自行编写代码（人工编写代码目前少于5%）；
 - 开发环境：VSCode + Cline + GitHub Copilot + Claude 4 / GPT-4.1
 - 使用Claude 4搭建本工程的主体框架，但由于GitHub Copilot Pro版2天内就消耗完（300 Premium requests），后转向使用GPT-4.1实现各项功能。
 - .clinerules目录：存储AI规则
