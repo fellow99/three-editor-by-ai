@@ -99,7 +99,7 @@ three-editor-by-ai/
 ├── script/                   # 脚本
 │   ├── package.json          # 脚本子项目配置
 │   ├── generate-vfs.js       # 脚本：生成虚拟文件系统的元数据，用于编辑器的文件浏览器
-│   └── vfs-server.js         # 脚本：虚拟文件系统后端服务，提供目录与文件列表API
+│   └── vfs-server.js         # 脚本：虚拟文件系统后端服务，支持多 drive 配置（读取vfs-server.json）
 ├── index.html                # HTML 模板
 ├── package.json              # 项目配置
 ├── vite.config.js            # Vite 配置

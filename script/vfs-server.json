@@ -1,0 +1,8 @@
+{
+    "vfs": [
+        {
+            "drive": "vfs",
+            "path": "../public/vfs"
+        }
+    ]
+}

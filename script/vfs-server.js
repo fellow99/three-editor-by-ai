@@ -4,6 +4,11 @@
  * 支持跨域，可与前端分离部署。
  * - /api/list/:drive?path= 路由，返回指定目录下的文件和文件夹结构
  * - /file/:drive/* 路由，返回指定文件内容，支持二进制
+ * - /exist/:drive/* 路由，检查指定文件或目录是否存在
+ * 
+ * 新增：支持多 drive，启动时读取同目录 vfs-server.json，按配置动态映射 drive 到不同根路径。
+ * 新语法：fs/promises、import.meta.url、ESM下__dirname、JSON配置动态加载
+ * 新增：服务端口PORT可通过命令行参数传入，如 node vfs-server.js 8080，默认3001
  */
 
 import express from "express";
@@ -17,10 +22,38 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = 3001;
+// 支持通过命令行参数传入端口，默认3001
+let PORT = 3001;
+const portArg = process.argv.find(arg => /^\d+$/.test(arg));
+if (portArg) {
+    PORT = parseInt(portArg, 10);
+}
 
-// 虚拟文件系统根目录
-const VFS_ROOT = path.resolve(__dirname, "../public/vfs");
+// 读取 vfs-server.json 配置，构建 drive 映射
+const VFS_CONFIG_PATH = path.resolve(__dirname, "vfs-server.json");
+/**
+ * driveRoots: { [drive: string]: 绝对路径 }
+ */
+let driveRoots = {};
+async function loadDriveConfig() {
+    try {
+        const configRaw = await fs.readFile(VFS_CONFIG_PATH, "utf-8");
+        const config = JSON.parse(configRaw);
+        if (Array.isArray(config.vfs)) {
+            driveRoots = {};
+            for (const item of config.vfs) {
+                if (item.drive && item.path) {
+                    driveRoots[item.drive] = path.resolve(__dirname, item.path);
+                }
+            }
+        }
+    } catch (e) {
+        console.error("读取vfs-server.json失败：", e);
+        driveRoots = {};
+    }
+}
+// 启动时加载一次
+await loadDriveConfig();
 
 // 只读取当前目录内容，不递归子目录
 /**
@@ -79,9 +112,15 @@ app.use(cors());
  * 返回：{ code: 0, data: { files: [...] } }
  */
 app.get("/api/list/:drive", async (req, res) => {
+    const drive = req.params.drive;
     let reqPath = req.query.path || "/";
     if (!reqPath.startsWith("/")) reqPath = "/" + reqPath;
-    const absPath = path.join(VFS_ROOT, "." + reqPath);
+    const root = driveRoots[drive];
+    if (!root) {
+        res.json({ code: 1, msg: "无效的drive参数" });
+        return;
+    }
+    const absPath = path.join(root, "." + reqPath);
     try {
         const files = await readDirCurrent(absPath, reqPath);
         res.json({ code: 0, data: { files } });
@@ -95,14 +134,40 @@ app.get("/api/list/:drive", async (req, res) => {
 app.get("/file/:drive/*", async (req, res) => {
     const drive = req.params.drive;
     const filePath = req.params[0] || "";
-    // 只允许访问 public/vfs 下的文件
-    const absPath = path.join(VFS_ROOT, filePath);
+    const root = driveRoots[drive];
+    if (!root) {
+        res.status(404).send("Invalid drive");
+        return;
+    }
+    const absPath = path.join(root, filePath);
     try {
         // 检查文件是否存在
         await fs.access(absPath);
         res.sendFile(absPath);
     } catch (e) {
         res.status(404).send("File not found");
+    }
+});
+
+/**
+ * 判断文件或目录是否存在
+ * GET /exists/:drive/*
+ * 返回：{ exists: true/false }
+ */
+app.get("/exists/:drive/*", async (req, res) => {
+    const drive = req.params.drive;
+    const filePath = req.params[0] || "";
+    const root = driveRoots[drive];
+    if (!root) {
+        res.json({ exists: false });
+        return;
+    }
+    const absPath = path.join(root, filePath);
+    try {
+        await fs.access(absPath);
+        res.json({ exists: true });
+    } catch (e) {
+        res.json({ exists: false });
     }
 });
 
