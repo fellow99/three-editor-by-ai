@@ -4,5 +4,11 @@
         "drive": "demo",
         "baseURL": "/three-editor-by-ai",
         "root": "/vfs"
+    },
+    {
+        "type": "vfs-server",
+        "drive": "vfs",
+        "baseURL": "http://localhost:3001",
+        "root": ""
     }
 ]

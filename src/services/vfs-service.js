@@ -1,6 +1,7 @@
 import mime from 'mime';
 
 import { StaticDriveApi} from './static-drive-api'; // 静态文件系统API
+import { VfsServerApi } from './vfs-server-api'; // vfs-server服务API
 
 const driveMap = {};
 
@@ -13,6 +14,8 @@ function registerVfs (opt) {
     let vfs = null;
     if (type === 'static') {
         vfs = driveMap[drive] = new StaticDriveApi(opt);
+    } else if (type === 'vfs-server') {
+        vfs = driveMap[drive] = new VfsServerApi(opt);
     }
     return vfs;
 }
