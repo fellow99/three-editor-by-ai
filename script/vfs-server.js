@@ -79,8 +79,7 @@ async function readDirCurrent(dir, relPath = "/") {
                     ext: "",
                     type: "FOLDER",
                     size: 0,
-                    time: null,
-                    url: `/three-editor-by-ai/vfs${entryRelPath}`,
+                    time: null
                 });
             } else {
                 // 文件
@@ -90,8 +89,7 @@ async function readDirCurrent(dir, relPath = "/") {
                     ext: path.extname(entry.name).replace(".", ""),
                     type: "FILE",
                     size: stat.size,
-                    time: stat.mtime,
-                    url: `/three-editor-by-ai/vfs${entryRelPath}`,
+                    time: stat.mtime
                 });
             }
         }

@@ -36,7 +36,7 @@
       >
         <span v-if="item.type === 'FOLDER'">📁</span>
         <span v-else>📄</span>
-        {{ item.name }}
+        {{ item.title || item.name }}
       </div>
       <div v-if="files.length === 0" class="vfs-empty">该目录为空</div>
     </div>
@@ -120,7 +120,8 @@ function onItemDrag(file, event) {
     drive: currentVfs.value?._drive,
     path: file.path,
     name: file.name,
-    type: file.type
+    type: file.type,
+    url: file.url
   }));
 }
 

@@ -106,14 +106,26 @@ export default {
             return;
           }
           // VFS模型（有drive/path/name/type字段）
+          /**
+           * 兼容VFS模型拖拽，支持modelInfo.url字段
+           * - 若modelInfo有url字段，则fetch该url获取blob
+           * - 否则按原有方式通过vfs获取blob
+           * 新增用法：fetch(url)获取blob并转为File对象
+           */
           if (modelInfo.drive && modelInfo.path && modelInfo.name) {
             const modelExts = ['.glb', '.gltf', '.fbx', '.obj'];
             const ext = modelInfo.name ? modelInfo.name.slice(modelInfo.name.lastIndexOf('.')).toLowerCase() : '';
             if (modelInfo.type !== 'FILE' || !modelExts.includes(ext)) return;
-            // 获取vfs实例
-            const vfs = vfsService.getVfs(modelInfo.drive);
-            // 获取Blob对象
-            const blob = await vfs.blob(modelInfo.path + '/' + modelInfo.name);
+            let blob;
+            if (modelInfo.url) {
+              // 有url字段，直接fetch获取blob
+              const response = await fetch(modelInfo.url);
+              blob = await response.blob();
+            } else {
+              // 无url字段，按原有方式
+              const vfs = vfsService.getVfs(modelInfo.drive);
+              blob = await vfs.blob(modelInfo.path + '/' + modelInfo.name);
+            }
             // Blob转File对象
             const file = new File([blob], modelInfo.name, { type: blob.type });
             file.fileInfo = modelInfo; // 保留原始文件信息
@@ -133,14 +145,28 @@ export default {
           }
         }
         // 3. 兼容旧的application/json拖拽（VFS面板老实现）
+        /**
+         * 兼容旧VFS面板拖拽，支持fileInfo.url字段
+         * - 若fileInfo有url字段，则fetch该url获取blob
+         * - 否则按原有方式通过vfs获取blob
+         * 新增用法：fetch(url)获取blob并转为File对象
+         */
         const data = event.dataTransfer.getData('application/json');
         if (data) {
           const fileInfo = JSON.parse(data);
           const modelExts = ['.glb', '.gltf', '.fbx', '.obj'];
           const ext = fileInfo.name ? fileInfo.name.slice(fileInfo.name.lastIndexOf('.')).toLowerCase() : '';
           if (fileInfo.type !== 'FILE' || !modelExts.includes(ext)) return;
-          const vfs = vfsService.getVfs(fileInfo.drive);
-          const blob = await vfs.blob(fileInfo.path + '/' + fileInfo.name);
+          let blob;
+          if (fileInfo.url) {
+            // 有url字段，直接fetch获取blob
+            const response = await fetch(fileInfo.url);
+            blob = await response.blob();
+          } else {
+            // 无url字段，按原有方式
+            const vfs = vfsService.getVfs(fileInfo.drive);
+            blob = await vfs.blob(fileInfo.path + '/' + fileInfo.name);
+          }
           const file = new File([blob], fileInfo.name, { type: blob.type });
           file.fileInfo = fileInfo;
           const cached = getCachedModel(file.name, blob.size);
