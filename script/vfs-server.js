@@ -1,7 +1,3 @@
-// script/vfs-server.js
-// 功能：虚拟文件系统后端服务，提供目录与文件列表API，供前端资源浏览器调用。
-// 新语法：使用 ES6+、async/await、递归、path、fs/promises、Express 框架，ESM模块(import语法)。
-
 /**
  * 虚拟文件系统服务
  * 功能：虚拟文件系统后端服务，提供目录与文件列表API，供前端资源浏览器调用。

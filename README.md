@@ -106,11 +106,6 @@ three-editor-by-ai/
 └── README.md                 # 项目说明
 ```
 
-## 脚本说明
-
-- script/generate-vfs.js：生成虚拟文件系统的元数据，用于编辑器的文件浏览器
-- script/vfs-server.js：虚拟文件系统后端服务，提供目录与文件列表API
-
 ## 🏗️ 架构设计
 
 ### 组件层次

@@ -1,7 +1,7 @@
 [
     {
         "type": "static",
-        "drive": "demo",
+        "drive": "static",
         "baseURL": "/three-editor-by-ai",
         "root": "/vfs"
     },
