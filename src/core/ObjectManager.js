@@ -4,6 +4,7 @@
  * 
  * 新增方法说明：
  * - getIntersectedFirstObject(raycaster)：高效获取射线第一个相交对象，仅返回第一个命中的顶级对象，适用于对象数量极大时的高性能选择。
+ * - getUnlockedObjects()：获取所有未被锁定（userData.locked !== true）的对象，便于过滤交互对象。
  */
 
 import * as THREE from 'three';
@@ -380,6 +381,15 @@ class ObjectManager {
   getAllObjects() {
     return Array.from(this.state.objects.values());
   }
+
+  /**
+   * 获取所有未被锁定的对象
+   * @returns {THREE.Object3D[]} 未锁定对象数组
+   * 新语法说明：使用Array.prototype.filter过滤userData.locked!==true的对象
+   */
+  getUnlockedObjects() {
+    return Array.from(this.state.objects.values()).filter(obj => !(obj.userData && obj.userData.locked === true));
+  }
   
   /**
    * 选择对象
@@ -638,14 +648,14 @@ class ObjectManager {
   }
   
   /**
-   * 根据射线查找对象
+   * 根据射线查找未锁定对象
    * @param {THREE.Raycaster} raycaster 射线投射器
-   * @returns {THREE.Object3D[]} 相交的对象
+   * @returns {THREE.Object3D[]} 相交的未锁定对象
    */
   getIntersectedObjects(raycaster) {
-    const objects = this.getAllObjects();
+    const objects = this.getUnlockedObjects();
     const intersects = raycaster.intersectObjects(objects, true);
-    
+
     return intersects.map(intersect => {
       // 找到顶级管理的对象
       let targetObject = intersect.object;
@@ -657,13 +667,13 @@ class ObjectManager {
   }
 
   /**
-   * 高效获取射线第一个相交对象
-   * 只返回第一个命中的顶级对象，适用于对象数量极大时的高性能选择
+   * 高效获取射线第一个相交未锁定对象
+   * 只返回第一个命中的顶级未锁定对象，适用于对象数量极大时的高性能选择
    * @param {THREE.Raycaster} raycaster 射线投射器
-   * @returns {THREE.Object3D|null} 第一个相交对象或null
+   * @returns {THREE.Object3D|null} 第一个相交未锁定对象或null
    */
   getIntersectedFirstObject(raycaster) {
-    const objects = this.getAllObjects();
+    const objects = this.getUnlockedObjects();
     const intersects = raycaster.intersectObjects(objects, true);
     if (intersects.length === 0) return null;
     // 找到顶级管理的对象

@@ -70,7 +70,7 @@ three-editor-by-ai/
 │   │   ├── useAssets.js       # 资源管理，包含模型/纹理等资源的加载、缓存与去重机制
 │   ├── core/                  # 核心 Three.js 逻辑
 │   │   ├── SceneManager.js    # 场景管理器
-│   │   ├── ObjectManager.js   # 对象管理器
+│   │   ├── ObjectManager.js   # 对象管理器（含 getUnlockedObjects 方法，支持过滤未锁定对象，getIntersectedObjects/getIntersectedFirstObject 仅返回未锁定对象）
 │   │   ├── InputManager.js    # 输入处理
 │   │   ├── AssetLoader.js     # 资源加载器
 │   ├── composables/           # Vue Composition API 可组合函数
@@ -136,6 +136,8 @@ three-editor-by-ai/
   - 如需加载KTX2纹理，请将node_modules/three/examples/jsm/libs/basis目录中的文件放入 /basis/ 目录下。
   - 如需加载Meshopt压缩的glTF模型，请将node_modules/three/examples/jsm/libs/meshopt_decoder.module.js文件放入 public/meshopt/ 目录下。
 - ObjectManager.js中：
+  - 新增 getUnlockedObjects() 方法，支持获取所有未被锁定（userData.locked !== true）的对象；
+  - getIntersectedObjects() 和 getIntersectedFirstObject() 仅返回未锁定对象；
   - 变换后分发object-transform-updated事件。
 - useScene.js中：
   - 聚焦对象时计算中心点并设置OrbitControls target。
