@@ -388,6 +388,7 @@ export function useObjectSelection() {
   
   /**
    * 处理鼠标点击选择
+   * 使用ObjectManager.getIntersectedFirstObject(raycaster)高效获取第一个相交对象
    * @param {object} event 鼠标事件数据
    * @param {THREE.Camera} camera 相机
    */
@@ -395,10 +396,9 @@ export function useObjectSelection() {
     if (!camera) return;
     
     const raycaster = inputManager.getRaycaster(camera);
-    const intersectedObjects = objectManager.getIntersectedObjects(raycaster);
+    const targetObject = objectManager.getIntersectedFirstObject(raycaster);
     
-    if (intersectedObjects.length > 0) {
-      const targetObject = intersectedObjects[0];
+    if (targetObject) {
       // 如果对象被锁定，则不允许选中
       if (targetObject.userData && targetObject.userData.locked) {
         return;

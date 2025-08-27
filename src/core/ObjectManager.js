@@ -1,6 +1,9 @@
 /**
  * 对象管理器
  * 负责3D对象的创建、管理和操作
+ * 
+ * 新增方法说明：
+ * - getIntersectedFirstObject(raycaster)：高效获取射线第一个相交对象，仅返回第一个命中的顶级对象，适用于对象数量极大时的高性能选择。
  */
 
 import * as THREE from 'three';
@@ -651,6 +654,24 @@ class ObjectManager {
       }
       return targetObject;
     }).filter(obj => this.state.objects.has(obj.userData.id));
+  }
+
+  /**
+   * 高效获取射线第一个相交对象
+   * 只返回第一个命中的顶级对象，适用于对象数量极大时的高性能选择
+   * @param {THREE.Raycaster} raycaster 射线投射器
+   * @returns {THREE.Object3D|null} 第一个相交对象或null
+   */
+  getIntersectedFirstObject(raycaster) {
+    const objects = this.getAllObjects();
+    const intersects = raycaster.intersectObjects(objects, true);
+    if (intersects.length === 0) return null;
+    // 找到顶级管理的对象
+    let targetObject = intersects[0].object;
+    while (targetObject.parent && !this.state.objects.has(targetObject.userData.id)) {
+      targetObject = targetObject.parent;
+    }
+    return this.state.objects.has(targetObject.userData.id) ? targetObject : null;
   }
   
   /**
