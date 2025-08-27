@@ -13,7 +13,7 @@
 - 完整的对象变换系统（移动、旋转、缩放）、撤销重做历史记录
 - 多格式3D模型和纹理加载与管理（GLTF、OBJ、FBX等）
 - 拖拽上传、资源管理与资源浏览（支持模型预览和几何体创建）
-- 相机控制与预设视角（OrbitControls、FlyControls切换）
+- 相机控制与预设视角（OrbitControls、MapControls、FlyControls切换，FlyControls支持基于键盘、鼠标的三维飞行控制）
 - 材质编辑和属性调整（多种材质类型与参数动态配置）
 - 场景序列化、导入导出与完整层级管理
 - 单对象选择和编辑
@@ -80,7 +80,7 @@ three-editor-by-ai/
 │   │   ├── static-drive-api.js # 静态文件系统封装
 │   │   ├── vfs-service.js    # 虚拟文件系统服务，用于读写文件
 │   ├── controls/             # 控制器
-│   │   ├── FlyControls.js    # 飞行控制器
+│   │   ├── FlyControls.js    # 飞行控制器，支持基于键盘、鼠标的三维飞行
 │   ├── utils/                # 工具函数
 │   │   ├── mathUtils.js      # 数学工具
 │   │   ├── geometryUtils.js  # 几何工具
@@ -150,10 +150,7 @@ three-editor-by-ai/
     - selectionStore 生命周期与 useObjectSelection 组合式函数一致，自动随页面刷新或状态重置而清空。
   - TransformControls与选中对象辅助功能已迁移至useObjectSelection.js统一管理，SceneManager.js仅负责场景本身，SceneViewer.vue仅负责初始化调用。
   - TransformControls拖拽时会自动禁用OrbitControls，避免拖拽时镜头跟随问题。（已迁移至useObjectSelection.js）
-- FlyControls.js中，修改了部分操作逻辑：
-    - 按键Q/E：目标点围绕镜头旋转，即镜头原地旋转；
-    - 鼠标左键点击拖动：目标点位置不动，镜头围绕目标点运动；
-    - 鼠标右键点击拖动：镜头位置不动，目标点运动，镜头始终看向目标点；
+- FlyControls.js中，已支持基于键盘的三维飞行控制（WASD/QE/方向键等），核心逻辑参考 three/examples/jsm/controls/OrbitControls.js、three/examples/jsm/controls/FlyControls.js 实现，支持速度、旋转、拖拽等多种操作。
 - useAssets.js 中：
   - 资源加载函数（如 loadModel、loadTexture）已实现缓存机制：若 assetLibrary 中已存在同名且大小一致的资源，则直接返回缓存，避免重复加载和内存浪费。
 - 所有资源（基础几何体、模型、资源）添加方式已统一为拖拽，点击添加功能已移除。
