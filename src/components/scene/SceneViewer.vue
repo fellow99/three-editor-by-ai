@@ -105,9 +105,8 @@ export default {
             }
             return;
           }
-          // VFS模型（有drive/path/name/type字段）
           /**
-           * 兼容VFS模型拖拽，支持modelInfo.url字段
+           * 从VfsFilePanel中拖拽模型，支持modelInfo.url字段
            * - 若modelInfo有url字段，则fetch该url获取blob
            * - 否则按原有方式通过vfs获取blob
            * 新增用法：fetch(url)获取blob并转为File对象
@@ -143,42 +142,6 @@ export default {
             }
             return;
           }
-        }
-        // 3. 兼容旧的application/json拖拽（VFS面板老实现）
-        /**
-         * 兼容旧VFS面板拖拽，支持fileInfo.url字段
-         * - 若fileInfo有url字段，则fetch该url获取blob
-         * - 否则按原有方式通过vfs获取blob
-         * 新增用法：fetch(url)获取blob并转为File对象
-         */
-        const data = event.dataTransfer.getData('application/json');
-        if (data) {
-          const fileInfo = JSON.parse(data);
-          const modelExts = ['.glb', '.gltf', '.fbx', '.obj'];
-          const ext = fileInfo.name ? fileInfo.name.slice(fileInfo.name.lastIndexOf('.')).toLowerCase() : '';
-          if (fileInfo.type !== 'FILE' || !modelExts.includes(ext)) return;
-          let blob;
-          if (fileInfo.url) {
-            // 有url字段，直接fetch获取blob
-            const response = await fetch(fileInfo.url);
-            blob = await response.blob();
-          } else {
-            // 无url字段，按原有方式
-            const vfs = vfsService.getVfs(fileInfo.drive);
-            blob = await vfs.blob(fileInfo.path + '/' + fileInfo.name);
-          }
-          const file = new File([blob], fileInfo.name, { type: blob.type });
-          file.fileInfo = fileInfo;
-          const cached = getCachedModel(file.name, blob.size);
-          if (cached) {
-            addModelToScene(cached.id);
-            ElMessage.success('已从缓存加载');
-          } else {
-            const modelInfo = await loadModel(file);
-            addModelToScene(modelInfo.id);
-            ElMessage.success('文件加载成功');
-          }
-          return;
         }
       } catch (e) {
         // 可根据需要弹窗提示

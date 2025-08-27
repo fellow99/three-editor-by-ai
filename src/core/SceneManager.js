@@ -115,8 +115,16 @@ class SceneManager {
           try {
             const { loadModel, addModelToScene, getCachedModel } = useAssets();
             const fileInfo = objData.userData.fileInfo;
-            const vfs = vfsService.getVfs(fileInfo.drive);
-            const blob = await vfs.blob(fileInfo.path + '/' + fileInfo.name);
+            let blob;
+            if (fileInfo.url) {
+              // 有url字段，直接fetch获取blob
+              const response = await fetch(fileInfo.url);
+              blob = await response.blob();
+            } else {
+              // 无url字段，按原有方式
+              const vfs = vfsService.getVfs(fileInfo.drive);
+              blob = await vfs.blob(fileInfo.path + '/' + fileInfo.name);
+            }
             const file = new File([blob], fileInfo.name, { type: blob.type });
             file.fileInfo = fileInfo;
             // 优先判断缓存
