@@ -101,8 +101,19 @@
           </button>
         </div>
       </div>
-      
+      <!-- 配置 -->
+      <div class="ribbon-group">
+        <div class="ribbon-group-title">配置</div>
+        <div class="ribbon-group-buttons">
+          <button @click="showEditorConfig = true" class="ribbon-btn" title="编辑器配置">
+            <span class="icon">⚙️</span>
+            <div>编辑器</div>
+          </button>
+        </div>
+      </div>
     </div>
+    <!-- 编辑器配置对话框 -->
+    <EditorConfigDialog v-model="showEditorConfig" />
   </div>
 </template>
 
@@ -117,9 +128,11 @@ import useTransform from '../../composables/useTransform.js';
 import { useObjectManager } from '../../core/ObjectManager.js';
 import { exportJSON } from '../../utils/fileUtils.js';
 import { useSceneManager } from '../../core/SceneManager.js';
+import EditorConfigDialog from '../dialog/EditorConfigDialog.vue';
 
 export default {
   name: 'Toolbar',
+  components: { EditorConfigDialog },
   emits: ['delete-selected'],
   /**
    * 工具栏组件
@@ -128,6 +141,11 @@ export default {
   setup(props, { emit }) {
     // 注入全局appState
     const appState = inject('appState');
+    /**
+     * 编辑器配置对话框显示状态
+     * @type {import('vue').Ref<boolean>}
+     */
+    const showEditorConfig = ref(false);
     // Ribbon tab 配置
     const tabs = [
       { key: 'file', label: '文件' },
@@ -330,7 +348,8 @@ export default {
       duplicateSelected,
       deleteSelected,
       focusSelected,
-      resetCamera
+      resetCamera,
+      showEditorConfig
     };
   }
 };

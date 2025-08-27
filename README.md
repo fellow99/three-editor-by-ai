@@ -57,7 +57,8 @@ three-editor-by-ai/
 │   │   │   ├── VfsFilePanel.vue              # 虚拟文件系统面板
 │   │   │   ├── Inspector.vue                 # 对象检查器
 │   │   ├── dialog/                           # 各类对话框组件
-│   │   │   └── TextureSelectDialog.vue       # 纹理选择对话框
+│   │   │   ├── TextureSelectDialog.vue       # 纹理选择对话框
+│   │   │   ├── EditorConfigDialog.vue        # 编辑器配置对话框
 │   │   ├── scene/                            # 3D 场景组件
 │   │   │   ├── SceneViewer.vue               # 主场景视图，支持拖拽添加对象到当前视点位置
 │   │   │   ├── InteractionHints.vue          # 操作提示组件
@@ -68,6 +69,7 @@ three-editor-by-ai/
 │   │   ├── useObjectSelection.js  # 对象选择、TransformControls与选中对象辅助功能
 │   │   ├── useTransform.js    # 变换操作
 │   │   ├── useAssets.js       # 资源管理，包含模型/纹理等资源的加载、缓存与去重机制
+│   │   ├── useEditorConfig.js # 编辑器配置响应式状态与操作方法
 │   ├── core/                  # 核心 Three.js 逻辑
 │   │   ├── SceneManager.js    # 场景管理器
 │   │   ├── ObjectManager.js   # 对象管理器（含 getUnlockedObjects 方法，支持过滤未锁定对象，getIntersectedObjects/getIntersectedFirstObject 仅返回未锁定对象）

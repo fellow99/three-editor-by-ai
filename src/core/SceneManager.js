@@ -7,6 +7,7 @@
 
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { useEditorConfig } from '../composables/useEditorConfig.js';
 /**
  * 引入FlyControls用于飞行模式控制（本地自定义版本）
  */
@@ -61,6 +62,53 @@ class SceneManager {
     this.resizeHandler = this.handleResize.bind(this);
     
     this.init();
+
+    // 实时监听编辑器配置变化，动态更新辅助线和控制器参数
+    const { editorConfig } = useEditorConfig();
+    watch(
+      editorConfig,
+      (cfg) => {
+        // 网格辅助线重建
+        if (this.gridHelper && this.scene) {
+          this.scene.remove(this.gridHelper);
+          this.gridHelper.geometry.dispose();
+          if (Array.isArray(this.gridHelper.material)) {
+            this.gridHelper.material.forEach(m => m.dispose && m.dispose());
+          } else if (this.gridHelper.material) {
+            this.gridHelper.material.dispose && this.gridHelper.material.dispose();
+          }
+          this.gridHelper = null;
+        }
+        if (this.scene) {
+          this.gridHelper = new THREE.GridHelper(
+            cfg.gridSize,
+            cfg.gridDivisions,
+            new THREE.Color(cfg.gridColorCenterLine),
+            new THREE.Color(cfg.gridColorGrid)
+          );
+          this.gridHelper.name = 'grid_helper';
+          this.scene.add(this.gridHelper);
+        }
+        // 坐标轴辅助线重建
+        if (this.axesHelper && this.scene) {
+          this.scene.remove(this.axesHelper);
+          this.axesHelper.geometry.dispose && this.axesHelper.geometry.dispose();
+          this.axesHelper = null;
+        }
+        if (this.scene) {
+          this.axesHelper = new THREE.AxesHelper(cfg.axesSize);
+          this.axesHelper.name = 'axes_helper';
+          this.scene.add(this.axesHelper);
+        }
+        // 控制器参数
+        if (this.controls) {
+          this.controls.rotateSpeed = cfg.rotateSpeed;
+          this.controls.zoomSpeed = cfg.zoomSpeed;
+          this.controls.panSpeed = cfg.panSpeed;
+        }
+      },
+      { deep: true }
+    );
   }
 
   /**
@@ -328,17 +376,24 @@ class SceneManager {
   
   /**
    * 设置网格地面
+   * 读取编辑器配置
    */
   setupGrid() {
+    const { editorConfig } = useEditorConfig();
     // 只创建一次
     if (!this.gridHelper) {
-      this.gridHelper = new THREE.GridHelper(1000, 1000, 0x666666, 0x333333);
+      this.gridHelper = new THREE.GridHelper(
+        editorConfig.gridSize,
+        editorConfig.gridDivisions,
+        new THREE.Color(editorConfig.gridColorCenterLine),
+        new THREE.Color(editorConfig.gridColorGrid)
+      );
       this.gridHelper.name = 'grid_helper';
       this.scene.add(this.gridHelper);
     }
     // 添加坐标轴
     if (!this.axesHelper) {
-      this.axesHelper = new THREE.AxesHelper(5);
+      this.axesHelper = new THREE.AxesHelper(editorConfig.axesSize);
       this.axesHelper.name = 'axes_helper';
       this.scene.add(this.axesHelper);
     }
