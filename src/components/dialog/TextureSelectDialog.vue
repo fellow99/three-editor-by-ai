@@ -6,10 +6,13 @@
 import { ref, computed } from 'vue';
 import { useAssets } from '../../composables/useAssets.js';
 
+/**
+ * 对话框显示状态，由父组件通过 v-model:visible 控制
+ */
 const props = defineProps({
-  visible: Boolean
+  modelValue: { type: Boolean, required: true }
 });
-const emits = defineEmits(['close', 'select']);
+const emits = defineEmits(['update:modelValue', 'select']);
 
 const { filteredTextures } = useAssets();
 
@@ -28,46 +31,53 @@ function formatFileSize(bytes) {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
+/**
+ * 关闭对话框
+ */
 function close() {
-  emits('close');
+  emits('update:modelValue', false);
 }
 
+/**
+ * 选择纹理
+ */
 function select(texture) {
   emits('select', texture);
+  emits('update:modelValue', false);
 }
 </script>
 
 <template>
-  <div class="texture-dialog-mask" v-if="visible">
-    <div class="texture-dialog">
-      <div class="texture-dialog-header">
-        <span>选择纹理</span>
-        <button class="close-btn" @click="close">×</button>
-      </div>
-      <div class="texture-list">
-        <div v-if="textures.length === 0" class="empty-tip">暂无纹理资源</div>
-        <div class="textures-grid">
-          <div
-            v-for="texture in textures"
-            :key="texture.id"
-            class="texture-card"
-            @click="select(texture)"
-          >
-            <div class="card-preview">
-              <img :src="texture.preview" :alt="texture.name" class="preview-image" />
-            </div>
-            <div class="card-info">
-              <div class="card-name" :title="texture.name">{{ texture.name }}</div>
-              <div class="card-meta">
-                <span class="card-resolution">{{ texture.width }}×{{ texture.height }}</span>
-                <span class="card-size">{{ formatFileSize(texture.size) }}</span>
-              </div>
+  <ElDialog
+    :model-value="props.modelValue"
+    title="选择纹理"
+    width="560px"
+    @close="close"
+    class="texture-dialog-el"
+  >
+    <div class="texture-list">
+      <div v-if="textures.length === 0" class="empty-tip">暂无纹理资源</div>
+      <div class="textures-grid">
+        <div
+          v-for="texture in textures"
+          :key="texture.id"
+          class="texture-card"
+          @click="select(texture)"
+        >
+          <div class="card-preview">
+            <img :src="texture.preview" :alt="texture.name" class="preview-image" />
+          </div>
+          <div class="card-info">
+            <div class="card-name" :title="texture.name">{{ texture.name }}</div>
+            <div class="card-meta">
+              <span class="card-resolution">{{ texture.width }}×{{ texture.height }}</span>
+              <span class="card-size">{{ formatFileSize(texture.size) }}</span>
             </div>
           </div>
         </div>
       </div>
     </div>
-  </div>
+  </ElDialog>
 </template>
 
 <style lang="scss" scoped>

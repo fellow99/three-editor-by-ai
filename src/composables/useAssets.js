@@ -125,6 +125,8 @@ export function useAssets() {
       );
     }
     
+    // 按加载时间倒序，最新在前
+    textures.sort((a, b) => new Date(b.loadedAt) - new Date(a.loadedAt));
     return textures;
   });
   
@@ -216,11 +218,11 @@ export function useAssets() {
   }
 
   /**
-   * 获取已缓存的纹理（根据文件名和大小）
+   * 获取已缓存的纹理（根据文件名）
    * @param {string} filename 文件名
    * @returns {object|null} 已存在则返回纹理信息，否则返回null
    */
-  function getCachedTexture(getFileName) {
+  function getCachedTexture(filename) {
     return assetLibrary.textures.get(filename);
   }
 
@@ -277,7 +279,7 @@ export function useAssets() {
    */
   async function loadTexture(file, options = {}) {
     // 缓存检查：按文件名查找
-    const cached = getCachedTexture(file.name, file.size);
+    const cached = getCachedTexture(file.name);
     if (cached) {
       // 已缓存，直接返回
       return cached;
@@ -299,8 +301,8 @@ export function useAssets() {
       isFavorite: false
     };
 
-    // 添加到资源库
-    assetLibrary.textures.set(textureInfo.id, textureInfo);
+    // 用文件名做key，保证同名纹理覆盖
+    assetLibrary.textures.set(textureInfo.filename, textureInfo);
 
     return textureInfo;
   }

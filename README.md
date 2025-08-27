@@ -72,7 +72,7 @@ three-editor-by-ai/
 │   │   ├── useEditorConfig.js # 编辑器配置响应式状态与操作方法
 │   ├── core/                  # 核心 Three.js 逻辑
 │   │   ├── SceneManager.js    # 场景管理器
-│   │   ├── ObjectManager.js   # 对象管理器（含 getUnlockedObjects 方法，支持过滤未锁定对象，getIntersectedObjects/getIntersectedFirstObject 仅返回未锁定对象）
+│   │   ├── ObjectManager.js   # 对象管理器
 │   │   ├── InputManager.js    # 输入处理
 │   │   ├── AssetLoader.js     # 资源加载器
 │   ├── composables/           # Vue Composition API 可组合函数

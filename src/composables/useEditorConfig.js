@@ -49,7 +49,7 @@ const defaultConfig = {
   gridSize: 1000,
   gridDivisions: 1000,
   gridColorCenterLine: '#666666',
-  gridColorGrid: '#888888',
+  gridColorGrid: '#333333',
   axesSize: 5,
   sceneBgColor: '#222222'
 };

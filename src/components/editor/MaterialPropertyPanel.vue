@@ -274,8 +274,7 @@ function getTexturePreviewSrc(image) {
       </el-form-item>
     </el-form>
     <TextureSelectDialog
-      :visible="showTextureDialog"
-      @close="showTextureDialog = false"
+      v-model="showTextureDialog"
       @select="onTextureSelected"
     />
   </div>
