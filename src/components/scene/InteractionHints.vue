@@ -4,24 +4,35 @@
   新增：支持切换FlyControls键盘控制
 -->
 <script setup>
-import { ElTag, ElCheckbox, ElIcon } from 'element-plus';
+/*
+  交互操作提示组件
+  固定显示在视口，提示用户常用鼠标操作说明
+  新增：支持切换控制器类型（OrbitControls、MapControls、FlyControls）
+  新语法说明：使用Vue 3 Composition API，响应式联动editorConfig.controlsType
+*/
+
+import { ElTag, ElSelect, ElOption, ElIcon } from 'element-plus';
 import { InfoFilled } from '@element-plus/icons-vue';
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
+import { useEditorConfig } from '../../composables/useEditorConfig.js';
 import { useSceneManager } from '../../core/SceneManager.js';
 
-// 用于控制FlyControls启停
-const flyControlEnabled = ref(false);
 // 控制悬停展开
 const isHovered = ref(false);
 
-/**
- * 切换FlyControls启停
- * @param {boolean} val 是否启用FlyControls
- */
-function onFlyControlChange(val) {
-  const sceneManager = useSceneManager();
-  sceneManager.setFlyControlEnabled(val);
-}
+// 获取编辑器配置
+const { editorConfig, setControlsType, CONTROLS_OPTIONS } = useEditorConfig();
+
+// 当前控制器类型
+const controlsType = computed({
+  get: () => editorConfig.controlsType,
+  set: (val) => {
+    setControlsType(val);
+    // 通知SceneManager切换控制器
+    const sceneManager = useSceneManager();
+    // sceneManager会自动响应controlsType变化，无需手动调用
+  }
+});
 </script>
 
 <template>
@@ -32,7 +43,7 @@ function onFlyControlChange(val) {
     @mouseleave="isHovered = false"
   >
     <template v-if="isHovered">
-      <template v-if="flyControlEnabled">
+      <template v-if="controlsType === 'FlyControls'">
         <el-tag class="hint-item" size="small" type="info" effect="dark">
           <span class="hint-key">W / S</span>
           <span class="hint-action">前进后退</span>
@@ -54,10 +65,24 @@ function onFlyControlChange(val) {
           <span class="hint-action">目标移动</span>
         </el-tag>
       </template>
-      <template v-else>
+      <template v-if="controlsType === 'OrbitControls'">
         <el-tag class="hint-item" size="small" type="info" effect="dark">
           <span class="hint-key">左键</span>
-          <span class="hint-action">选择对象</span>
+          <span class="hint-action">旋转视图</span>
+        </el-tag>
+        <el-tag class="hint-item" size="small" type="info" effect="dark">
+          <span class="hint-key">右键</span>
+          <span class="hint-action">平移视图</span>
+        </el-tag>
+        <el-tag class="hint-item" size="small" type="info" effect="dark">
+          <span class="hint-key">滚轮</span>
+          <span class="hint-action">缩放</span>
+        </el-tag>
+      </template>
+      <template v-if="controlsType === 'MapControls'">
+        <el-tag class="hint-item" size="small" type="info" effect="dark">
+          <span class="hint-key">左键</span>
+          <span class="hint-action">平移视图</span>
         </el-tag>
         <el-tag class="hint-item" size="small" type="info" effect="dark">
           <span class="hint-key">右键</span>
@@ -68,21 +93,24 @@ function onFlyControlChange(val) {
           <span class="hint-action">缩放</span>
         </el-tag>
       </template>
-      <!-- 键盘漫游勾选，用于启停FlyControls，放在底部 -->
-      <el-checkbox
-        v-model="flyControlEnabled"
-        @change="onFlyControlChange"
-        style="margin-top: 10px;"
+      <select
+        :value="controlsType"
+        @change="e => controlsType = e.target.value"
+        style="width: 140px; margin-bottom: 10px; height: 28px; border-radius: 4px; border: 1px solid #444; background: #23262e; color: #b0b8c9; padding-left: 8px;"
       >
-        键盘漫游
-      </el-checkbox>
+        <option
+          v-for="item in CONTROLS_OPTIONS"
+          :key="item.value"
+          :value="item.value"
+        >{{ item.label }}</option>
+      </select>
     </template>
     <template v-else>
       <el-icon class="hint-icon">
         <InfoFilled />
       </el-icon>
       <span class="hint-mode-text">
-        {{ flyControlEnabled ? '键盘漫游' : '鼠标控制' }}
+        {{ controlsType }}
       </span>
     </template>
   </div>

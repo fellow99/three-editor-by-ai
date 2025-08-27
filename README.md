@@ -61,7 +61,7 @@ three-editor-by-ai/
 │   │   │   ├── EditorConfigDialog.vue        # 编辑器配置对话框
 │   │   ├── scene/                            # 3D 场景组件
 │   │   │   ├── SceneViewer.vue               # 主场景视图，支持拖拽添加对象到当前视点位置
-│   │   │   ├── InteractionHints.vue          # 操作提示组件
+│   │   │   ├── InteractionHints.vue          # 操作提示组件，支持el-select切换控制器类型（OrbitControls/MapControls/FlyControls）
 │   │   │   ├── ViewportControls.vue          # 视图控制面板组件
 │   │   │   ├── CubeViewportControls.vue      # 立方体视角控件
 │   ├── composables/           # Vue Composition API 可组合函数

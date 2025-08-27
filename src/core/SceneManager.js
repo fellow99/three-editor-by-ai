@@ -7,6 +7,7 @@
 
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { MapControls } from 'three/examples/jsm/controls/MapControls.js';
 import { useEditorConfig } from '../composables/useEditorConfig.js';
 /**
  * 引入FlyControls用于飞行模式控制（本地自定义版本）
@@ -32,9 +33,7 @@ class SceneManager {
     this.scene = null;
     this.renderer = null;
     this.camera = null;
-    this.controls = null; // OrbitControls实例
-    this.flyControls = null; // FlyControls实例
-    this.isFlyControlEnabled = false; // 是否启用FlyControls
+    this.controls = null; // 控制器实例（OrbitControls/MapControls/FlyControls）
     this.container = null;
     this.animationId = null;
 
@@ -68,6 +67,9 @@ class SceneManager {
     watch(
       editorConfig,
       (cfg) => {
+        // 控制器类型切换
+        this.switchControls(cfg.controlsType);
+
         // 网格辅助线重建
         if (this.gridHelper && this.scene) {
           this.scene.remove(this.gridHelper);
@@ -421,74 +423,66 @@ class SceneManager {
     if (container && this.renderer) {
       container.appendChild(this.renderer.domElement);
       this.setupControls();
-      this.setupFlyControls();
       this.handleResize();
       window.addEventListener('resize', this.resizeHandler);
     }
   }
   
   /**
-   * 设置OrbitControls
+   * 切换控制器类型
+   * @param {string} type
    */
-  setupControls() {
-    if (!this.camera || !this.renderer) return;
-    this.controls = new OrbitControls(this.camera, this.renderer.domElement);
-    // 配置控制器
-    this.controls.enableDamping = false; // 禁用惯性移动
-    this.controls.dampingFactor = 0.05;
-    this.controls.screenSpacePanning = false;
-    this.controls.minDistance = 1;
-    this.controls.maxDistance = 500;
-    this.controls.maxPolarAngle = Math.PI;
-    // 设置控制器速度
-    this.controls.rotateSpeed = 1.0;
-    this.controls.zoomSpeed = 1.0;
-    this.controls.panSpeed = 1.0;
-    // 设置目标点
-    this.controls.target.set(0, 0, 0);
-    this.controls.update();
-  }
-
-  /**
-   * 设置FlyControls
-   * 仅初始化一次，默认不启用
-   */
-  setupFlyControls() {
-    if (!this.camera || !this.renderer) return;
-    this.flyControls = new FlyControls(this.camera, this.renderer.domElement);
-    // FlyControls参数可根据需要调整
-    this.flyControls.movementSpeed = 2;
-    this.flyControls.rollSpeed = Math.PI / 36;
-    this.flyControls.autoForward = false;
-    this.flyControls.dragToLook = true;
-    this.flyControls.enabled = false;
-  }
-
-  /**
-   * 启用或禁用FlyControls
-   * @param {boolean} enabled 是否启用飞行控制
-   */
-  setFlyControlEnabled(enabled) {
-    this.isFlyControlEnabled = enabled;
-    if (this.flyControls) this.flyControls.enabled = enabled;
+  switchControls(type) {
+    console.log('切换控制器到', type);
     if (this.controls) {
-      this.controls.enabled = !enabled;
-      // 从FlyControls切换回OrbitControls时，同步相机位置和target
-      if (!enabled) {
-        // 设置OrbitControls的target为相机前方一定距离
-        const camera = this.camera;
-        const controls = this.controls;
-        if (camera && controls) {
-          // 取相机朝向
-          const dir = new THREE.Vector3();
-          camera.getWorldDirection(dir);
-          // target设为相机位置+朝向向量*10（可根据实际场景调整距离）
-          controls.target.copy(camera.position).add(dir.multiplyScalar(10));
-          controls.update();
-        }
+      this.controls.dispose && this.controls.dispose();
+      this.controls = null;
+    }
+    if (!this.camera || !this.renderer) return;
+    if (type === 'OrbitControls') {
+      this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+      this.controls.enableDamping = false;
+      this.controls.dampingFactor = 0.05;
+      this.controls.screenSpacePanning = false;
+      this.controls.minDistance = 1;
+      this.controls.maxDistance = 500;
+      this.controls.maxPolarAngle = Math.PI;
+    } else if (type === 'MapControls') {
+      this.controls = new MapControls(this.camera, this.renderer.domElement);
+      this.controls.enableDamping = false;
+      this.controls.dampingFactor = 0.05;
+      this.controls.screenSpacePanning = true;
+      this.controls.minDistance = 1;
+      this.controls.maxDistance = 500;
+      this.controls.maxPolarAngle = Math.PI;
+    } else if (type === 'FlyControls') {
+      this.controls = new FlyControls(this.camera, this.renderer.domElement);
+      this.controls.movementSpeed = 2;
+      this.controls.rollSpeed = Math.PI / 36;
+      this.controls.autoForward = false;
+      this.controls.dragToLook = true;
+    }
+    // 通用参数
+    if (this.controls) {
+      this.controls.rotateSpeed = 1.0;
+      this.controls.zoomSpeed = 1.0;
+      this.controls.panSpeed = 1.0;
+      if (this.controls.target) {
+        this.controls.target.set(0, 0, 0);
       }
+      this.controls.update && this.controls.update();
     }
   }
+
+  /**
+   * 设置控制器（根据editorConfig.controlsType）
+   */
+  setupControls() {
+    const { editorConfig } = useEditorConfig();
+    this.switchControls(editorConfig.controlsType);
+  }
+
+
   
   /**
    * 更新控制器配置
@@ -613,34 +607,9 @@ class SceneManager {
    */
   render() {
     // 更新控制器
-    if (this.isFlyControlEnabled && this.flyControls) {
-      // 动态调整速度：根据相机到视点距离
-      let target = this.flyControls.target ? this.flyControls.target : (this.controls ? this.controls.target : new THREE.Vector3(0, 0, 0));
-      let camPos = this.camera ? this.camera.position : new THREE.Vector3(0, 0, 0);
-      let distance = camPos.distanceTo(target);
-      // 距离越远速度越快，越近越慢（限制最小最大值）
-      this.flyControls.movementSpeed = Math.max(0.5, Math.min(20, distance * 0.6));
-      this.flyControls.rollSpeed = Math.max(Math.PI / 36, Math.min(Math.PI / 6, distance * 0.04));
-      this.flyControls.update(0.1);
-
-      // --------- 实时同步FlyControls.target到OrbitControls.target ---------
-      // 若OrbitControls存在，实时同步target
-      if (this.controls && this.flyControls.target) {
-        // 必须用copy，不能直接赋值引用
-        this.controls.target.copy(this.flyControls.target);
-        this.controls.update();
-      }
-      // -------------------------------------------------------------
-
-      // axesHelper位置与FlyControls.target同步
-      if (this.axesHelper && this.flyControls.target && this.camera) {
-        this.axesHelper.position.copy(this.flyControls.target);
-        const scale = distance / 50;
-        this.axesHelper.scale.setScalar(scale > 0 ? scale : 0.01);
-      }
-    } else if (this.controls) {
+    if (this.controls) {
       this.controls.update();
-      // 坐标轴位置与大小同步到OrbitControls的target
+      // 坐标轴位置与大小同步到controls的target
       if (this.axesHelper && this.controls && this.controls.target && this.camera) {
         this.axesHelper.position.copy(this.controls.target);
         const distance = this.camera.position.distanceTo(this.controls.target);
