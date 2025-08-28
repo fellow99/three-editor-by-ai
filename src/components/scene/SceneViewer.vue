@@ -25,7 +25,6 @@
  * - 支持拖拽VFS模型文件到场景
  */
 import { ref, reactive, computed, onMounted, onUnmounted, watch, inject } from 'vue';
-import * as THREE from 'three';
 import { useScene } from '../../composables/useScene.js';
 import { useObjectSelection } from '../../composables/useObjectSelection.js';
 import { useInputManager } from '../../core/InputManager.js';
@@ -250,8 +249,23 @@ export default {
     // 生命周期
     onMounted(() => {
       initializeScene();
-      // 使canvas点击时获得焦点
-      setTimeout(() => {
+      // 初始化完成后自动尝试加载localStorage中的暂存场景
+      // key: three-editor-by-ai_editorScene
+      setTimeout(async () => {
+        try {
+          const raw = localStorage.getItem('three-editor-by-ai_editorScene');
+          if (raw) {
+            const sceneData = JSON.parse(raw);
+            // 尝试加载场景数据
+            if (scene && scene.sceneManager && typeof scene.sceneManager.loadScene === 'function') {
+              await scene.sceneManager.loadScene(sceneData);
+              ElMessage.success('已自动加载本地暂存场景');
+            }
+          }
+        } catch (e) {
+          console.warn('自动加载本地暂存场景失败', e);
+        }
+        // 使canvas点击时获得焦点
         const container = containerRef.value;
         if (container) {
           const canvas = container.querySelector('canvas');

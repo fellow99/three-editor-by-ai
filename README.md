@@ -49,7 +49,7 @@ three-editor-by-ai/
 │   │   │   ├── ScenePropertyPanel.vue        # 场景属性面板
 │   │   │   ├── ObjectPropertyPanel.vue       # 对象基本属性面板
 │   │   │   ├── MaterialPropertyPanel.vue     # 材质编辑面板
-│   │   │   ├── Toolbar.vue                   # 工具栏
+│   │   │   ├── Toolbar.vue                   # 工具栏（新建、导出、导入、暂存、加载[预留]、保存[预留]）
 │   │   │   ├── EditorFooter.vue              # 编辑器底部状态栏
 │   │   │   ├── AssetBrowser.vue              # 资源浏览器
 │   │   │   ├── PrimitiveBrowser.vue          # 基础几何体与灯光浏览组件

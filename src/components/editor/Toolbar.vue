@@ -1,6 +1,9 @@
 <!--
   主工具栏组件
   提供场景文件、编辑、对象变换等操作入口
+  文件按钮区包含：新建、导出、导入、暂存、加载、保存
+  其中“导出”/“导入”使用新命名及新图标，“暂存”保存到localStorage
+  “加载”“保存”按钮为预留，暂未实现
 -->
 <template>
   <div class="ribbon-toolbar dark">
@@ -13,6 +16,10 @@
             <span class="icon">📄</span>
             <div>新建</div>
           </button>
+          <button @click="saveLocal" class="ribbon-btn" title="暂存到本地">
+            <span class="icon">🗄️</span>
+            <div>暂存</div>
+          </button>
           <button @click="saveScene" class="ribbon-btn" title="保存场景">
             <span class="icon">💾</span>
             <div>保存</div>
@@ -20,6 +27,14 @@
           <button @click="loadScene" class="ribbon-btn" title="加载场景">
             <span class="icon">📂</span>
             <div>加载</div>
+          </button>
+          <button @click="exportScene" class="ribbon-btn" title="导出场景">
+            <span class="icon">📤</span>
+            <div>导出</div>
+          </button>
+          <button @click="importScene" class="ribbon-btn" title="导入场景">
+            <span class="icon">📥</span>
+            <div>导入</div>
           </button>
         </div>
       </div>
@@ -197,32 +212,25 @@ export default {
      * 保存当前场景为JSON文件
      */
     /**
-     * 保存当前场景为JSON文件
+     * 导出当前场景为JSON文件
      */
-    function saveScene() {
+    function exportScene() {
       try {
         const sceneData = scene.exportScene();
         const filename = `scene_${new Date().toISOString().slice(0, 19).replace(/[:-]/g, '')}.json`;
         exportJSON(sceneData, filename);
-        ElMessage.success('场景已保存');
+        ElMessage.success('场景已导出');
       } catch (error) {
-        console.error('保存场景失败:', error);
-        ElMessage.error('保存场景失败，请检查控制台错误信息。');
+        console.error('导出场景失败:', error);
+        ElMessage.error('导出场景失败，请检查控制台错误信息。');
       }
     }
-    
+
     /**
-     * 加载场景文件
+     * 导入场景文件
      * 选择JSON文件并调用SceneManager.loadScene(json)
      */
-    /**
-     * 加载场景文件
-     * 选择JSON文件并调用SceneManager.loadScene(json)
-     */
-    /**
-     * 加载场景文件，显示全局loading蒙版
-     */
-    async function loadScene() {
+    async function importScene() {
       const input = document.createElement('input');
       input.type = 'file';
       input.accept = '.json';
@@ -232,36 +240,60 @@ export default {
           try {
             const text = await file.text();
             const sceneData = JSON.parse(text);
-            ElMessageBox.confirm('确定要加载这个场景吗？这将替换当前场景。', '提示', {
+            ElMessageBox.confirm('确定要导入这个场景吗？这将替换当前场景。', '提示', {
               confirmButtonText: '确定',
               cancelButtonText: '取消',
               type: 'warning'
             }).then(async () => {
-              // 显示loading
               if (appState) appState.isLoading = true;
               try {
-                // 直接调用useSceneManager
                 const sceneManager = useSceneManager();
-                
                 objectSelection.clearSelection();
                 transform.clearHistory();
-
                 await sceneManager.loadScene(sceneData);
-                ElMessage.success('场景加载成功');
+                ElMessage.success('场景导入成功');
               } catch (e) {
-                console.error('加载场景失败:', e);
-                ElMessage.error('加载场景失败，请检查文件格式。');
+                console.error('导入场景失败:', e);
+                ElMessage.error('导入场景失败，请检查文件格式。');
               } finally {
                 if (appState) appState.isLoading = false;
               }
             }).catch(() => {});
           } catch (error) {
-            console.error('加载场景失败:', error);
-            ElMessage.error('加载场景失败，请检查文件格式。');
+            console.error('导入场景失败:', error);
+            ElMessage.error('导入场景失败，请检查文件格式。');
           }
         }
       };
       input.click();
+    }
+
+    /**
+     * 暂存场景到localStorage
+     */
+    function saveLocal() {
+      try {
+        const sceneData = scene.exportScene();
+        localStorage.setItem('three-editor-by-ai_editorScene', JSON.stringify(sceneData));
+        ElMessage.success('场景已暂存到本地');
+      } catch (error) {
+        console.error('暂存失败:', error);
+        ElMessage.error('暂存失败，请检查控制台错误信息。');
+      }
+    }
+
+    /**
+     * 预留：加载场景（暂未实现）
+     */
+    function loadScene() {
+      ElMessage.info('加载场景功能暂未实现');
+    }
+
+    /**
+     * 预留：保存场景（暂未实现）
+     */
+    function saveScene() {
+      ElMessage.info('保存场景功能暂未实现');
     }
     
     /**
@@ -271,8 +303,6 @@ export default {
     function setTransformMode(mode) {
       transform.transformMode.value = mode;
     }
-    
-    // 移除 setSelectionMode 方法
     
     /**
      * 撤销上一步操作
@@ -339,8 +369,11 @@ export default {
       
       // 方法
       newScene,
-      saveScene,
+      exportScene,
+      importScene,
+      saveLocal,
       loadScene,
+      saveScene,
       setTransformMode,
       // setSelectionMode, // 移除
       undo,
