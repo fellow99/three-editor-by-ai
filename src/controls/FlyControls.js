@@ -658,6 +658,8 @@ this._interceptControlUp = this.interceptControlUp.bind( this );
                 this.object.rotateX(-2 * Math.PI * this._rotateDelta.y / this.domElement.clientHeight);
                 this._rotateStart.copy(this._rotateEnd);
                 this.update();
+                // 新增：旋转时实时同步target为相机前方一定距离
+                this._syncTargetAfterTransform();
                 break;
             case _STATE.DOLLY:
                 this._dollyEnd.set(event.clientX, event.clientY);
@@ -669,6 +671,7 @@ this._interceptControlUp = this.interceptControlUp.bind( this );
                 }
                 this._dollyStart.copy(this._dollyEnd);
                 this.update();
+                // 缩放时target不变
                 break;
             case _STATE.PAN:
                 this._panEnd.set(event.clientX, event.clientY);
@@ -680,6 +683,8 @@ this._interceptControlUp = this.interceptControlUp.bind( this );
                 this.object.position.addScaledVector(new Vector3().setFromMatrixColumn(this.object.matrix, 1), offsetY);
                 this._panStart.copy(this._panEnd);
                 this.update();
+                // 新增：平移时同步target
+                this._syncTargetAfterTransform();
                 break;
         }
     }
@@ -834,6 +839,17 @@ this._interceptControlUp = this.interceptControlUp.bind( this );
             this._lastPosition.copy( object.position );
         }
 
+    }
+
+    /**
+     * 拖拽变换后同步target为相机前方一定距离
+     * 旋转时target为相机前方10单位点，平移时target随相机平移
+     */
+    _syncTargetAfterTransform() {
+        // 取相机前方10单位点
+        const dir = new Vector3();
+        this.object.getWorldDirection(dir);
+        this.target.copy(this.object.position).add(dir.multiplyScalar(10));
     }
 
     // ... 其余原有方法保持不变

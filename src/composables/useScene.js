@@ -321,6 +321,11 @@ export function useScene() {
       near: 0.1,
       far: 1000
     });
+
+    // 新增：重置相机对象
+    if (sceneManager.createCamera) {
+      sceneManager.createCamera();
+    }  
     
     applySceneConfig();
     applyCameraConfig();

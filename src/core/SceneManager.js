@@ -8,11 +8,8 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { MapControls } from 'three/examples/jsm/controls/MapControls.js';
-import { useEditorConfig } from '../composables/useEditorConfig.js';
-/**
- * 引入FlyControls用于飞行模式控制（本地自定义版本）
- */
 import { FlyControls } from '../controls/FlyControls.js';
+import { useEditorConfig } from '../composables/useEditorConfig.js';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { reactive, watch } from 'vue';
@@ -123,12 +120,24 @@ class SceneManager {
 
     // 2. 恢复相机参数
     if (json.camera && this.camera) {
-      if (Array.isArray(json.camera.position)) {
-        this.camera.position.fromArray(json.camera.position);
+      // 位置
+      if (json.camera.position && typeof json.camera.position.x === 'number') {
+        this.camera.position.set(
+          json.camera.position.x,
+          json.camera.position.y,
+          json.camera.position.z
+        );
       }
-      if (Array.isArray(json.camera.rotation)) {
-        this.camera.rotation.fromArray(json.camera.rotation);
+      // target（视点）
+      if (json.camera.target && this.controls && this.controls.target) {
+        this.controls.target.set(
+          json.camera.target.x,
+          json.camera.target.y,
+          json.camera.target.z
+        );
+        this.controls.update && this.controls.update();
       }
+      // fov/near/far
       if (typeof json.camera.fov === 'number') this.camera.fov = json.camera.fov;
       if (typeof json.camera.near === 'number') this.camera.near = json.camera.near;
       if (typeof json.camera.far === 'number') this.camera.far = json.camera.far;
@@ -432,8 +441,18 @@ class SceneManager {
    * 切换控制器类型
    * @param {string} type
    */
+  /**
+   * 切换控制器类型
+   * 切换前将当前controls的target（如有）同步到新controls
+   */
   switchControls(type) {
     console.log('切换控制器到', type);
+    // 保存当前controls的target
+    let lastTarget = null;
+    if (this.controls && this.controls.target) {
+      // target为THREE.Vector3实例
+      lastTarget = this.controls.target.clone();
+    }
     if (this.controls) {
       this.controls.dispose && this.controls.dispose();
       this.controls = null;
@@ -467,7 +486,10 @@ class SceneManager {
       this.controls.rotateSpeed = 1.0;
       this.controls.zoomSpeed = 1.0;
       this.controls.panSpeed = 1.0;
-      if (this.controls.target) {
+      // 切换后恢复target
+      if (this.controls.target && lastTarget) {
+        this.controls.target.copy(lastTarget);
+      } else if (this.controls.target) {
         this.controls.target.set(0, 0, 0);
       }
       this.controls.update && this.controls.update();
