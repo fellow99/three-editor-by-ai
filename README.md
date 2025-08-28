@@ -61,7 +61,7 @@ three-editor-by-ai/
 │   │   │   ├── EditorConfigDialog.vue        # 编辑器配置对话框
 │   │   ├── scene/                            # 3D 场景组件
 │   │   │   ├── SceneViewer.vue               # 主场景视图，支持拖拽添加对象到当前视点位置
-│   │   │   ├── InteractionHints.vue          # 操作提示组件，支持el-select切换控制器类型（OrbitControls/MapControls/FlyControls）
+│   │   │   ├── InteractionHints.vue          # 操作提示组件，支持切换控制器
 │   │   │   ├── ViewportControls.vue          # 视图控制面板组件
 │   │   │   ├── CubeViewportControls.vue      # 立方体视角控件
 │   ├── composables/           # Vue Composition API 可组合函数
@@ -150,7 +150,7 @@ three-editor-by-ai/
     - selectionStore 生命周期与 useObjectSelection 组合式函数一致，自动随页面刷新或状态重置而清空。
   - TransformControls与选中对象辅助功能已迁移至useObjectSelection.js统一管理，SceneManager.js仅负责场景本身，SceneViewer.vue仅负责初始化调用。
   - TransformControls拖拽时会自动禁用OrbitControls，避免拖拽时镜头跟随问题。（已迁移至useObjectSelection.js）
-- FlyControls.js中，已支持基于键盘的三维飞行控制（WASD/QE/方向键等），核心逻辑参考 three/examples/jsm/controls/OrbitControls.js、three/examples/jsm/controls/FlyControls.js 实现，支持速度、旋转、拖拽等多种操作。
+- FlyControls.js中，已支持基于键盘的三维飞行控制（WASD/QE/方向键等），核心逻辑参考 three/examples/jsm/controls/OrbitControls.js、three/examples/jsm/controls/FlyControls.js 实现，支持速度、旋转、拖拽等多种操作。空格键与R键逻辑一致，均可向上飞行。
 - useAssets.js 中：
   - 资源加载函数（如 loadModel、loadTexture）已实现缓存机制：若 assetLibrary 中已存在同名且大小一致的资源，则直接返回缓存，避免重复加载和内存浪费。
 - 所有资源（基础几何体、模型、资源）添加方式已统一为拖拽，点击添加功能已移除。

@@ -250,6 +250,20 @@ export default {
     // 生命周期
     onMounted(() => {
       initializeScene();
+      // 使canvas点击时获得焦点
+      setTimeout(() => {
+        const container = containerRef.value;
+        if (container) {
+          const canvas = container.querySelector('canvas');
+          if (canvas) {
+            // 允许canvas聚焦
+            canvas.setAttribute('tabindex', '0');
+            canvas.addEventListener('click', () => {
+              canvas.focus();
+            });
+          }
+        }
+      }, 100);
     });
 
     // 不再监听场景对象变化自动刷新helper
