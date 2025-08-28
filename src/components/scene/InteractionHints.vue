@@ -1,17 +1,10 @@
 <!--
   交互操作提示组件
   固定显示在视口，提示用户常用鼠标操作说明
-  新增：支持切换FlyControls键盘控制
+  支持切换控制器类型（OrbitControls、MapControls、FlyControls）
 -->
 <script setup>
-/*
-  交互操作提示组件
-  固定显示在视口，提示用户常用鼠标操作说明
-  新增：支持切换控制器类型（OrbitControls、MapControls、FlyControls）
-  新语法说明：使用Vue 3 Composition API，响应式联动editorConfig.controlsType
-*/
-
-import { ElTag, ElSelect, ElOption, ElIcon } from 'element-plus';
+import { ElTag, ElIcon } from 'element-plus';
 import { InfoFilled } from '@element-plus/icons-vue';
 import { ref, computed } from 'vue';
 import { useEditorConfig } from '../../composables/useEditorConfig.js';
@@ -57,12 +50,24 @@ const controlsType = computed({
           <span class="hint-action">镜头旋转</span>
         </el-tag>
         <el-tag class="hint-item" size="small" type="info" effect="dark">
+          <span class="hint-key">R / F</span>
+          <span class="hint-action">上下平移</span>
+        </el-tag>
+        <el-tag class="hint-item" size="small" type="info" effect="dark">
+          <span class="hint-key">SPACE</span>
+          <span class="hint-action">向上平移</span>
+        </el-tag>
+        <el-tag class="hint-item" size="small" type="info" effect="dark">
           <span class="hint-key">左键</span>
-          <span class="hint-action">镜头移动</span>
+          <span class="hint-action">镜头转动</span>
         </el-tag>
         <el-tag class="hint-item" size="small" type="info" effect="dark">
           <span class="hint-key">右键</span>
           <span class="hint-action">目标移动</span>
+        </el-tag>
+        <el-tag class="hint-item" size="small" type="info" effect="dark">
+          <span class="hint-key">滚轮</span>
+          <span class="hint-action">缩放</span>
         </el-tag>
       </template>
       <template v-if="controlsType === 'OrbitControls'">
