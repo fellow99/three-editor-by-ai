@@ -8,17 +8,37 @@
   <div class="property-panel">
     <div class="property-content">
       <div class="tabs">
-        <!-- 未选对象时，仅显示“场景属性”Tab -->
-        <template v-if="!hasSelection">
-          <button
-            class="tab-btn"
-            :class="{ active: activeTab === '场景' }"
-            @click="activeTab = '场景'"
-          >
-            <span class="tab-icon">🌐</span>
-            场景
-          </button>
-        </template>
+<!-- 未选对象时，显示“属性”“光影”“环境”“后处理”“场景”Tab -->
+<template v-if="!hasSelection">
+  <button
+    class="tab-btn"
+    :class="{ active: activeTab === '场景' }"
+    @click="activeTab = '场景'"
+  >
+    场景
+  </button>
+  <button
+    class="tab-btn"
+    :class="{ active: activeTab === '光影' }"
+    @click="activeTab = '光影'"
+  >
+    光影
+  </button>
+  <button
+    class="tab-btn"
+    :class="{ active: activeTab === '环境' }"
+    @click="activeTab = '环境'"
+  >
+    环境
+  </button>
+  <button
+    class="tab-btn"
+    :class="{ active: activeTab === '后处理' }"
+    @click="activeTab = '后处理'"
+  >
+    后处理
+  </button>
+</template>
         <!-- 选中对象时，显示“对象属性”“材质属性”Tab -->
         <template v-else>
           <button
@@ -26,23 +46,32 @@
             :class="{ active: activeTab === '对象' }"
             @click="activeTab = '对象'"
           >
-            <span class="tab-icon">📝</span>
-            对象属性
+            对象
+          </button>
+          <button
+            class="tab-btn"
+            :class="{ active: activeTab === '属性' }"
+            @click="activeTab = '属性'"
+          >
+            属性
           </button>
           <button
             class="tab-btn"
             :class="{ active: activeTab === '材质' }"
             @click="activeTab = '材质'"
           >
-            <span class="tab-icon">🎨</span>
-            材质属性
+            材质
           </button>
         </template>
       </div>
       <!-- Tab内容区域 -->
-      <ScenePropertyPanel v-show="!hasSelection && activeTab === '场景'" />
-      <ObjectPropertyPanel v-if="hasSelection && activeTab === '对象'" />
-      <MaterialPropertyPanel v-if="hasSelection && activeTab === '材质'" />
+      <ScenePropertyPanel v-show="activeTab === '场景'" />
+      <div v-show="activeTab === '光影'" style="padding: 24px; color: #888;">光影内容占位</div>
+      <div v-show="activeTab === '环境'" style="padding: 24px; color: #888;">环境内容占位</div>
+      <div v-show="activeTab === '后处理'" style="padding: 24px; color: #888;">后处理内容占位</div>
+      <ObjectPropertyPanel v-if="activeTab === '对象'" />
+      <div v-if="activeTab === '属性'" style="padding: 24px; color: #888;">属性内容占位</div>
+      <MaterialPropertyPanel v-if="activeTab === '材质'" />
     </div>
   </div>
 </template>
@@ -68,13 +97,14 @@ export default {
      * - hasSelection: 是否有选中对象
      */
     // 当前激活的Tab
-    const activeTab = ref('场景'); // 默认显示场景属性
+    // 未选对象时默认显示“场景”Tab
+    const activeTab = ref('场景');
     // 获取对象选择状态
     const { hasSelection } = useObjectSelection(); // 是否有选中对象
 
     // 当选择状态变化时，自动切换Tab
     // 必须加注释说明用途
-    // 选中对象时，切换到“对象属性”Tab；未选对象时，切换到“场景”Tab
+    // 选中对象时，切换到“对象”Tab；未选对象时，切换到“场景”Tab
     watch(hasSelection, (val) => {
       if (val) {
         activeTab.value = '对象';
