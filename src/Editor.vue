@@ -50,6 +50,13 @@
           :cameraQuaternion="cameraQuaternion"
           @viewChange="setViewAngle"
         />
+        <!-- 浮动面板：左上 性能监控 -->
+        <StatHints
+          :class="[
+            'stat-hints',
+            { 'with-left': !appState.leftPanelCollapsed }
+          ]"
+        />
         <!-- 浮动面板：左下 -->
         <InteractionHints
           :class="[
@@ -133,6 +140,7 @@ import EditorFooter from './components/editor/EditorFooter.vue';
 import ViewportControls from './components/scene/ViewportControls.vue';
 import CubeViewportControls from './components/scene/CubeViewportControls.vue';
 import InteractionHints from './components/scene/InteractionHints.vue';
+import StatHints from './components/scene/StatHints.vue';
 
  // 应用状态管理
 const appState = reactive({
@@ -766,4 +774,15 @@ onUnmounted(() => {
   left: 316px;
 }
 
+/* 性能监控面板定位样式 */
+.stat-hints {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  z-index: 210;
+  transition: left 0.2s;
+}
+.stat-hints.with-left {
+  left: 316px;
+}
 </style>

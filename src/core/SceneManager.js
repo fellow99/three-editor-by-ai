@@ -446,7 +446,6 @@ class SceneManager {
    * 切换前将当前controls的target（如有）同步到新controls
    */
   switchControls(type) {
-    console.log('切换控制器到', type);
     // 保存当前controls的target
     let lastTarget = null;
     if (this.controls && this.controls.target) {
@@ -503,7 +502,6 @@ class SceneManager {
     const { editorConfig } = useEditorConfig();
     this.switchControls(editorConfig.controlsType);
   }
-
 
   
   /**

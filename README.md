@@ -37,6 +37,7 @@
   - Lodash - 实用工具函数库
   - Day.js - 轻量级日期时间库
   - three-viewport-gizmo - 立方体视角控件库
+  - stats-gl - 性能监控
 
 ## 📁 项目结构
 
@@ -61,6 +62,7 @@ three-editor-by-ai/
 │   │   │   ├── EditorConfigDialog.vue        # 编辑器配置对话框
 │   │   ├── scene/                            # 3D 场景组件
 │   │   │   ├── SceneViewer.vue               # 主场景视图，支持拖拽添加对象到当前视点位置
+│   │   │   ├── StatHints.vue                 # 性能监控面板
 │   │   │   ├── InteractionHints.vue          # 操作提示组件，支持切换控制器
 │   │   │   ├── ViewportControls.vue          # 视图控制面板组件
 │   │   │   ├── CubeViewportControls.vue      # 立方体视角控件

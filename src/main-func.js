@@ -14,7 +14,6 @@ export async function registerVfsFromURL(url) {
         if (Array.isArray(list)) {
             list.forEach(item=>{
                 vfsService.registerVfs(item);
-                console.log('已注册VFS:', item.drive);
             });
         }
     } catch(err) {
