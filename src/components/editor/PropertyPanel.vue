@@ -72,6 +72,11 @@
       <BasePropertyPane v-if="activeTab === '对象'" />
 <div v-if="activeTab === '属性'">
   <PrimitivePropertyPaneBox v-if="selectedObject && selectedObject.geometry && selectedObject.geometry.type === 'BoxGeometry'" />
+  <PrimitivePropertyPaneSphere v-else-if="selectedObject && selectedObject.geometry && selectedObject.geometry.type === 'SphereGeometry'" />
+  <PrimitivePropertyPaneCylinder v-else-if="selectedObject && selectedObject.geometry && selectedObject.geometry.type === 'CylinderGeometry'" />
+  <PrimitivePropertyPanePlane v-else-if="selectedObject && selectedObject.geometry && selectedObject.geometry.type === 'PlaneGeometry'" />
+  <PrimitivePropertyPaneTorus v-else-if="selectedObject && selectedObject.geometry && selectedObject.geometry.type === 'TorusGeometry'" />
+  <PrimitivePropertyPaneCone v-else-if="selectedObject && selectedObject.geometry && selectedObject.geometry.type === 'ConeGeometry'" />
   <div v-else style="padding: 24px; color: #888;">属性内容占位</div>
 </div>
       <MaterialPropertyPane v-if="activeTab === '材质'" />
@@ -85,6 +90,11 @@ import ScenePropertyPane from '../property/ScenePropertyPane.vue';
 import BasePropertyPane from '../property/BasePropertyPane.vue';
 import MaterialPropertyPane from '../property/MaterialPropertyPane.vue';
 import PrimitivePropertyPaneBox from '../property/PrimitivePropertyPane-box.vue';
+import PrimitivePropertyPaneSphere from '../property/PrimitivePropertyPane-sphere.vue';
+import PrimitivePropertyPaneCylinder from '../property/PrimitivePropertyPane-cylinder.vue';
+import PrimitivePropertyPanePlane from '../property/PrimitivePropertyPane-plane.vue';
+import PrimitivePropertyPaneTorus from '../property/PrimitivePropertyPane-torus.vue';
+import PrimitivePropertyPaneCone from '../property/PrimitivePropertyPane-cone.vue';
 import { useObjectSelection } from '../../composables/useObjectSelection.js';
 
 export default {
@@ -93,7 +103,12 @@ export default {
     ScenePropertyPane,
     BasePropertyPane,
     MaterialPropertyPane,
-    PrimitivePropertyPaneBox
+    PrimitivePropertyPaneBox,
+    PrimitivePropertyPaneSphere,
+    PrimitivePropertyPaneCylinder,
+    PrimitivePropertyPanePlane,
+    PrimitivePropertyPaneTorus,
+    PrimitivePropertyPaneCone
   },
   setup() {
     /**
