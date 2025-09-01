@@ -70,17 +70,21 @@
       <div v-show="activeTab === '环境'" style="padding: 24px; color: #888;">环境内容占位</div>
       <div v-show="activeTab === '后处理'" style="padding: 24px; color: #888;">后处理内容占位</div>
       <BasePropertyPane v-if="activeTab === '对象'" />
-      <div v-if="activeTab === '属性'" style="padding: 24px; color: #888;">属性内容占位</div>
+<div v-if="activeTab === '属性'">
+  <PrimitivePropertyPaneBox v-if="selectedObject && selectedObject.geometry && selectedObject.geometry.type === 'BoxGeometry'" />
+  <div v-else style="padding: 24px; color: #888;">属性内容占位</div>
+</div>
       <MaterialPropertyPane v-if="activeTab === '材质'" />
     </div>
   </div>
 </template>
 
 <script>
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 import ScenePropertyPane from '../property/ScenePropertyPane.vue';
 import BasePropertyPane from '../property/BasePropertyPane.vue';
 import MaterialPropertyPane from '../property/MaterialPropertyPane.vue';
+import PrimitivePropertyPaneBox from '../property/PrimitivePropertyPane-box.vue';
 import { useObjectSelection } from '../../composables/useObjectSelection.js';
 
 export default {
@@ -88,23 +92,25 @@ export default {
   components: {
     ScenePropertyPane,
     BasePropertyPane,
-    MaterialPropertyPane
+    MaterialPropertyPane,
+    PrimitivePropertyPaneBox
   },
   setup() {
     /**
      * 属性面板Tab切换逻辑
      * - activeTab: 当前激活的Tab
      * - hasSelection: 是否有选中对象
+     * - selectedObject: 当前选中对象（仅支持单选）
      */
-    // 当前激活的Tab
-    // 未选对象时默认显示“场景”Tab
     const activeTab = ref('场景');
-    // 获取对象选择状态
-    const { hasSelection } = useObjectSelection(); // 是否有选中对象
+    const { hasSelection, selectedObjects } = useObjectSelection(); // 是否有选中对象
 
-    // 当选择状态变化时，自动切换Tab
-    // 必须加注释说明用途
-    // 选中对象时，切换到“对象”Tab；未选对象时，切换到“场景”Tab
+    // 当前选中对象（仅支持单选）
+    const selectedObject = computed(() => {
+      const arr = selectedObjects.value || [];
+      return arr.length === 1 ? arr[0] : null;
+    });
+
     watch(hasSelection, (val) => {
       if (val) {
         activeTab.value = '对象';
@@ -115,7 +121,8 @@ export default {
 
     return {
       activeTab,
-      hasSelection
+      hasSelection,
+      selectedObject
     };
   }
 };
