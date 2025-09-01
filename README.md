@@ -47,9 +47,6 @@ three-editor-by-ai/
 │   ├── components/                           # Vue 组件
 │   │   ├── editor/                           # 编辑器 UI 组件
 │   │   │   ├── PropertyPanel.vue             # 属性面板
-│   │   │   ├── ScenePropertyPanel.vue        # 场景属性面板
-│   │   │   ├── ObjectPropertyPanel.vue       # 对象基本属性面板
-│   │   │   ├── MaterialPropertyPanel.vue     # 材质编辑面板
 │   │   │   ├── Toolbar.vue                   # 工具栏
 │   │   │   ├── EditorFooter.vue              # 编辑器底部状态栏
 │   │   │   ├── AssetBrowser.vue              # 资源浏览器
@@ -57,6 +54,10 @@ three-editor-by-ai/
 │   │   │   ├── ResourcePanel.vue             # 资源面板
 │   │   │   ├── VfsFilePanel.vue              # 虚拟文件系统面板
 │   │   │   ├── Inspector.vue                 # 对象检查器
+│   │   ├── property/                         # 各种属性编辑组件
+│   │   │   ├── ScenePropertyPane.vue         # 场景属性编辑面板
+│   │   │   ├── BasePropertyPane.vue          # 对象基础属性编辑面板
+│   │   │   ├── MaterialPropertyPane.vue      # 材质编辑面板
 │   │   ├── dialog/                           # 各类对话框组件
 │   │   │   ├── TextureSelectDialog.vue       # 纹理选择对话框
 │   │   │   ├── EditorConfigDialog.vue        # 编辑器配置对话框

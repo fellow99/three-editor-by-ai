@@ -65,30 +65,30 @@
         </template>
       </div>
       <!-- Tab内容区域 -->
-      <ScenePropertyPanel v-show="activeTab === '场景'" />
+      <ScenePropertyPane v-show="activeTab === '场景'" />
       <div v-show="activeTab === '光影'" style="padding: 24px; color: #888;">光影内容占位</div>
       <div v-show="activeTab === '环境'" style="padding: 24px; color: #888;">环境内容占位</div>
       <div v-show="activeTab === '后处理'" style="padding: 24px; color: #888;">后处理内容占位</div>
-      <ObjectPropertyPanel v-if="activeTab === '对象'" />
+      <BasePropertyPane v-if="activeTab === '对象'" />
       <div v-if="activeTab === '属性'" style="padding: 24px; color: #888;">属性内容占位</div>
-      <MaterialPropertyPanel v-if="activeTab === '材质'" />
+      <MaterialPropertyPane v-if="activeTab === '材质'" />
     </div>
   </div>
 </template>
 
 <script>
 import { ref, watch } from 'vue';
-import ScenePropertyPanel from './ScenePropertyPanel.vue';
-import ObjectPropertyPanel from './ObjectPropertyPanel.vue';
-import MaterialPropertyPanel from './MaterialPropertyPanel.vue';
+import ScenePropertyPane from '../property/ScenePropertyPane.vue';
+import BasePropertyPane from '../property/BasePropertyPane.vue';
+import MaterialPropertyPane from '../property/MaterialPropertyPane.vue';
 import { useObjectSelection } from '../../composables/useObjectSelection.js';
 
 export default {
   name: 'PropertyPanel',
   components: {
-    ScenePropertyPanel,
-    ObjectPropertyPanel,
-    MaterialPropertyPanel
+    ScenePropertyPane,
+    BasePropertyPane,
+    MaterialPropertyPane
   },
   setup() {
     /**
