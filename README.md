@@ -58,7 +58,8 @@ three-editor-by-ai/
 │   │   │   ├── ScenePropertyPane.vue         # 场景属性编辑面板
 │   │   │   ├── BasePropertyPane.vue          # 对象基础属性编辑面板
 │   │   │   ├── MaterialPropertyPane.vue      # 材质编辑面板
-│   │   │   ├── PrimitivePropertyPane-*.vue  # 各种Primitive的专属属性编辑面板
+│   │   │   ├── PrimitivePropertyPane-*.vue   # 各种Primitive的专属属性编辑面板
+│   │   │   ├── LightPropertyPane-*.vue       # 各种灯光的专属属性面板
 │   │   ├── dialog/                           # 各类对话框组件
 │   │   │   ├── TextureSelectDialog.vue       # 纹理选择对话框
 │   │   │   ├── EditorConfigDialog.vue        # 编辑器配置对话框

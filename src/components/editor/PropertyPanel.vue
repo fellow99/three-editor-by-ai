@@ -70,21 +70,26 @@
       <div v-show="activeTab === '环境'" style="padding: 24px; color: #888;">环境内容占位</div>
       <div v-show="activeTab === '后处理'" style="padding: 24px; color: #888;">后处理内容占位</div>
       <BasePropertyPane v-if="activeTab === '对象'" />
-<div v-if="activeTab === '属性'">
-  <PrimitivePropertyPaneBox v-if="selectedObject && selectedObject.geometry && selectedObject.geometry.type === 'BoxGeometry'" />
-  <PrimitivePropertyPaneSphere v-else-if="selectedObject && selectedObject.geometry && selectedObject.geometry.type === 'SphereGeometry'" />
-  <PrimitivePropertyPaneCylinder v-else-if="selectedObject && selectedObject.geometry && selectedObject.geometry.type === 'CylinderGeometry'" />
-  <PrimitivePropertyPanePlane v-else-if="selectedObject && selectedObject.geometry && selectedObject.geometry.type === 'PlaneGeometry'" />
-  <PrimitivePropertyPaneTorus v-else-if="selectedObject && selectedObject.geometry && selectedObject.geometry.type === 'TorusGeometry'" />
-  <PrimitivePropertyPaneCone v-else-if="selectedObject && selectedObject.geometry && selectedObject.geometry.type === 'ConeGeometry'" />
-  <PrimitivePropertyPaneTetrahedron v-else-if="selectedObject && selectedObject.geometry && selectedObject.geometry.type === 'TetrahedronGeometry'" />
-  <PrimitivePropertyPaneOctahedron v-else-if="selectedObject && selectedObject.geometry && selectedObject.geometry.type === 'OctahedronGeometry'" />
-  <PrimitivePropertyPaneDodecahedron v-else-if="selectedObject && selectedObject.geometry && selectedObject.geometry.type === 'DodecahedronGeometry'" />
-  <PrimitivePropertyPaneIcosahedron v-else-if="selectedObject && selectedObject.geometry && selectedObject.geometry.type === 'IcosahedronGeometry'" />
-  <PrimitivePropertyPaneRing v-else-if="selectedObject && selectedObject.geometry && selectedObject.geometry.type === 'RingGeometry'" />
-  <PrimitivePropertyPaneTube v-else-if="selectedObject && selectedObject.geometry && selectedObject.geometry.type === 'TubeGeometry'" />
-  <div v-else style="padding: 24px; color: #888;">属性内容占位</div>
-</div>
+      <div v-if="activeTab === '属性'">
+        <PrimitivePropertyPaneBox v-if="selectedObject && selectedObject.geometry && selectedObject.geometry.type === 'BoxGeometry'" />
+        <PrimitivePropertyPaneSphere v-else-if="selectedObject && selectedObject.geometry && selectedObject.geometry.type === 'SphereGeometry'" />
+        <PrimitivePropertyPaneCylinder v-else-if="selectedObject && selectedObject.geometry && selectedObject.geometry.type === 'CylinderGeometry'" />
+        <PrimitivePropertyPanePlane v-else-if="selectedObject && selectedObject.geometry && selectedObject.geometry.type === 'PlaneGeometry'" />
+        <PrimitivePropertyPaneTorus v-else-if="selectedObject && selectedObject.geometry && selectedObject.geometry.type === 'TorusGeometry'" />
+        <PrimitivePropertyPaneCone v-else-if="selectedObject && selectedObject.geometry && selectedObject.geometry.type === 'ConeGeometry'" />
+        <PrimitivePropertyPaneTetrahedron v-else-if="selectedObject && selectedObject.geometry && selectedObject.geometry.type === 'TetrahedronGeometry'" />
+        <PrimitivePropertyPaneOctahedron v-else-if="selectedObject && selectedObject.geometry && selectedObject.geometry.type === 'OctahedronGeometry'" />
+        <PrimitivePropertyPaneDodecahedron v-else-if="selectedObject && selectedObject.geometry && selectedObject.geometry.type === 'DodecahedronGeometry'" />
+        <PrimitivePropertyPaneIcosahedron v-else-if="selectedObject && selectedObject.geometry && selectedObject.geometry.type === 'IcosahedronGeometry'" />
+        <PrimitivePropertyPaneRing v-else-if="selectedObject && selectedObject.geometry && selectedObject.geometry.type === 'RingGeometry'" />
+        <PrimitivePropertyPaneTube v-else-if="selectedObject && selectedObject.geometry && selectedObject.geometry.type === 'TubeGeometry'" />
+        <LightPropertyPaneDirectionalLight v-else-if="selectedObject && selectedObject.type === 'DirectionalLight'" />
+        <LightPropertyPanePointLight v-else-if="selectedObject && selectedObject.type === 'PointLight'" />
+        <LightPropertyPaneSpotLight v-else-if="selectedObject && selectedObject.type === 'SpotLight'" />
+        <LightPropertyPaneAmbientLight v-else-if="selectedObject && selectedObject.type === 'AmbientLight'" />
+        <LightPropertyPaneHemisphereLight v-else-if="selectedObject && selectedObject.type === 'HemisphereLight'" />
+        <div v-else style="padding: 24px; color: #888;">属性内容占位</div>
+      </div>
       <MaterialPropertyPane v-if="activeTab === '材质'" />
     </div>
   </div>
@@ -107,6 +112,11 @@ import PrimitivePropertyPaneDodecahedron from '../property/PrimitivePropertyPane
 import PrimitivePropertyPaneIcosahedron from '../property/PrimitivePropertyPane-icosahedron.vue';
 import PrimitivePropertyPaneRing from '../property/PrimitivePropertyPane-ring.vue';
 import PrimitivePropertyPaneTube from '../property/PrimitivePropertyPane-tube.vue';
+import LightPropertyPaneDirectionalLight from '../property/LightPropertyPane-DirectionalLight.vue';
+import LightPropertyPanePointLight from '../property/LightPropertyPane-PointLight.vue';
+import LightPropertyPaneSpotLight from '../property/LightPropertyPane-SpotLight.vue';
+import LightPropertyPaneAmbientLight from '../property/LightPropertyPane-AmbientLight.vue';
+import LightPropertyPaneHemisphereLight from '../property/LightPropertyPane-HemisphereLight.vue';
 import { useObjectSelection } from '../../composables/useObjectSelection.js';
 
 export default {
@@ -126,7 +136,12 @@ export default {
     PrimitivePropertyPaneDodecahedron,
     PrimitivePropertyPaneIcosahedron,
     PrimitivePropertyPaneRing,
-    PrimitivePropertyPaneTube
+    PrimitivePropertyPaneTube,
+    LightPropertyPaneDirectionalLight,
+    LightPropertyPanePointLight,
+    LightPropertyPaneSpotLight,
+    LightPropertyPaneAmbientLight,
+    LightPropertyPaneHemisphereLight
   },
   setup() {
     /**
