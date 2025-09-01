@@ -74,33 +74,7 @@ function onUserDataBlur() {
 
 <template>
   <div class="scene-property-panel">
-    <!-- 场景统计信息 -->
-    <div class="scene-stats">
-      <div class="stat-item">
-        <span class="stat-label">对象数量:</span>
-        <span class="stat-value">{{ sceneStats.objects }}</span>
-      </div>
-      <div class="stat-item">
-        <span class="stat-label">三角形:</span>
-        <span class="stat-value">{{ formatNumber(sceneStats.triangles) }}</span>
-      </div>
-      <div class="stat-item">
-        <span class="stat-label">顶点:</span>
-        <span class="stat-value">{{ formatNumber(sceneStats.vertices) }}</span>
-      </div>
-      <div class="stat-item">
-        <span class="stat-label">材质:</span>
-        <span class="stat-value">{{ sceneStats.materials }}</span>
-      </div>
-      <div class="stat-item">
-        <span class="stat-label">纹理:</span>
-        <span class="stat-value">{{ sceneStats.textures }}</span>
-      </div>
-      <div class="stat-item">
-        <span class="stat-label">FPS:</span>
-        <span class="stat-value">{{ sceneStats.fps }}</span>
-      </div>
-    </div>
+    
 
     <el-form class="scene-form" label-width="70px">
       <el-form-item label="场景名称">
@@ -129,30 +103,6 @@ function onUserDataBlur() {
 .scene-property-panel {
   padding: 16px;
 }
-
-.scene-stats {
-  padding: 12px 0 0 0;
-  border-bottom: 1px solid #444;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-}
-
-.stat-item {
-  display: flex;
-  justify-content: space-between;
-  font-size: 11px;
-}
-
-.stat-label {
-  color: #aaa;
-}
-
-.stat-value {
-  color: #fff;
-  font-weight: 600;
-}
-
 .scene-form {
   margin-top: 16px;
 }

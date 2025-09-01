@@ -1,12 +1,14 @@
 <!--
   编辑器底部状态栏组件
-  展示选中对象、相机参数、FPS等实时信息
+  展示选中对象、相机参数，并提供场景统计弹窗
 -->
 <script setup>
-import { ElTag, ElIcon } from 'element-plus';
-import { Box, Camera, Cpu, Position } from '@element-plus/icons-vue';
+import { ref, computed } from 'vue';
+import { ElTag, ElIcon, ElPopover } from 'element-plus';
+import { Box, Camera, Position, DataAnalysis } from '@element-plus/icons-vue';
 
-defineProps({
+/** 组件属性定义 */
+const { objectSelection, scene, cameraPosition, cameraTarget } = defineProps({
   objectSelection: { type: Object, required: true },
   scene: { type: Object, required: true },
   cameraPosition: { type: Object, required: true },
@@ -15,6 +17,23 @@ defineProps({
    */
   cameraTarget: { type: Object, required: true }
 });
+
+/** 场景统计信息，复用 scene.getSceneStats() */
+const sceneStats = computed(() => (typeof scene.getSceneStats === 'function' ? scene.getSceneStats() : {}));
+
+/**
+ * 格式化数字显示
+ * @param {number} num 数值
+ * @returns {string} 格式化结果
+ */
+function formatNumber(num) {
+  if (num >= 1000000) {
+    return (num / 1000000).toFixed(1) + 'M';
+  } else if (num >= 1000) {
+    return (num / 1000).toFixed(1) + 'K';
+  }
+  return num?.toString() ?? '0';
+}
 </script>
 
 <template>
@@ -41,14 +60,42 @@ defineProps({
       </el-tag>
     </div>
     <div class="footer-right">
-      <el-tag size="small" type="success" effect="dark">
-        <el-icon><Cpu /></el-icon>
-        FPS: {{ scene?.fps?.value || 0 }}
-      </el-tag>
-      <el-tag size="small" type="warning" effect="dark">
-        <el-icon><Box /></el-icon>
-        对象数: {{ scene?.getSceneStats?.()?.objects || 0 }}
-      </el-tag>
+      <!-- 场景统计弹窗 -->
+      <el-popover
+        placement="top"
+        width="100"
+        trigger="hover"
+        popper-class="scene-stats-popover"
+      >
+        <template #reference>
+          <el-tag size="small" type="info" effect="dark" style="cursor:pointer;">
+            <el-icon><DataAnalysis /></el-icon>
+            场景统计
+          </el-tag>
+        </template>
+        <div class="scene-stats">
+          <div class="stat-item">
+            <span class="stat-label">对象数量:</span>
+            <span class="stat-value">{{ sceneStats.objects }}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">三角形:</span>
+            <span class="stat-value">{{ formatNumber(sceneStats.triangles) }}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">顶点:</span>
+            <span class="stat-value">{{ formatNumber(sceneStats.vertices) }}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">材质:</span>
+            <span class="stat-value">{{ sceneStats.materials }}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">纹理:</span>
+            <span class="stat-value">{{ sceneStats.textures }}</span>
+          </div>
+        </div>
+      </el-popover>
     </div>
   </footer>
 </template>
@@ -90,5 +137,29 @@ defineProps({
   .footer-center {
     display: none;
   }
+}
+.scene-stats {
+  padding: 8px 0 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+}
+.stat-label {
+  color: #aaa;
+}
+.stat-value {
+  color: #fff;
+  font-weight: 600;
+}
+.scene-stats-popover {
+  background: #232323;
+  border: 1px solid #444;
+  border-radius: 6px;
+  padding: 10px 12px 8px 12px;
 }
 </style>
