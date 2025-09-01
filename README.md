@@ -9,7 +9,7 @@
 ## ✅ 主要功能
 
 - 3D场景渲染和管理
-- 多种基础与扩展几何体创建（立方体、球体、圆柱体、平面、圆锥体、圆环体、十二面体、二十面体、八面体、四面体、环形、管道等）
+- 多种基础与扩展几何体创建
 - 完整的对象变换系统（移动、旋转、缩放）、撤销重做历史记录
 - 多格式3D模型和纹理加载与管理（GLTF、OBJ、FBX等）
 - 拖拽上传、资源管理与资源浏览（支持模型预览和几何体创建）
@@ -58,7 +58,7 @@ three-editor-by-ai/
 │   │   │   ├── ScenePropertyPane.vue         # 场景属性编辑面板
 │   │   │   ├── BasePropertyPane.vue          # 对象基础属性编辑面板
 │   │   │   ├── MaterialPropertyPane.vue      # 材质编辑面板
-│   │   │   ├── PrimitivePropertyPane-box.vue # Box专属属性编辑面板
+│   │   │   ├── PrimitivePropertyPane-*.vue  # 各种Primitive的专属属性编辑面板
 │   │   ├── dialog/                           # 各类对话框组件
 │   │   │   ├── TextureSelectDialog.vue       # 纹理选择对话框
 │   │   │   ├── EditorConfigDialog.vue        # 编辑器配置对话框

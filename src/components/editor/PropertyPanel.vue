@@ -77,6 +77,12 @@
   <PrimitivePropertyPanePlane v-else-if="selectedObject && selectedObject.geometry && selectedObject.geometry.type === 'PlaneGeometry'" />
   <PrimitivePropertyPaneTorus v-else-if="selectedObject && selectedObject.geometry && selectedObject.geometry.type === 'TorusGeometry'" />
   <PrimitivePropertyPaneCone v-else-if="selectedObject && selectedObject.geometry && selectedObject.geometry.type === 'ConeGeometry'" />
+  <PrimitivePropertyPaneTetrahedron v-else-if="selectedObject && selectedObject.geometry && selectedObject.geometry.type === 'TetrahedronGeometry'" />
+  <PrimitivePropertyPaneOctahedron v-else-if="selectedObject && selectedObject.geometry && selectedObject.geometry.type === 'OctahedronGeometry'" />
+  <PrimitivePropertyPaneDodecahedron v-else-if="selectedObject && selectedObject.geometry && selectedObject.geometry.type === 'DodecahedronGeometry'" />
+  <PrimitivePropertyPaneIcosahedron v-else-if="selectedObject && selectedObject.geometry && selectedObject.geometry.type === 'IcosahedronGeometry'" />
+  <PrimitivePropertyPaneRing v-else-if="selectedObject && selectedObject.geometry && selectedObject.geometry.type === 'RingGeometry'" />
+  <PrimitivePropertyPaneTube v-else-if="selectedObject && selectedObject.geometry && selectedObject.geometry.type === 'TubeGeometry'" />
   <div v-else style="padding: 24px; color: #888;">属性内容占位</div>
 </div>
       <MaterialPropertyPane v-if="activeTab === '材质'" />
@@ -95,6 +101,12 @@ import PrimitivePropertyPaneCylinder from '../property/PrimitivePropertyPane-cyl
 import PrimitivePropertyPanePlane from '../property/PrimitivePropertyPane-plane.vue';
 import PrimitivePropertyPaneTorus from '../property/PrimitivePropertyPane-torus.vue';
 import PrimitivePropertyPaneCone from '../property/PrimitivePropertyPane-cone.vue';
+import PrimitivePropertyPaneTetrahedron from '../property/PrimitivePropertyPane-tetrahedron.vue';
+import PrimitivePropertyPaneOctahedron from '../property/PrimitivePropertyPane-octahedron.vue';
+import PrimitivePropertyPaneDodecahedron from '../property/PrimitivePropertyPane-dodecahedron.vue';
+import PrimitivePropertyPaneIcosahedron from '../property/PrimitivePropertyPane-icosahedron.vue';
+import PrimitivePropertyPaneRing from '../property/PrimitivePropertyPane-ring.vue';
+import PrimitivePropertyPaneTube from '../property/PrimitivePropertyPane-tube.vue';
 import { useObjectSelection } from '../../composables/useObjectSelection.js';
 
 export default {
@@ -108,7 +120,13 @@ export default {
     PrimitivePropertyPaneCylinder,
     PrimitivePropertyPanePlane,
     PrimitivePropertyPaneTorus,
-    PrimitivePropertyPaneCone
+    PrimitivePropertyPaneCone,
+    PrimitivePropertyPaneTetrahedron,
+    PrimitivePropertyPaneOctahedron,
+    PrimitivePropertyPaneDodecahedron,
+    PrimitivePropertyPaneIcosahedron,
+    PrimitivePropertyPaneRing,
+    PrimitivePropertyPaneTube
   },
   setup() {
     /**
