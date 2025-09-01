@@ -113,6 +113,8 @@
       :scene="scene"
       :cameraPosition="cameraPosition"
       :cameraTarget="cameraTarget"
+      @update:cameraPosition="onCameraPositionUpdate"
+      @update:cameraTarget="onCameraTargetUpdate"
     />
   </div>
 </template>
@@ -120,6 +122,29 @@
 <script setup>
  // 3D场景编辑器主应用组件
 import { ref, reactive, provide, onMounted, onUnmounted } from 'vue';
+
+/**
+ * 处理EditorFooter相机位置变更事件
+ * @param {Object} pos 新的相机位置
+ */
+function onCameraPositionUpdate(pos) {
+  if (scene.sceneManager?.camera) {
+    scene.sceneManager.camera.position.set(pos.x, pos.y, pos.z);
+  }
+}
+/**
+ * 处理EditorFooter目标点变更事件
+ * @param {Object} target 新的controls target
+ */
+function onCameraTargetUpdate(target) {
+  if (scene.sceneManager?.controls && scene.sceneManager.controls.target) {
+    scene.sceneManager.controls.target.set(target.x, target.y, target.z);
+    // 同步相机朝向
+    if (scene.sceneManager.camera && typeof scene.sceneManager.camera.lookAt === 'function') {
+      scene.sceneManager.camera.lookAt(target.x, target.y, target.z);
+    }
+  }
+}
 import { ElMessageBox } from 'element-plus';
 import 'element-plus/es/components/message-box/style/css';
 import { useScene } from './composables/useScene.js';

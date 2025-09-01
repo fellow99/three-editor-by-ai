@@ -3,8 +3,8 @@
   展示选中对象、相机参数，并提供场景统计弹窗
 -->
 <script setup>
-import { ref, computed } from 'vue';
-import { ElTag, ElIcon, ElPopover } from 'element-plus';
+import { ref, computed, watch } from 'vue';
+import { ElTag, ElIcon, ElPopover, ElInputNumber, ElForm, ElFormItem } from 'element-plus';
 import { Box, Camera, Position, DataAnalysis } from '@element-plus/icons-vue';
 
 /** 组件属性定义 */
@@ -20,6 +20,54 @@ const { objectSelection, scene, cameraPosition, cameraTarget } = defineProps({
 
 /** 场景统计信息，复用 scene.getSceneStats() */
 const sceneStats = computed(() => (typeof scene.getSceneStats === 'function' ? scene.getSceneStats() : {}));
+
+/** 相机位置编辑弹窗的可编辑副本，避免直接修改props */
+const cameraPosEdit = ref({
+  x: 0,
+  y: 0,
+  z: 0
+});
+/** 目标位置编辑弹窗的可编辑副本，避免直接修改props */
+const cameraTargetEdit = ref({
+  x: 0,
+  y: 0,
+  z: 0
+});
+/** 控制弹窗显示 */
+const cameraPosPopoverVisible = ref(false);
+const cameraTargetPopoverVisible = ref(false);
+
+/**
+ * 监听弹窗显示，弹出时同步当前值
+ */
+watch(cameraPosPopoverVisible, (val) => {
+  if (val) {
+    cameraPosEdit.value.x = cameraPosition.x;
+    cameraPosEdit.value.y = cameraPosition.y;
+    cameraPosEdit.value.z = cameraPosition.z;
+  }
+});
+watch(cameraTargetPopoverVisible, (val) => {
+  if (val) {
+    cameraTargetEdit.value.x = cameraTarget.x;
+    cameraTargetEdit.value.y = cameraTarget.y;
+    cameraTargetEdit.value.z = cameraTarget.z;
+  }
+});
+
+/**
+ * 通知父组件更新相机位置
+ */
+const emit = defineEmits(['update:cameraPosition', 'update:cameraTarget']);
+function handleCameraPosChange() {
+  emit('update:cameraPosition', { ...cameraPosEdit.value });
+}
+/**
+ * 通知父组件更新controls目标
+ */
+function handleCameraTargetChange() {
+  emit('update:cameraTarget', { ...cameraTargetEdit.value });
+}
 
 /**
  * 格式化数字显示
@@ -49,15 +97,54 @@ function formatNumber(num) {
         <el-icon><Camera /></el-icon>
         相机: {{ scene?.cameraState?.fov || 75 }}° FOV
       </el-tag>
-      <el-tag size="small" type="info" effect="dark">
-        <el-icon><Position /></el-icon>
-        位置: ({{ cameraPosition.x.toFixed(1) }}, {{ cameraPosition.y.toFixed(1) }}, {{ cameraPosition.z.toFixed(1) }})
-      </el-tag>
-      <!-- 当前视点（OrbitControls target） -->
-      <el-tag size="small" type="info" effect="dark">
-        <el-icon><Camera /></el-icon>
-        目标: ({{ cameraTarget?.x?.toFixed?.(2) ?? 'N/A' }}, {{ cameraTarget?.y?.toFixed?.(2) ?? 'N/A' }}, {{ cameraTarget?.z?.toFixed?.(2) ?? 'N/A' }})
-      </el-tag>
+      <!-- 相机位置hover可编辑 -->
+      <el-popover
+        placement="top"
+        trigger="hover"
+        v-model:visible="cameraPosPopoverVisible"
+      >
+        <template #reference>
+          <el-tag size="small" type="info" effect="dark" style="cursor:pointer;">
+            <el-icon><Position /></el-icon>
+            位置: ({{ cameraPosition.x.toFixed(1) }}, {{ cameraPosition.y.toFixed(1) }}, {{ cameraPosition.z.toFixed(1) }})
+          </el-tag>
+        </template>
+        <el-form size="small">
+          <el-form-item label="X">
+<el-input-number v-model="cameraPosEdit.x" :step="1" :precision="2" controls-position="right" @change="handleCameraPosChange" />
+          </el-form-item>
+          <el-form-item label="Y">
+<el-input-number v-model="cameraPosEdit.y" :step="1" :precision="2" controls-position="right" @change="handleCameraPosChange" />
+          </el-form-item>
+          <el-form-item label="Z">
+<el-input-number v-model="cameraPosEdit.z" :step="1" :precision="2" controls-position="right" @change="handleCameraPosChange" />
+          </el-form-item>
+        </el-form>
+      </el-popover>
+      <!-- 当前视点（OrbitControls target），hover可编辑 -->
+      <el-popover
+        placement="top"
+        trigger="hover"
+        v-model:visible="cameraTargetPopoverVisible"
+      >
+        <template #reference>
+          <el-tag size="small" type="info" effect="dark" style="cursor:pointer;">
+            <el-icon><Camera /></el-icon>
+            目标: ({{ cameraTarget?.x?.toFixed?.(2) ?? 'N/A' }}, {{ cameraTarget?.y?.toFixed?.(2) ?? 'N/A' }}, {{ cameraTarget?.z?.toFixed?.(2) ?? 'N/A' }})
+          </el-tag>
+        </template>
+        <el-form size="small">
+          <el-form-item label="X">
+<el-input-number v-model="cameraTargetEdit.x" :step="1" :precision="2" controls-position="right" @change="handleCameraTargetChange" />
+          </el-form-item>
+          <el-form-item label="Y">
+<el-input-number v-model="cameraTargetEdit.y" :step="1" :precision="2" controls-position="right" @change="handleCameraTargetChange" />
+          </el-form-item>
+          <el-form-item label="Z">
+<el-input-number v-model="cameraTargetEdit.z" :step="1" :precision="2" controls-position="right" @change="handleCameraTargetChange" />
+          </el-form-item>
+        </el-form>
+      </el-popover>
     </div>
     <div class="footer-right">
       <!-- 场景统计弹窗 -->
