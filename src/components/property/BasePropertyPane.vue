@@ -24,6 +24,9 @@ const objectType = computed(() => {
   return selectedObject.value.userData?.type || selectedObject.value.type || 'Object3D'
 })
 
+/** 对象ID（唯一标识，来源于THREE.Object3D.uuid） */
+const objectId = computed(() => selectedObject.value?.uuid ?? '')
+
 /** 对象名称 */
 const objectName = ref('')
 
@@ -56,18 +59,21 @@ function updateObjectName() {
     <div class="property-section">
       <h4>基本信息</h4>
       <el-form label-width="60px" class="property-form">
-        <el-form-item label="名称">
-          <el-input
-            v-model="objectName"
-            placeholder="请输入对象名称"
-            @blur="updateObjectName"
-            size="small"
-            clearable
-          />
-        </el-form-item>
-        <el-form-item label="类型">
-          <span class="property-value">{{ objectType }}</span>
-        </el-form-item>
+      <el-form-item label="对象ID">
+        <el-input v-model="objectId" disabled size="small" />
+      </el-form-item>
+      <el-form-item label="名称">
+        <el-input
+          v-model="objectName"
+          placeholder="请输入对象名称"
+          @blur="updateObjectName"
+          size="small"
+          clearable
+        />
+      </el-form-item>
+      <el-form-item label="类型">
+        <span class="property-value">{{ objectType }}</span>
+      </el-form-item>
       </el-form>
     </div>
   </div>

@@ -358,11 +358,32 @@ export function useObjectSelection() {
   /**
    * 根据类型选择对象
    * @param {string} type 对象类型
+   * 支持: primitive（几何体），light，group，camera，具体几何体类型（如 box、sphere 等）
    */
   function selectByType(type) {
-    const objects = objectManager.getAllObjects()
-      .filter(obj => obj.userData.type === type || obj.userData.primitiveType === type);
-    
+    const objects = objectManager.getAllObjects().filter(obj => {
+      if (type === 'primitive') {
+        return obj.isMesh;
+      }
+      if (type === 'light') {
+        return obj.isLight;
+      }
+      if (type === 'group') {
+        return obj.isGroup;
+      }
+      if (type === 'camera') {
+        return obj.isCamera;
+      }
+      // 具体几何体类型
+      if (obj.isMesh && obj.geometry && obj.geometry.type) {
+        return obj.geometry.type.replace('Geometry', '').toLowerCase() === type;
+      }
+      // 灯光类型
+      if (obj.isLight && obj.type) {
+        return obj.type === type;
+      }
+      return false;
+    });
     const ids = objects.map(obj => obj.userData.id).filter(Boolean);
     objectManager.selectObjects(ids);
   }

@@ -163,13 +163,8 @@ class ObjectManager {
       object.castShadow = true;
       object.receiveShadow = true;
     
-      // 设置基本属性
-      object.userData = {
-        id: generateId(),
-        type: 'primitive',
-        primitiveType: type,
-        createdAt: new Date().toISOString()
-      };
+      // 设置基本属性（只设置{}，不包含type/primitiveType字段）
+      object.userData = {};
       
     } else if (['DirectionalLight', 'PointLight', 'SpotLight', 'AmbientLight', 'HemisphereLight'].includes(type)) {
       // 灯光类型
@@ -219,13 +214,8 @@ class ObjectManager {
           break;
       }
     
-      // 设置基本属性
-      object.userData = {
-        id: generateId(),
-        type: 'light',
-        primitiveType: type,
-        createdAt: new Date().toISOString()
-      };
+      // 设置基本属性（只设置{}，不包含type/primitiveType字段）
+      object.userData = {};
       
     } else if (['camera', 'group', 'text', 'sprite'].includes(type)) {
       // 其他对象类型
@@ -256,13 +246,8 @@ class ObjectManager {
           break;
       }
     
-      // 设置基本属性
-      object.userData = {
-        id: generateId(),
-        type: 'primitive',
-        primitiveType: type,
-        createdAt: new Date().toISOString()
-      };
+      // 设置基本属性（只设置{}，不包含type/primitiveType字段）
+      object.userData = {};
     } else {
       // 默认创建立方体
       const geometry = createBoxGeometry();
@@ -271,13 +256,8 @@ class ObjectManager {
       object.castShadow = true;
       object.receiveShadow = true;
     
-      // 设置基本属性
-      object.userData = {
-        id: generateId(),
-        type: 'primitive',
-        primitiveType: type,
-        createdAt: new Date().toISOString()
-      };
+      // 设置基本属性（只设置{}，不包含type/primitiveType字段）
+      object.userData = {};
     }
     
     if (options.name) {
@@ -707,16 +687,28 @@ class ObjectManager {
       ? objectIds.map(id => this.getObject(id)).filter(Boolean)
       : this.getAllObjects();
     
-    // 过滤掉灯光
-    objects = objects.filter(obj => !['light'].includes(obj.userData.type));
+    // 过滤掉灯光（通过对象属性判断）
+    objects = objects.filter(obj => !obj.isLight);
     return {
       objects: objects.map(obj => {
         // 导出userData时，去除_mixer/_activeAction等运行时字段，仅保留animationIndex等可序列化数据
         const { _mixer, _activeAction, ...userDataExport } = obj.userData || {};
+        // 导出时，type=primitive时增加primitiveType字段
+        let type = obj.userData.type;
+        let primitiveType = undefined;
+        if (!type && obj.isMesh) {
+          type = 'primitive';
+          primitiveType = obj.geometry && obj.geometry.type ? obj.geometry.type.replace('Geometry', '').toLowerCase() : undefined;
+        }
+        if (!type && obj.isLight) {
+          type = 'light';
+          primitiveType = obj.type;
+        }
         return {
           id: obj.userData.id,
           name: obj.name,
-          type: obj.userData.type,
+          type,
+          primitiveType,
           position: obj.position.toArray(),
           rotation: obj.rotation.toArray(),
           scale: obj.scale.toArray(),

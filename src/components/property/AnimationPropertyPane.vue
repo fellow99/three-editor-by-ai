@@ -11,6 +11,8 @@ import { useObjectSelection } from '../../composables/useObjectSelection.js'
 
 /** 对象选择管理器 */
 const objectSelection = useObjectSelection()
+/** 是否有选中对象 */
+const { hasSelection } = objectSelection
 /** 当前选中对象 */
 const selectedObject = computed(() => {
   const objects = objectSelection.selectedObjects.value

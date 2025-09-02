@@ -120,25 +120,18 @@ export default {
       props.object.children && props.object.children.length > 0
     );
     
+    // 通过对象属性判断类型，不依赖userData
     const objectType = computed(() => {
-      if (props.object.userData.type) {
-        return props.object.userData.type;
-      }
-      if (props.object.userData.primitiveType) {
-        return props.object.userData.primitiveType;
-      }
-      if (props.object.isGroup) {
-        return 'Group';
-      }
+      if (props.object.isGroup) return 'Group';
       if (props.object.isMesh) {
+        // 优先显示具体几何体类型
+        if (props.object.geometry && props.object.geometry.type) {
+          return props.object.geometry.type.replace('Geometry', '').toLowerCase();
+        }
         return 'Mesh';
       }
-      if (props.object.isLight) {
-        return 'Light';
-      }
-      if (props.object.isCamera) {
-        return 'Camera';
-      }
+      if (props.object.isLight) return props.object.type || 'Light';
+      if (props.object.isCamera) return props.object.type || 'Camera';
       return null;
     });
     
@@ -155,19 +148,29 @@ export default {
      * @param {Object} object Three.js对象
      * @returns {string} 图标
      */
+    // 通过对象属性判断图标，不依赖userData
     function getObjectIcon(object) {
-      if (object.userData.primitiveType) {
-        switch (object.userData.primitiveType) {
-          case 'box': return '⬜';
-          case 'sphere': return '⚪';
-          case 'cylinder': return '🥫';
-          case 'plane': return '▭';
-          default: return '📦';
-        }
-      }
-      
       if (object.isGroup) return '📁';
-      if (object.isMesh) return '📦';
+      if (object.isMesh) {
+        if (object.geometry && object.geometry.type) {
+          switch (object.geometry.type.replace('Geometry', '').toLowerCase()) {
+            case 'box': return '⬜';
+            case 'sphere': return '⚪';
+            case 'cylinder': return '🥫';
+            case 'plane': return '▭';
+            case 'cone': return '🔺';
+            case 'torus': return '🧿';
+            case 'dodecahedron': return '🔷';
+            case 'icosahedron': return '🔶';
+            case 'octahedron': return '🔸';
+            case 'tetrahedron': return '🔺';
+            case 'ring': return '⭕';
+            case 'tube': return '〰️';
+            default: return '📦';
+          }
+        }
+        return '📦';
+      }
       if (object.isLight) {
         if (object.isDirectionalLight) return '☀️';
         if (object.isPointLight) return '💡';
@@ -179,7 +182,6 @@ export default {
         if (object.isOrthographicCamera) return '📹';
         return '📷';
       }
-      
       return '🔸';
     }
     

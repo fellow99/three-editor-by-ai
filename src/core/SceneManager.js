@@ -208,9 +208,9 @@ class SceneManager {
           } catch (e) {
             console.error('加载模型文件失败', e);
           }
-        } else if (objData.userData && objData.userData.type === 'primitive' && objData.userData.primitiveType) {
+        } else if (objData.type === 'primitive' && objData.primitiveType) {
           // 普通primitive对象
-          const primitiveObj = objectManager.createPrimitive?.(objData.userData.primitiveType, {
+          const primitiveObj = objectManager.createPrimitive?.(objData.primitiveType, {
             name: objData.name,
             position: objData.position,
             rotation: objData.rotation,
