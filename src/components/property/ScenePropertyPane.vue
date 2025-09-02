@@ -1,6 +1,7 @@
 <!--
   场景属性面板
-  用于查看和编辑当前场景的基础属性（如名称、背景色、userData等）。
+  用于查看和编辑当前场景的基础属性（如名称、背景色）。
+  userData已抽取到SceneUserDataPropertyPane.vue独立管理。
 -->
 <script setup>
 import { ref, computed, watch } from 'vue'
@@ -30,19 +31,12 @@ function formatNumber(num) {
 const sceneName = ref('')
 /** 当前场景背景色 */
 const backgroundColor = ref(sceneConfig.backgroundColor)
-/** userData编辑区文本 */
-const userDataText = ref('')
-/** userData校验错误信息 */
-const userDataError = ref('')
 
 /**
  * 初始化面板数据
  */
 function initPanel() {
   backgroundColor.value = sceneConfig.backgroundColor
-  // userData初始化为格式化JSON字符串
-  userDataText.value = JSON.stringify(sceneConfig.userData ?? {}, null, 2)
-  userDataError.value = ''
 }
 initPanel()
 
@@ -55,20 +49,6 @@ watch([backgroundColor], () => {
   })
 })
 
-/**
- * userData编辑失焦时校验并应用
- */
-function onUserDataBlur() {
-  try {
-    const json = JSON.parse(userDataText.value)
-    updateSceneConfig({
-      userData: json
-    })
-    userDataError.value = ''
-  } catch (e) {
-    userDataError.value = 'JSON格式错误，请检查输入'
-  }
-}
 
 </script>
 
@@ -82,18 +62,6 @@ function onUserDataBlur() {
       </el-form-item>
       <el-form-item label="背景色">
         <el-color-picker v-model="backgroundColor" />
-      </el-form-item>
-      <el-form-item label="userData">
-        <el-input
-          type="textarea"
-          v-model="userDataText"
-          :rows="4"
-          placeholder="请输入合法的JSON"
-          @blur="onUserDataBlur"
-        />
-        <div v-if="userDataError" style="color: #f56c6c; font-size: 12px; margin-top: 4px;">
-          {{ userDataError }}
-        </div>
       </el-form-item>
     </el-form>
   </div>

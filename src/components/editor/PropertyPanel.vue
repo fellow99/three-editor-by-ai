@@ -8,61 +8,48 @@
   <div class="property-panel">
     <div class="property-content">
       <div class="tabs">
-<!-- 未选对象时，显示“属性”“光影”“环境”“后处理”“场景”Tab -->
-<template v-if="!hasSelection">
-  <button
-    class="tab-btn"
-    :class="{ active: activeTab === '场景' }"
-    @click="activeTab = '场景'"
-  >
-    场景
-  </button>
-  <button
-    class="tab-btn"
-    :class="{ active: activeTab === '光影' }"
-    @click="activeTab = '光影'"
-  >
-    光影
-  </button>
-  <button
-    class="tab-btn"
-    :class="{ active: activeTab === '环境' }"
-    @click="activeTab = '环境'"
-  >
-    环境
-  </button>
-  <button
-    class="tab-btn"
-    :class="{ active: activeTab === '后处理' }"
-    @click="activeTab = '后处理'"
-  >
-    后处理
-  </button>
-</template>
-        <!-- 选中对象时，显示“对象属性”“材质属性”Tab -->
-        <template v-else>
-          <button
-            class="tab-btn"
-            :class="{ active: activeTab === '对象' }"
-            @click="activeTab = '对象'"
-          >
-            对象
-          </button>
-          <button
-            class="tab-btn"
-            :class="{ active: activeTab === '材质' }"
-            @click="activeTab = '材质'"
-          >
-            材质
-          </button>
-          <button
-            class="tab-btn"
-            :class="{ active: activeTab === '属性' }"
-            @click="activeTab = '属性'"
-          >
-            userData
-          </button>
-        </template>
+        <button v-if="!hasSelection"
+          class="tab-btn"
+          :class="{ active: activeTab === '场景' }"
+          @click="activeTab = '场景'"
+        >
+          场景
+        </button>
+        <button v-if="!hasSelection"
+          class="tab-btn"
+          :class="{ active: activeTab === '环境' }"
+          @click="activeTab = '环境'"
+        >
+          环境
+        </button>
+        <button v-if="!hasSelection"
+          class="tab-btn"
+          :class="{ active: activeTab === '后处理' }"
+          @click="activeTab = '后处理'"
+        >
+          后处理
+        </button>
+        <button v-if="hasSelection"
+          class="tab-btn"
+          :class="{ active: activeTab === '对象' }"
+          @click="activeTab = '对象'"
+        >
+          对象
+        </button>
+        <button v-if="hasSelection"
+          class="tab-btn"
+          :class="{ active: activeTab === '材质' }"
+          @click="activeTab = '材质'"
+        >
+          材质
+        </button>
+        <button
+          class="tab-btn"
+          :class="{ active: activeTab === 'userData' }"
+          @click="activeTab = 'userData'"
+        >
+          userData
+        </button>
       </div>
       <!-- Tab内容区域 -->
       <ScenePropertyPane v-show="activeTab === '场景'" />
@@ -92,6 +79,11 @@
         <LightPropertyPaneHemisphereLight v-else-if="selectedObject && selectedObject.type === 'HemisphereLight'" />
       </div>
       <MaterialPropertyPane v-if="activeTab === '材质'" />
+      <UserDataPropertyPane v-if="activeTab === '属性'" />
+      <div v-show="activeTab === 'userData'">
+        <SceneUserDataPropertyPane v-show="!hasSelection" />
+        <UserDataPropertyPane v-if="selectedObject" v-show="hasSelection" :object="selectedObject" />
+      </div>
     </div>
   </div>
 </template>
@@ -99,7 +91,9 @@
 <script>
 import { ref, watch, computed } from 'vue';
 import ScenePropertyPane from '../property/ScenePropertyPane.vue';
+import SceneUserDataPropertyPane from '../property/SceneUserDataPropertyPane.vue';
 import BasePropertyPane from '../property/BasePropertyPane.vue';
+import UserDataPropertyPane from '../property/UserDataPropertyPane.vue';
 import TransformPropertyPane from '../property/TransformPropertyPane.vue';
 import AnimationPropertyPane from '../property/AnimationPropertyPane.vue';
 import MaterialPropertyPane from '../property/MaterialPropertyPane.vue';
@@ -126,7 +120,9 @@ export default {
   name: 'PropertyPanel',
   components: {
     ScenePropertyPane,
+    SceneUserDataPropertyPane,
     BasePropertyPane,
+    UserDataPropertyPane,
     TransformPropertyPane,
     AnimationPropertyPane,
     MaterialPropertyPane,
