@@ -83,10 +83,10 @@ three-editor-by-ai/
 │   │   ├── ObjectManager.js   # 对象管理器
 │   │   ├── InputManager.js    # 输入处理
 │   │   ├── AssetLoader.js     # 资源加载器
-│   ├── composables/           # Vue Composition API 可组合函数
-│   │   ├── useObjectSelection.js  # 对象选择、TransformControls与选中对象辅助功能
-│   │   ├── static-drive-api.js # 静态文件系统封装
-│   │   ├── vfs-service.js    # 虚拟文件系统服务，用于读写文件
+│   ├── services/              # 数据请求和外部接口
+│   │   ├── static-drive-api.js# 静态文件系统封装
+│   │   ├── vfs-server-api.js  # 虚拟文件系统封装
+│   │   ├── vfs-service.js     # 虚拟文件系统服务
 │   ├── controls/             # 控制器
 │   │   ├── FlyControls.js    # 飞行控制器，支持基于键盘、鼠标的三维飞行
 │   ├── utils/                # 工具函数
