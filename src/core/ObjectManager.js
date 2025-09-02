@@ -259,11 +259,11 @@ class ObjectManager {
       // 设置基本属性（只设置{}，不包含type/primitiveType字段）
       object.userData = {};
     }
-    
+
     if (options.name) {
       object.name = options.name;
     } else {
-      object.name = `${type}_${Date.now()}`;
+      object.name = `${type}`;
     }
     
     // 设置位置、旋转、缩放

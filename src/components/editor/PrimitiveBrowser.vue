@@ -45,7 +45,8 @@ import PRIMITIVES from '../../constants/PRIMITIVES.json';
 function onDragStart(primitive) {
   // 拖拽类型统一为primitive，便于SceneViewer区分
   event.dataTransfer.setData('application/x-primitive', JSON.stringify({
-    type: primitive.type
+    type: primitive.type,
+    name: primitive.name
   }));
   // 可选：设置拖拽效果
   event.dataTransfer.effectAllowed = 'copy';

@@ -80,6 +80,7 @@ export default {
           // 触发添加基础几何体/灯光的逻辑
           // 这里假设有scene.addPrimitive(type)方法，实际需根据项目实现
           if (scene) {
+            options.name = primitive.name || primitive.type;
             await scene.createPrimitive(primitive.type, options);
             ElMessage.success('已添加基础对象');
           } else {
