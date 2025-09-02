@@ -52,12 +52,12 @@ three-editor-by-ai/
 │   │   │   ├── AssetBrowser.vue              # 资源浏览器
 │   │   │   ├── PrimitiveBrowser.vue          # 基础几何体与灯光浏览组件
 │   │   │   ├── ResourcePanel.vue             # 资源面板
-│   │   │   ├── VfsFilePanel.vue              # 虚拟文件系统面板
+│   │   │   ├── VfsFileBrowser.vue            # 虚拟文件系统面板
 │   │   │   ├── Inspector.vue                 # 对象检查器
 │   │   ├── property/                         # 各种属性编辑组件
 │   │   │   ├── ScenePropertyPane.vue         # 场景属性编辑面板
-│   │   │   ├── BasePropertyPane.vue          # 对象基础属性编辑面板（仅名称、类型）
-│   │   │   ├── UserDataPropertyPane.vue      # userData属性编辑面板（JSON格式，独立Tab）
+│   │   │   ├── BasePropertyPane.vue          # 对象基础属性编辑面板
+│   │   │   ├── UserDataPropertyPane.vue      # userData属性编辑面板
 │   │   │   ├── TransformPropertyPane.vue     # 变换属性面板（位置、旋转、缩放）
 │   │   │   ├── AnimationPropertyPane.vue     # 动画属性面板（动画选择与播放）
 │   │   │   ├── MaterialPropertyPane.vue      # 材质编辑面板

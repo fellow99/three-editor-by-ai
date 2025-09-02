@@ -106,7 +106,7 @@ export default {
             return;
           }
           /**
-           * 从VfsFilePanel中拖拽模型，支持modelInfo.url字段
+           * 从VfsFileBrowser中拖拽模型，支持modelInfo.url字段
            * - 若modelInfo有url字段，则fetch该url获取blob
            * - 否则按原有方式通过vfs获取blob
            * 新增用法：fetch(url)获取blob并转为File对象

@@ -215,14 +215,12 @@
 import { ref, computed } from 'vue';
 import { ElMessage } from 'element-plus';
 import 'element-plus/es/components/message/style/css';
-import VfsFilePanel from './VfsFilePanel.vue';
 import { useAssets } from '../../composables/useAssets.js';
 import { useObjectSelection } from '../../composables/useObjectSelection.js';
 import { useScene } from '../../composables/useScene.js';
 import { useObjectManager } from '../../core/ObjectManager.js';
 export default {
   name: 'AssetBrowser',
-  components: { VfsFilePanel },
   setup() {
     const assets = useAssets();
     const objectSelection = useObjectSelection();

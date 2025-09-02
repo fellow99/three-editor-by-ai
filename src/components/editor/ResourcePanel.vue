@@ -8,7 +8,7 @@ import { ElMessageBox } from 'element-plus';
 import 'element-plus/es/components/message-box/style/css';
 import AssetBrowser from './AssetBrowser.vue';
 import Inspector from './Inspector.vue';
-import VfsFilePanel from './VfsFilePanel.vue';
+import VfsFileBrowser from './VfsFileBrowser.vue';
 import PrimitiveBrowser from './PrimitiveBrowser.vue';
 
 const scene = inject('scene');
@@ -69,7 +69,7 @@ function handleDeleteSelected() {
       </button>
     </div>
     <div class="panel-content">
-      <VfsFilePanel v-show="props.activeLeftTab === 'files'" />
+      <VfsFileBrowser v-show="props.activeLeftTab === 'files'" />
       <PrimitiveBrowser
         v-show="props.activeLeftTab === 'primitives'"
       />
