@@ -1,6 +1,6 @@
 <!--
   基础属性面板
-  用于展示和编辑选中对象的基本属性，包括名称、类型。
+  用于展示和编辑选中对象的基本属性，包括名称、类型、内部ID、对外ID。
   已将userData相关逻辑抽离到UserDataPropertyPane.vue。
 -->
 
@@ -24,25 +24,31 @@ const objectType = computed(() => {
   return selectedObject.value.userData?.type || selectedObject.value.type || 'Object3D'
 })
 
-/** 对象ID（唯一标识，来源于THREE.Object3D.uuid） */
-const objectId = computed(() => selectedObject.value?.uuid ?? '')
+/** 内部ID（唯一标识，来源于THREE.Object3D.uuid，仅内部使用） */
+const internalId = computed(() => selectedObject.value?.uuid ?? '')
+
+/** 对外ID（可编辑，来源于userData.id） */
+const externalId = ref('')
 
 /** 对象名称 */
 const objectName = ref('')
 
 /**
  * 刷新属性显示
+ * @description 同步objectName和externalId
  */
 function refreshBaseInfo() {
   const newObject = selectedObject.value
   if (newObject) {
     objectName.value = newObject.name || ''
+    externalId.value = newObject.userData?.id || ''
   }
 }
 watch(selectedObject, refreshBaseInfo, { immediate: true })
 
 /**
  * 更新对象名称
+ * @description 修改对象的name属性
  */
 function updateObjectName() {
   if (selectedObject.value) {
@@ -59,21 +65,28 @@ function updateObjectName() {
     <div class="property-section">
       <h4>基本信息</h4>
       <el-form label-width="60px" class="property-form">
-      <el-form-item label="对象ID">
-        <el-input v-model="objectId" disabled size="small" />
-      </el-form-item>
-      <el-form-item label="名称">
-        <el-input
-          v-model="objectName"
-          placeholder="请输入对象名称"
-          @blur="updateObjectName"
-          size="small"
-          clearable
-        />
-      </el-form-item>
-      <el-form-item label="类型">
-        <span class="property-value">{{ objectType }}</span>
-      </el-form-item>
+        <el-form-item label="内部ID">
+          <el-input v-model="internalId" disabled size="small" />
+        </el-form-item>
+        <el-form-item label="对外ID">
+          <el-input
+            v-model="externalId"
+            disabled
+            size="small"
+          />
+        </el-form-item>
+        <el-form-item label="名称">
+          <el-input
+            v-model="objectName"
+            placeholder="请输入对象名称"
+            @blur="updateObjectName"
+            size="small"
+            clearable
+          />
+        </el-form-item>
+        <el-form-item label="类型">
+          <span class="property-value">{{ objectType }}</span>
+        </el-form-item>
       </el-form>
     </div>
   </div>
