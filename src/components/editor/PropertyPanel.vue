@@ -50,17 +50,17 @@
           </button>
           <button
             class="tab-btn"
-            :class="{ active: activeTab === '属性' }"
-            @click="activeTab = '属性'"
-          >
-            属性
-          </button>
-          <button
-            class="tab-btn"
             :class="{ active: activeTab === '材质' }"
             @click="activeTab = '材质'"
           >
             材质
+          </button>
+          <button
+            class="tab-btn"
+            :class="{ active: activeTab === '属性' }"
+            @click="activeTab = '属性'"
+          >
+            userData
           </button>
         </template>
       </div>
@@ -69,8 +69,10 @@
       <div v-show="activeTab === '光影'" style="padding: 24px; color: #888;">光影内容占位</div>
       <div v-show="activeTab === '环境'" style="padding: 24px; color: #888;">环境内容占位</div>
       <div v-show="activeTab === '后处理'" style="padding: 24px; color: #888;">后处理内容占位</div>
-      <BasePropertyPane v-if="activeTab === '对象'" />
-      <div v-if="activeTab === '属性'">
+      <div v-if="activeTab === '对象'">
+        <BasePropertyPane />
+        <TransformPropertyPane />
+        <AnimationPropertyPane />
         <PrimitivePropertyPaneBox v-if="selectedObject && selectedObject.geometry && selectedObject.geometry.type === 'BoxGeometry'" />
         <PrimitivePropertyPaneSphere v-else-if="selectedObject && selectedObject.geometry && selectedObject.geometry.type === 'SphereGeometry'" />
         <PrimitivePropertyPaneCylinder v-else-if="selectedObject && selectedObject.geometry && selectedObject.geometry.type === 'CylinderGeometry'" />
@@ -88,7 +90,6 @@
         <LightPropertyPaneSpotLight v-else-if="selectedObject && selectedObject.type === 'SpotLight'" />
         <LightPropertyPaneAmbientLight v-else-if="selectedObject && selectedObject.type === 'AmbientLight'" />
         <LightPropertyPaneHemisphereLight v-else-if="selectedObject && selectedObject.type === 'HemisphereLight'" />
-        <div v-else style="padding: 24px; color: #888;">属性内容占位</div>
       </div>
       <MaterialPropertyPane v-if="activeTab === '材质'" />
     </div>
@@ -99,6 +100,8 @@
 import { ref, watch, computed } from 'vue';
 import ScenePropertyPane from '../property/ScenePropertyPane.vue';
 import BasePropertyPane from '../property/BasePropertyPane.vue';
+import TransformPropertyPane from '../property/TransformPropertyPane.vue';
+import AnimationPropertyPane from '../property/AnimationPropertyPane.vue';
 import MaterialPropertyPane from '../property/MaterialPropertyPane.vue';
 import PrimitivePropertyPaneBox from '../property/PrimitivePropertyPane-box.vue';
 import PrimitivePropertyPaneSphere from '../property/PrimitivePropertyPane-sphere.vue';
@@ -124,6 +127,8 @@ export default {
   components: {
     ScenePropertyPane,
     BasePropertyPane,
+    TransformPropertyPane,
+    AnimationPropertyPane,
     MaterialPropertyPane,
     PrimitivePropertyPaneBox,
     PrimitivePropertyPaneSphere,

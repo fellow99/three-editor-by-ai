@@ -56,7 +56,9 @@ three-editor-by-ai/
 │   │   │   ├── Inspector.vue                 # 对象检查器
 │   │   ├── property/                         # 各种属性编辑组件
 │   │   │   ├── ScenePropertyPane.vue         # 场景属性编辑面板
-│   │   │   ├── BasePropertyPane.vue          # 对象基础属性编辑面板
+│   │   │   ├── BasePropertyPane.vue          # 对象基础属性编辑面板（仅名称、类型、userData）
+│   │   │   ├── TransformPropertyPane.vue     # 变换属性面板（位置、旋转、缩放）
+│   │   │   ├── AnimationPropertyPane.vue     # 动画属性面板（动画选择与播放）
 │   │   │   ├── MaterialPropertyPane.vue      # 材质编辑面板
 │   │   │   ├── PrimitivePropertyPane-*.vue   # 各种Primitive的专属属性编辑面板
 │   │   │   ├── LightPropertyPane-*.vue       # 各种灯光的专属属性面板
