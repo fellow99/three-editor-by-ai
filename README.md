@@ -153,6 +153,7 @@ three-editor-by-ai/
 - ObjectManager.js中：
   - 导出对象数据时，仅保留可序列化字段（如animationIndex），所有运行时对象（如_mixer、_activeAction等）均直接挂主对象，不再出现在userData中。
 - ObjectManager.js中：
+  - createPrimitive(type, options) 只负责创建对象，不自动添加到管理器（不调用addObject），需在外部调用addObject方法完成对象注册；
   - 新增 getUnlockedObjects() 方法，支持获取所有未被锁定（userData.locked !== true）的对象；
   - getIntersectedObjects() 和 getIntersectedFirstObject() 仅返回未锁定对象；
   - 变换后分发object-transform-updated事件。

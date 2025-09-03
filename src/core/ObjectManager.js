@@ -53,6 +53,7 @@ class ObjectManager {
    * @param {string} type 几何体类型
    * @param {object} options 选项参数
    * @returns {THREE.Mesh|THREE.Light|THREE.Camera|THREE.Group} 创建的对象
+   * 注意：本方法只负责创建对象，不自动添加到管理器（不调用addObject）
    */
   createPrimitive(type, options = {}) {
     let object;
@@ -277,7 +278,7 @@ class ObjectManager {
       object.scale.set(...options.scale);
     }
     
-    this.addObject(object);
+    // 只创建对象，不自动添加到管理器
     return object;
   }
   

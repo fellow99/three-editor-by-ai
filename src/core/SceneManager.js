@@ -168,6 +168,10 @@ json.lights.forEach(lightData => {
   if (lightObj && lightData.userData) {
     lightObj.userData = { ...lightData.userData };
   }
+  // 添加到场景
+  if (lightObj) {
+    this.addObject(lightObj);
+  }
 });
     }
 
@@ -372,25 +376,31 @@ if (primitiveObj2 && objData.userData) {
       const objectManager = useObjectManager();
       
       // 环境光
-      objectManager.createPrimitive?.('AmbientLight', {
-        color: 0x404040,
-        intensity: 10
-      });
+      {
+        const ambient = objectManager.createPrimitive?.('AmbientLight', {
+          color: 0x404040,
+          intensity: 10
+        });
+        if (ambient) this.addObject(ambient);
+      }
 
       // 方向光
-      objectManager.createPrimitive?.('DirectionalLight', {
-        color: 0xffffff,
-        intensity: 1,
-        position: [50, 50, 50],
-        castShadow: true,
-        shadowMapSize: { width: 2048, height: 2048 },
-        shadowCameraNear: 0.5,
-        shadowCameraFar: 500,
-        shadowCameraLeft: -50,
-        shadowCameraRight: 50,
-        shadowCameraTop: 50,
-        shadowCameraBottom: -50
-      });
+      {
+        const directional = objectManager.createPrimitive?.('DirectionalLight', {
+          color: 0xffffff,
+          intensity: 1,
+          position: [50, 50, 50],
+          castShadow: true,
+          shadowMapSize: { width: 2048, height: 2048 },
+          shadowCameraNear: 0.5,
+          shadowCameraFar: 500,
+          shadowCameraLeft: -50,
+          shadowCameraRight: 50,
+          shadowCameraTop: 50,
+          shadowCameraBottom: -50
+        });
+        if (directional) this.addObject(directional);
+      }
   }
   
   /**
