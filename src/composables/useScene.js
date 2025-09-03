@@ -175,7 +175,6 @@ export function useScene() {
    * @param {THREE.Object3D} object 3D对象
    */
   function addObjectToScene(object) {
-    objectManager.addObject(object);
     sceneManager.addObject(object);
   }
   

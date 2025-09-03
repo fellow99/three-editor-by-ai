@@ -385,6 +385,8 @@ export function useAssets() {
         modelClone.scale.set(...options.scale);
       }
     }
+    let userData = options?.userData || {};
+    modelClone.userData = { ...modelClone.userData, ...userData };
     
     addObjectToScene(modelClone);
     return modelClone;

@@ -57,7 +57,8 @@ class ObjectManager {
    */
   createPrimitive(type, options = {}) {
     let object;
-    
+    let userData = options?.userData || {};
+
     // 几何体类型
     if (['box', 'sphere', 'cylinder', 'plane', 'cone', 'torus', 'dodecahedron', 'icosahedron', 'octahedron', 'tetrahedron', 'ring', 'tube'].includes(type)) {
       let geometry;
@@ -165,7 +166,7 @@ class ObjectManager {
       object.receiveShadow = true;
     
       // 设置基本属性（只设置{}，不包含type/primitiveType字段）
-      object.userData = {};
+      object.userData = {...userData};
       
     } else if (['DirectionalLight', 'PointLight', 'SpotLight', 'AmbientLight', 'HemisphereLight'].includes(type)) {
       // 灯光类型
@@ -216,7 +217,7 @@ class ObjectManager {
       }
     
       // 设置基本属性（只设置{}，不包含type/primitiveType字段）
-      object.userData = {};
+      object.userData = {...userData};
       
     } else if (['camera', 'group', 'text', 'sprite'].includes(type)) {
       // 其他对象类型
@@ -248,7 +249,7 @@ class ObjectManager {
       }
     
       // 设置基本属性（只设置{}，不包含type/primitiveType字段）
-      object.userData = {};
+      object.userData = {...userData};
     } else {
       // 默认创建立方体
       const geometry = createBoxGeometry();
@@ -258,7 +259,7 @@ class ObjectManager {
       object.receiveShadow = true;
     
       // 设置基本属性（只设置{}，不包含type/primitiveType字段）
-      object.userData = {};
+      object.userData = {...userData};
     }
 
     if (options.name) {
@@ -291,12 +292,6 @@ class ObjectManager {
       object.userData.id = generateId();
     }
     this.state.objects.set(object.userData.id, object);
-
-    // 同步添加到three.js场景
-    const sceneManager = useSceneManager();
-    if (sceneManager && typeof sceneManager.addObject === 'function') {
-      sceneManager.addObject(object);
-    }
   }
   
   /**

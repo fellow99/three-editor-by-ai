@@ -120,6 +120,8 @@ class SceneManager {
     // 1. 清空场景
     await this.clearScene();
 
+    const objectManager = useObjectManager();
+
     // 2. 恢复相机参数
     if (json.camera && this.camera) {
       // 位置
@@ -156,28 +158,26 @@ class SceneManager {
 
     // 4. 恢复灯光
     if (Array.isArray(json.lights)) {
-      const objectManager = useObjectManager();
-json.lights.forEach(lightData => {
-  // 创建灯光对象
-  const lightObj = objectManager.createPrimitive?.(lightData.type, {
-    color: lightData.color,
-    intensity: lightData.intensity,
-    position: lightData.position
-  });
-  // 恢复userData
-  if (lightObj && lightData.userData) {
-    lightObj.userData = { ...lightData.userData };
-  }
-  // 添加到场景
-  if (lightObj) {
-    this.addObject(lightObj);
-  }
-});
+      json.lights.forEach(lightData => {
+        // 创建灯光对象
+        const lightObj = objectManager.createPrimitive?.(lightData.type, {
+          color: lightData.color,
+          intensity: lightData.intensity,
+          position: lightData.position
+        });
+        // 恢复userData
+        if (lightObj && lightData.userData) {
+          lightObj.userData = { ...lightData.userData };
+        }
+        // 添加到场景
+        if (lightObj) {
+          this.addObject(lightObj);
+        }
+      });
     }
 
     // 5. 恢复对象
     if (Array.isArray(json.objects)) {
-      const objectManager = useObjectManager();
       for (const objData of json.objects) {
         // userData.fileInfo 走异步模型加载
         if (objData.userData && objData.userData.fileInfo) {
@@ -210,13 +210,11 @@ json.lights.forEach(lightData => {
               name: objData.name,
               position: objData.position,
               rotation: objData.rotation,
-              scale: objData.scale
+              scale: objData.scale,
+              userData: objData.userData
             };
             const addedObj = await addModelToScene(modelInfo.id, addOptions);
-if (addedObj && objData.userData) {
-  // 恢复完整userData
-  addedObj.userData = { ...objData.userData };
-}
+
           } catch (e) {
             console.error('加载模型文件失败', e);
           }
@@ -226,24 +224,19 @@ if (addedObj && objData.userData) {
             name: objData.name,
             position: objData.position,
             rotation: objData.rotation,
-            scale: objData.scale
+            scale: objData.scale,
+            userData: objData.userData
           });
-          // 动画索引恢复
-if (primitiveObj && objData.userData) {
-  primitiveObj.userData = { ...objData.userData };
-}
+
         } else {
           // 普通primitive对象
           const primitiveObj2 = objectManager.createPrimitive?.(objData.type, {
             name: objData.name,
             position: objData.position,
             rotation: objData.rotation,
-            scale: objData.scale
+            scale: objData.scale,
+            userData: objData.userData
           });
-          // 动画索引恢复
-if (primitiveObj2 && objData.userData) {
-  primitiveObj2.userData = { ...objData.userData };
-}
         }
       }
     }
@@ -668,6 +661,8 @@ if (primitiveObj2 && objData.userData) {
    */
   addObject(object) {
     this.scene.add(object);
+    let objectManager = useObjectManager();
+    objectManager.addObject(object);
   }
   
   /**

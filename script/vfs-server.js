@@ -318,5 +318,5 @@ app.post('/upload/:drive/*', upload.any(), async function (req, res, next) {
 
 // 启动服务
 app.listen(PORT, () => {
-    console.log(`VFS Server running at http://localhost:${PORT}`);
+    console.info(`VFS Server running at http://localhost:${PORT}`);
 });

@@ -102,7 +102,7 @@ function goParent() {
 /** 文件点击事件（预留） */
 function onFileClick(file) {
   // TODO: 实现文件点击逻辑
-  // console.log('文件点击', file);
+  console.log('文件点击', file);
 }
 
 /**
