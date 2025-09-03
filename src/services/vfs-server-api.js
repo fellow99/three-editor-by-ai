@@ -134,4 +134,28 @@ export class VfsServerApi {
             return false;
         }
     }
+
+    /**
+     * 保存文件内容
+     * @param {string} path 文件路径
+     * @param {string} text 文件文本内容
+     * @returns {Promise<boolean>} 是否保存成功
+     */
+    async save (path, text) {
+        let drive = this._drive;
+        let root = this._root;
+        root = (root === '/' ? '' : root);
+        path = (path === '/' ? '' : path);
+        let url = `${this._baseURL}${root}/save/${drive}${path}`;
+        try {
+            let body = text;
+            let headers = {'Content-Type': 'text/plain'};
+            const res = await fetch(url, { method: 'POST', body, headers });
+            if (!res.ok) return false;
+            const json = await res.json();
+            return json && json.success;
+        } catch (e) {
+            return false;
+        }
+    }
 }

@@ -15,11 +15,30 @@ import express from "express";
 import cors from "cors";
 import fs from "fs/promises";
 import path from "path";
+import multer from "multer";
 import { fileURLToPath } from "url";
 
 // 兼容ESM下的__dirname
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+
+
+// 文件上传目录
+const FILE_SERVER_REPO = './tmp/';
+
+// 通过 filename 属性定制
+var multerStorage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, FILE_SERVER_REPO); // 保存的路径
+    },
+    filename: function (req, file, cb) {
+        var extname = path.extname(file.originalname);// 获取文件扩展名
+        // 将保存文件名设置为 字段名 + 时间戳+文件扩展名，比如 logo-1478521468943.jpg
+        cb(null, file.fieldname + '-' + Date.now() + extname);
+    }
+});
+var upload = multer({ multerStorage });
 
 const app = express();
 // 支持通过命令行参数传入端口，默认3001
@@ -168,6 +187,137 @@ app.get("/exists/:drive/*", async (req, res) => {
         res.json({ exists: false });
     }
 });
+
+
+
+/**
+ * 文本信息保存
+ */
+app.post('/save/:drive/*', function (req, res, next) {
+    try {
+        var drive = req.params.drive;
+        var drivepath = req.params[0];
+        const root = driveRoots[drive];
+        if (!root) {
+            res.status(404).send("Invalid drive");
+            return;
+        }
+        
+        if (!drivepath) {
+            drivepath = './';
+        } else if (drivepath[0] === '/') {
+            drivepath = '.' + drivepath;
+        } else {
+            drivepath = './' + drivepath;
+        }
+        const absPath = path.join(root, drivepath);
+
+        var raw = '';
+        req.setEncoding('utf8');
+        req.on('data', function (chunk) {
+            raw += chunk;
+        });
+
+        req.on('end', function () {
+            try {
+                fs.writeFileSync(absPath, raw);
+                
+                let type = 'FILE';
+                let filename = path.basename(drivepath);
+                let parentpath = path.dirname(drivepath);
+                let ext = filename.substring(filename.lastIndexOf('.') + 1); // 文件扩展名
+                if(drivepath.indexOf('./') === 0) drivepath = drivepath.substring(1); // 去掉路径前面的.
+                // 文件信息
+                var fileinfo = { 'name': filename, 'path': parentpath, type, ext };
+
+                var ret = {
+                    code: 0,
+                    data: {
+                        config: { drive: drive, path: drivepath },
+                        file: fileinfo
+                    },
+                    msg: '操作成功'
+                };
+                res.send(JSON.stringify(ret));
+            } catch (e) {
+                console.error(e);
+                res.status(500).send(e.message);
+                res.end();
+            }
+        });
+    } catch (e) {
+        console.error(e);
+        res.status(500).send(e.message);
+        res.end();
+    }
+});
+
+
+/**
+ * 文件上传
+ */
+app.post('/upload/:drive/*', upload.any(), function (req, res, next) {
+    try {
+        var drive = req.params.drive;
+        var drivepath = req.params[0];
+        const root = driveRoots[drive];
+        if (!root) {
+            res.status(404).send("Invalid drive");
+            return;
+        }
+        
+        if (!drivepath) {
+            drivepath = './';
+        } else if (drivepath[0] === '/') {
+            drivepath = '.' + drivepath;
+        } else {
+            drivepath = './' + drivepath;
+        }
+        const absPath = path.join(root, drivepath);
+
+
+        if (!req.files || !req.files[0]) {
+            throw new Error('Upload file not found.');
+        }
+
+        // 上传文件的原始文件名
+        var originalname = req.files[0].originalname;
+
+        var rootpath = path.resolve(dirname, root);
+        var filepath = path.resolve(rootpath, drivepath);
+        filepath = path.resolve(filepath, originalname);
+
+        // 文件名映射对象
+        FileMappingStore.addStoreIfAbsent(drive, rootpath);
+
+        var raw = req.files[0].buffer;
+
+        fs.writeFileSync(filepath, raw);
+        
+        let type = 'FILE';
+        let filename = path.basename(drivepath);
+        let parentpath = path.dirname(drivepath);
+        let ext = filename.substring(filename.lastIndexOf('.') + 1); // 文件扩展名
+        if(drivepath.indexOf('./') === 0) drivepath = drivepath.substring(1); // 去掉路径前面的.
+        // 文件信息
+        var fileinfo = { 'name': filename, 'path': parentpath, type, ext };
+
+        var ret = {
+            code: 0,
+            data: {
+                config: { drive: drive, path: drivepath },
+                file: fileinfo
+            },
+            msg: '操作成功'
+        };
+        res.send(JSON.stringify(ret));
+    } catch (e) {
+        console.error(e);
+        res.status(500).send(e.message);
+        res.end();
+    }
+});
+
 
 // 启动服务
 app.listen(PORT, () => {
