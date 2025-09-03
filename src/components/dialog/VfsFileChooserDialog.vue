@@ -48,7 +48,7 @@ function closeDialog() {
  * 加载所有虚拟文件系统
  */
 async function loadVfsList() {
-  vfsList.value = vfsService.listVfs()
+  vfsList.value = vfsService.listVfs().filter(v => v.type === 'vfs-server')
   if (vfsList.value.length > 0 && !selectedDrive.value) {
     selectedDrive.value = vfsList.value[0]._drive
     currentVfs.value = vfsList.value[0]

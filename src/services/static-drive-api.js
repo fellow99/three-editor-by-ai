@@ -12,6 +12,7 @@ export class StaticDriveApi {
         this._drive = drive || 'xx';
         this._baseURL = baseURL || '';
         this._root = root;
+        this.type = opt.type || 'static';
     }
 
     /**

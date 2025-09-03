@@ -16,6 +16,8 @@ function registerVfs (opt) {
         vfs = driveMap[drive] = new StaticDriveApi(opt);
     } else if (type === 'vfs-server') {
         vfs = driveMap[drive] = new VfsServerApi(opt);
+    } else if (type === 'asset-server') {
+        vfs = driveMap[drive] = new VfsServerApi(opt);
     }
     return vfs;
 }

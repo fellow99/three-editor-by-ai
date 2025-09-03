@@ -46,7 +46,8 @@ const loading = ref(false)
 
 /** 加载虚拟文件系统列表 */
 async function loadDrives() {
-  driveList.value = vfsService.listVfs()
+  driveList.value = vfsService.listVfs().filter(d => d.type === 'vfs-server')
+  console.log(driveList.value)
   if (driveList.value.length > 0 && !selectedDrive.value) {
     selectedDrive.value = driveList.value[0].id || driveList.value[0]._drive
   }
