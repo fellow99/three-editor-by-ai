@@ -66,6 +66,7 @@ three-editor-by-ai/
 │   │   ├── dialog/                           # 各类对话框组件
 │   │   │   ├── TextureSelectDialog.vue       # 纹理选择对话框
 │   │   │   ├── EditorConfigDialog.vue        # 编辑器配置对话框
+│   │   │   ├── VfsFileChooserDialog.vue      # 虚拟文件系统文件选择对话框
 │   │   ├── scene/                            # 3D 场景组件
 │   │   │   ├── SceneViewer.vue               # 主场景视图，支持拖拽添加对象到当前视点位置
 │   │   │   ├── StatHints.vue                 # 性能监控面板

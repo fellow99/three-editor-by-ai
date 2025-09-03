@@ -1,0 +1,236 @@
+{
+  "objects": [
+    {
+      "id": "bae6-2e7a-452d-ad4b",
+      "name": "cylinder_1755588456338",
+      "type": "primitive",
+      "position": [
+        -1.1337976683443702,
+        2.5828627757030604,
+        6.713926426529815
+      ],
+      "rotation": [
+        0,
+        0,
+        0,
+        "XYZ"
+      ],
+      "scale": [
+        1,
+        4.2590846328651715,
+        1
+      ],
+      "userData": {
+        "id": "bae6-2e7a-452d-ad4b",
+        "type": "primitive",
+        "primitiveType": "cylinder",
+        "createdAt": "2025-08-21T09:52:57.066Z"
+      }
+    },
+    {
+      "id": "28ba-f355-4ba2-9ae3",
+      "name": "Scene",
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "rotation": [
+        0,
+        0,
+        0,
+        "XYZ"
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ],
+      "userData": {
+        "fileInfo": {
+          "drive": "demo",
+          "path": "/models/gltf",
+          "name": "collision-world.glb",
+          "type": "FILE"
+        },
+        "loadedAt": "2025-08-21T09:52:57.114Z",
+        "id": "28ba-f355-4ba2-9ae3",
+		"locked": true
+      }
+    },
+    {
+      "id": "da82-5ff3-4fd0-91ec",
+      "name": "AuxScene",
+      "position": [
+        -1.126763653116936,
+        3.5189979902472084,
+        -3.8339907241022337
+      ],
+      "rotation": [
+        3.141592653589793,
+        1.347732877819397,
+        -3.141592653589793,
+        "XYZ"
+      ],
+      "scale": [
+        0.02,
+        0.02,
+        0.02
+      ],
+      "userData": {
+        "fileInfo": {
+          "drive": "demo",
+          "path": "/models/gltf",
+          "name": "Stork.glb",
+          "type": "FILE"
+        },
+        "loadedAt": "2025-08-21T09:52:57.182Z",
+        "id": "da82-5ff3-4fd0-91ec",
+        "animationIndex": 0
+      }
+    },
+    {
+      "id": "576d-514c-4700-b662",
+      "name": "AuxScene",
+      "position": [
+        0.4411966578142885,
+        2.3262842570628925,
+        -1.3152186896922693
+      ],
+      "rotation": [
+        -0.40122902963589857,
+        0,
+        0,
+        "XYZ"
+      ],
+      "scale": [
+        0.02,
+        0.02,
+        0.02
+      ],
+      "userData": {
+        "fileInfo": {
+          "drive": "demo",
+          "path": "/models/gltf",
+          "name": "Parrot.glb",
+          "type": "FILE"
+        },
+        "loadedAt": "2025-08-21T09:52:57.263Z",
+        "id": "576d-514c-4700-b662",
+        "animationIndex": 0
+      }
+    },
+    {
+      "id": "9261-34f6-4ac6-97ad",
+      "name": "AuxScene",
+      "position": [
+        -4.3124619006668325,
+        5.439,
+        -8.443874885620161
+      ],
+      "rotation": [
+        0,
+        0,
+        0,
+        "XYZ"
+      ],
+      "scale": [
+        0.02,
+        0.02,
+        0.02
+      ],
+      "userData": {
+        "fileInfo": {
+          "drive": "demo",
+          "path": "/models/gltf",
+          "name": "Flamingo.glb",
+          "type": "FILE"
+        },
+        "loadedAt": "2025-08-21T09:52:57.346Z",
+        "id": "9261-34f6-4ac6-97ad",
+        "animationIndex": 0
+      }
+    },
+    {
+      "id": "2ee7-1d73-4355-bd2a",
+      "name": "AuxScene",
+      "position": [
+        -2.263887514958613,
+        0.8862270987768035,
+        1.2385888445412014
+      ],
+      "rotation": [
+        -1.3017736090514744e-16,
+        0.3472548908386486,
+        1.70520184084554e-16,
+        "XYZ"
+      ],
+      "scale": [
+        0.02,
+        0.02,
+        0.02
+      ],
+      "userData": {
+        "fileInfo": {
+          "drive": "demo",
+          "path": "/models/gltf",
+          "name": "Horse.glb",
+          "type": "FILE"
+        },
+        "loadedAt": "2025-08-21T09:52:57.416Z",
+        "id": "2ee7-1d73-4355-bd2a",
+        "animationIndex": 0
+      }
+    }
+  ],
+  "lights": [
+    {
+      "type": "AmbientLight",
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "color": 4210752,
+      "intensity": 10
+    },
+    {
+      "type": "DirectionalLight",
+      "position": [
+        50,
+        50,
+        50
+      ],
+      "color": 16777215,
+      "intensity": 1
+    }
+  ],
+  "camera": {
+    "position": {
+      "x": 5,
+      "y": 5,
+      "z": 5
+    },
+    "target": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "fov": 75,
+    "near": 0.1,
+    "far": 1000
+  },
+  "background": 2236962,
+  "timestamp": "2025-08-21T09:53:15.295Z",
+  "config": {
+    "backgroundColor": "#222222",
+    "fogEnabled": false,
+    "fogColor": "#222222",
+    "fogNear": 1000,
+    "fogFar": 10000,
+    "shadowsEnabled": true,
+    "toneMappingEnabled": true,
+    "exposure": 1
+  },
+  "exportedAt": "2025-08-21T09:53:15.295Z"
+}

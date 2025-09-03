@@ -129,6 +129,8 @@
     </div>
     <!-- 编辑器配置对话框 -->
     <EditorConfigDialog v-model="showEditorConfig" />
+    <!-- 文件选择对话框 -->
+    <VfsFileChooserDialog v-model="showFileChooser" @select="handleFileSelect" />
   </div>
 </template>
 
@@ -144,10 +146,12 @@ import { useObjectManager } from '../../core/ObjectManager.js';
 import { exportJSON } from '../../utils/fileUtils.js';
 import { useSceneManager } from '../../core/SceneManager.js';
 import EditorConfigDialog from '../dialog/EditorConfigDialog.vue';
+import VfsFileChooserDialog from '../dialog/VfsFileChooserDialog.vue';
+import vfsService from '../../services/vfs-service.js';
 
 export default {
   name: 'Toolbar',
-  components: { EditorConfigDialog },
+  components: { EditorConfigDialog, VfsFileChooserDialog },
   emits: ['delete-selected'],
   /**
    * 工具栏组件
@@ -283,10 +287,45 @@ export default {
     }
 
     /**
-     * 预留：加载场景（暂未实现）
+     * 加载场景：弹出文件选择对话框，选中文件后加载内容并调用loadScene
      */
-    function loadScene() {
-      ElMessage.info('加载场景功能暂未实现');
+    const showFileChooser = ref(false);
+    async function loadScene() {
+      showFileChooser.value = true;
+    }
+    /**
+     * 文件选择回调
+     * @param {Object} fileInfo 选中的文件信息
+     */
+    async function handleFileSelect(fileInfo) {
+      showFileChooser.value = false;
+      if (!fileInfo || !fileInfo.path) return;
+      try {
+        if (appState) appState.isLoading = true;
+        // 获取文件内容（修正：通过 vfsService.getVfs 获取 vfs，再调用 vfs.content）
+        const vfs = vfsService.getVfs(fileInfo.drive);
+        if (!vfs || typeof vfs.content !== 'function') {
+          ElMessage.error('未找到指定虚拟文件系统或接口不支持');
+          return;
+        }
+        const contentRes = await vfs.content(fileInfo.path + fileInfo.name);
+        if (!contentRes) {
+          ElMessage.error('文件内容获取失败');
+          return;
+        }
+        // 加载场景
+        const sceneManager = useSceneManager();
+        objectSelection.clearSelection();
+        transform.clearHistory();
+        const sceneData = JSON.parse(contentRes);
+        await sceneManager.loadScene(sceneData);
+        ElMessage.success('场景加载成功');
+      } catch (e) {
+        console.error('加载场景失败:', e);
+        ElMessage.error('加载场景失败，请检查文件内容或格式。');
+      } finally {
+        if (appState) appState.isLoading = false;
+      }
     }
 
     /**
@@ -382,7 +421,9 @@ export default {
       deleteSelected,
       focusSelected,
       resetCamera,
-      showEditorConfig
+      showEditorConfig,
+      showFileChooser,
+      handleFileSelect
     };
   }
 };
