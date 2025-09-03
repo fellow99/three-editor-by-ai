@@ -6,6 +6,10 @@
  */
 
 import * as THREE from 'three';
+/**
+ * 新增功能：切换controls后自动同步TransformControls，确保拖拽时镜头不会跟随移动。
+ * 新语法：在switchControls方法末尾调用useObjectSelection.js的initTransformControls，传入最新controls实例。
+ */
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { MapControls } from 'three/examples/jsm/controls/MapControls.js';
 import { FlyControls } from '../controls/FlyControls.js';
@@ -15,6 +19,7 @@ import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { reactive, watch } from 'vue';
 
 import { useObjectManager } from './ObjectManager.js';
+import { useObjectSelection } from '../composables/useObjectSelection.js';
 import vfsService from '../services/vfs-service.js';
 import { useAssets } from '../composables/useAssets.js';
 
@@ -455,6 +460,7 @@ class SceneManager {
   /**
    * 切换控制器类型
    * 切换前将当前controls的target（如有）同步到新controls
+   * 新增：切换controls后自动同步TransformControls，确保拖拽时镜头不会跟随移动
    */
   switchControls(type) {
     // 保存当前controls的target
@@ -503,6 +509,14 @@ class SceneManager {
         this.controls.target.set(0, 0, 0);
       }
       this.controls.update && this.controls.update();
+      // 新增：切换controls后自动同步TransformControls
+      const { initTransformControls } = useObjectSelection();
+      initTransformControls({
+        scene: this.scene,
+        camera: this.camera,
+        renderer: this.renderer,
+        controls: this.controls
+      });
     }
   }
 
