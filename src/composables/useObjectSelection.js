@@ -7,6 +7,9 @@
 import { ref, reactive, computed, watch } from 'vue';
 import * as THREE from 'three';
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { MapControls } from 'three/examples/jsm/controls/MapControls.js';
+import { FlyControls } from '../controls/FlyControls.js';
 import { DirectionalLightHelper, PointLightHelper, SpotLightHelper, HemisphereLightHelper, CameraHelper, BoxHelper } from 'three';
 
 /**
@@ -99,10 +102,14 @@ export function useObjectSelection() {
 
     // 拖拽时禁用当前控制器（OrbitControls、MapControls、FlyControls）
     // 拖拽时禁用当前控制器（OrbitControls、MapControls、FlyControls）
-    transformControls.addEventListener('dragging-changed', (event) => {
+transformControls.addEventListener('dragging-changed', (event) => {
       if (controls) {
-        // 判断控制器类型，禁用对应控制器
-        if (controls.constructor?.name === 'OrbitControls' || controls.constructor?.name === 'MapControls' || controls.constructor?.name === 'FlyControls') {
+        // 判断控制器类型，禁用对应控制器（instanceof判断，兼容混淆环境）
+        if (
+          controls instanceof OrbitControls ||
+          controls instanceof MapControls ||
+          controls instanceof FlyControls
+        ) {
           controls.enabled = !event.value;
           // 拖拽结束后，主动重置控制器状态
           if (!event.value && typeof controls.state !== 'undefined') {
@@ -110,15 +117,12 @@ export function useObjectSelection() {
           }
           // 拖拽结束时，若镜头锁定则保持controls.enabled=false
           if (!event.value) {
-            try {
-              const { useSceneManager } = require('../core/SceneManager.js');
-              const sceneManager = useSceneManager();
+            import('../core/SceneManager.js').then(mod => {
+              const sceneManager = mod.useSceneManager();
               if (sceneManager.getControlsLocked && sceneManager.getControlsLocked()) {
                 controls.enabled = false;
               }
-            } catch (e) {
-              // ignore
-            }
+            });
           }
         }
       }
