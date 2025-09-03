@@ -116,6 +116,12 @@ onMounted(() => {
   loadVfsList()
 })
 
+watch(() => visible.value, (val) => {
+  if (val) {
+    loadVfsList()
+  }
+})
+
 watch([currentVfs, currentPath], () => {
   loadFiles()
 })

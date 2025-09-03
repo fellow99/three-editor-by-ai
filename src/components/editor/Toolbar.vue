@@ -128,9 +128,17 @@
       </div>
     </div>
     <!-- 编辑器配置对话框 -->
-    <EditorConfigDialog v-model="showEditorConfig" />
+    <EditorConfigDialog v-if="showEditorConfig" v-model="showEditorConfig" />
     <!-- 文件选择对话框 -->
-    <VfsFileChooserDialog v-model="showFileChooser" @select="handleFileSelect" />
+    <VfsFileChooserDialog v-if="showFileChooser" v-model="showFileChooser" @select="handleFileSelect" />
+    <!-- 文件保存对话框 -->
+    <VfsFileSaverDialog
+      v-if="showFileSaver"
+      v-model="showFileSaver"
+      :text="sceneJsonText"
+      ext="json"
+      @saved="handleFileSaved"
+    />
   </div>
 </template>
 
@@ -147,11 +155,12 @@ import { exportJSON } from '../../utils/fileUtils.js';
 import { useSceneManager } from '../../core/SceneManager.js';
 import EditorConfigDialog from '../dialog/EditorConfigDialog.vue';
 import VfsFileChooserDialog from '../dialog/VfsFileChooserDialog.vue';
+import VfsFileSaverDialog from '../dialog/VfsFileSaverDialog.vue';
 import vfsService from '../../services/vfs-service.js';
 
 export default {
   name: 'Toolbar',
-  components: { EditorConfigDialog, VfsFileChooserDialog },
+  components: { EditorConfigDialog, VfsFileChooserDialog, VfsFileSaverDialog },
   emits: ['delete-selected'],
   /**
    * 工具栏组件
@@ -329,10 +338,22 @@ export default {
     }
 
     /**
-     * 预留：保存场景（暂未实现）
+     * 保存场景：弹出保存对话框，填写文件名后保存到虚拟文件系统
      */
+    const showFileSaver = ref(false);
+    const sceneJsonText = ref('');
     function saveScene() {
-      ElMessage.info('保存场景功能暂未实现');
+      try {
+        const sceneData = scene.exportScene();
+        sceneJsonText.value = JSON.stringify(sceneData, null, 2);
+        showFileSaver.value = true;
+      } catch (error) {
+        ElMessage.error('场景序列化失败');
+      }
+    }
+    function handleFileSaved(path) {
+      showFileSaver.value = false;
+      ElMessage.success('场景已保存到虚拟文件系统');
     }
     
     /**
@@ -423,7 +444,10 @@ export default {
       resetCamera,
       showEditorConfig,
       showFileChooser,
-      handleFileSelect
+      handleFileSelect,
+      showFileSaver,
+      sceneJsonText,
+      handleFileSaved
     };
   }
 };

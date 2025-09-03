@@ -1,0 +1,53 @@
+{
+  "objects": [],
+  "lights": [
+    {
+      "type": "AmbientLight",
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "color": 4210752,
+      "intensity": 10
+    },
+    {
+      "type": "DirectionalLight",
+      "position": [
+        50,
+        50,
+        50
+      ],
+      "color": 16777215,
+      "intensity": 1
+    }
+  ],
+  "camera": {
+    "position": {
+      "x": 5,
+      "y": 5,
+      "z": 5
+    },
+    "target": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "fov": 75,
+    "near": 0.1,
+    "far": 1000
+  },
+  "background": 2236962,
+  "timestamp": "2025-09-03T05:38:52.045Z",
+  "config": {
+    "backgroundColor": "#222222",
+    "fogEnabled": false,
+    "fogColor": "#222222",
+    "fogNear": 1000,
+    "fogFar": 10000,
+    "shadowsEnabled": true,
+    "toneMappingEnabled": true,
+    "exposure": 1
+  },
+  "exportedAt": "2025-09-03T05:38:52.045Z"
+}

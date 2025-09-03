@@ -218,9 +218,9 @@ app.post('/save/:drive/*', function (req, res, next) {
             raw += chunk;
         });
 
-        req.on('end', function () {
+        req.on('end', async function () {
             try {
-                fs.writeFileSync(absPath, raw);
+                await fs.writeFile(absPath, raw);
                 
                 let type = 'FILE';
                 let filename = path.basename(drivepath);
@@ -256,7 +256,7 @@ app.post('/save/:drive/*', function (req, res, next) {
 /**
  * 文件上传
  */
-app.post('/upload/:drive/*', upload.any(), function (req, res, next) {
+app.post('/upload/:drive/*', upload.any(), async function (req, res, next) {
     try {
         var drive = req.params.drive;
         var drivepath = req.params[0];
@@ -287,12 +287,9 @@ app.post('/upload/:drive/*', upload.any(), function (req, res, next) {
         var filepath = path.resolve(rootpath, drivepath);
         filepath = path.resolve(filepath, originalname);
 
-        // 文件名映射对象
-        FileMappingStore.addStoreIfAbsent(drive, rootpath);
-
         var raw = req.files[0].buffer;
 
-        fs.writeFileSync(filepath, raw);
+        await fs.writeFile(filepath, raw);
         
         let type = 'FILE';
         let filename = path.basename(drivepath);
