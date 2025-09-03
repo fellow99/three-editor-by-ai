@@ -4,6 +4,7 @@
   文件按钮区包含：新建、导出、导入、暂存、加载、保存
   其中“导出”/“导入”使用新命名及新图标，“暂存”保存到localStorage
   “加载”“保存”按钮为预留，暂未实现
+  新增功能：视图分组增加“锁定相机”按钮，控制SceneManager的controlsLocked状态，锁定时controls.enabled=false。
 -->
 <template>
   <div class="ribbon-toolbar dark">
@@ -114,6 +115,15 @@
             <span class="icon">📷</span>
             <div>重置相机</div>
           </button>
+          <button
+            @click="toggleLockCamera"
+            class="ribbon-btn"
+            :class="{ active: controlsLocked }"
+            title="锁定/解锁相机"
+          >
+            <span class="icon">{{ controlsLocked ? '🔒' : '🔓' }}</span>
+            <div>锁定相机</div>
+          </button>
         </div>
       </div>
       <!-- 配置 -->
@@ -143,7 +153,7 @@
 </template>
 
 <script>
-import { ref, computed, inject } from 'vue';
+import { ref, computed, inject, watch } from 'vue';
 import { ElMessageBox, ElMessage } from 'element-plus';
 import 'element-plus/es/components/message/style/css';
 import 'element-plus/es/components/message-box/style/css';
@@ -187,8 +197,14 @@ export default {
     const objectSelection = useObjectSelection();
     const transform = useTransform();
     const objectManager = useObjectManager();
-    
-    
+    // 相机锁定相关
+    const sceneManager = useSceneManager();
+    const controlsLocked = ref(sceneManager.getControlsLocked());
+    function toggleLockCamera() {
+      const next = !controlsLocked.value;
+      sceneManager.setControlsLocked(next);
+      controlsLocked.value = next;
+    }
     
     // 计算属性
     const transformMode = computed(() => transform.transformMode.value);
@@ -199,6 +215,11 @@ export default {
     const objectCount = computed(() => objectManager.getAllObjects().length);
     const canUndo = computed(() => transform.transformHistory.undoStack.length > 0);
     const canRedo = computed(() => transform.transformHistory.redoStack.length > 0);
+
+    // 监听选择变化，重新触发锁定相机逻辑
+    watch(hasSelection, () => {
+      sceneManager.setControlsLocked(controlsLocked.value);
+    });
     
     // 方法
     /**
@@ -447,7 +468,9 @@ export default {
       handleFileSelect,
       showFileSaver,
       sceneJsonText,
-      handleFileSaved
+      handleFileSaved,
+      controlsLocked,
+      toggleLockCamera
     };
   }
 };

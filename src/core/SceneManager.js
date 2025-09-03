@@ -3,6 +3,7 @@
  * 负责Three.js场景的创建、管理和渲染，并统一驱动对象动画（如GLTF动画）。
  * 动画机制：遍历场景对象，若对象有mixer（AnimationMixer实例），则在渲染循环中调用mixer.update(delta)。
  * 新语法：为每个有动画的对象挂载mixer到object.userData._mixer，动画选择由userData.animationIndex控制。
+ * 新增功能：支持镜头锁定（controlsLocked），锁定时controls.enabled=false，避免与TransformControls拖拽冲突。
  */
 
 import * as THREE from 'three';
@@ -38,6 +39,9 @@ class SceneManager {
     this.controls = null; // 控制器实例（OrbitControls/MapControls/FlyControls）
     this.container = null;
     this.animationId = null;
+
+    // 镜头锁定状态
+    this.controlsLocked = false;
 
     // 动画相关
     this.mixers = []; // 所有AnimationMixer实例
@@ -110,6 +114,8 @@ class SceneManager {
           this.controls.zoomSpeed = cfg.zoomSpeed;
           this.controls.panSpeed = cfg.panSpeed;
         }
+        // 切换配置后同步锁定状态
+        this.setControlsLocked(this.controlsLocked);
       },
       { deep: true }
     );
@@ -122,14 +128,11 @@ class SceneManager {
    * 这样可确保场景序列化与反序列化时所有对象的自定义数据都能正确还原。
    */
   async loadScene(json) {
-    // 1. 清空场景
     await this.clearScene();
 
     const objectManager = useObjectManager();
 
-    // 2. 恢复相机参数
     if (json.camera && this.camera) {
-      // 位置
       if (json.camera.position && typeof json.camera.position.x === 'number') {
         this.camera.position.set(
           json.camera.position.x,
@@ -137,7 +140,6 @@ class SceneManager {
           json.camera.position.z
         );
       }
-      // target（视点）
       if (json.camera.target && this.controls && this.controls.target) {
         this.controls.target.set(
           json.camera.target.x,
@@ -146,63 +148,50 @@ class SceneManager {
         );
         this.controls.update && this.controls.update();
       }
-      // fov/near/far
       if (typeof json.camera.fov === 'number') this.camera.fov = json.camera.fov;
       if (typeof json.camera.near === 'number') this.camera.near = json.camera.near;
       if (typeof json.camera.far === 'number') this.camera.far = json.camera.far;
       this.camera.updateProjectionMatrix();
     }
 
-    // 3. 恢复背景
     if (json.background && this.scene) {
       if (typeof json.background === 'number') {
         this.scene.background = new THREE.Color(json.background);
       }
-      // 其他类型背景可扩展
     }
 
-    // 4. 恢复灯光
     if (Array.isArray(json.lights)) {
       json.lights.forEach(lightData => {
-        // 创建灯光对象
         const lightObj = objectManager.createPrimitive?.(lightData.type, {
           color: lightData.color,
           intensity: lightData.intensity,
           position: lightData.position
         });
-        // 恢复userData
         if (lightObj && lightData.userData) {
           lightObj.userData = { ...lightData.userData };
         }
-        // 添加到场景
         if (lightObj) {
           this.addObject(lightObj);
         }
       });
     }
 
-    // 5. 恢复对象
     if (Array.isArray(json.objects)) {
       for (const objData of json.objects) {
-        // userData.fileInfo 走异步模型加载
         if (objData.userData && objData.userData.fileInfo) {
-          // 复用SceneViewer.vue onDrop的核心逻辑
           try {
             const { loadModel, addModelToScene, getCachedModel } = useAssets();
             const fileInfo = objData.userData.fileInfo;
             let blob;
             if (fileInfo.url) {
-              // 有url字段，直接fetch获取blob
               const response = await fetch(fileInfo.url);
               blob = await response.blob();
             } else {
-              // 无url字段，按原有方式
               const vfs = vfsService.getVfs(fileInfo.drive);
               blob = await vfs.blob(fileInfo.path + '/' + fileInfo.name);
             }
             const file = new File([blob], fileInfo.name, { type: blob.type });
             file.fileInfo = fileInfo;
-            // 优先判断缓存
             const cached = getCachedModel(file.name, blob.size);
             let modelInfo;
             if (cached) {
@@ -210,7 +199,6 @@ class SceneManager {
             } else {
               modelInfo = await loadModel(file);
             }
-            // 动画索引恢复
             const addOptions = {
               name: objData.name,
               position: objData.position,
@@ -218,24 +206,20 @@ class SceneManager {
               scale: objData.scale,
               userData: objData.userData
             };
-            const addedObj = await addModelToScene(modelInfo.id, addOptions);
-
+            await addModelToScene(modelInfo.id, addOptions);
           } catch (e) {
             console.error('加载模型文件失败', e);
           }
         } else if (objData.type === 'primitive' && objData.primitiveType) {
-          // 普通primitive对象
-          const primitiveObj = objectManager.createPrimitive?.(objData.primitiveType, {
+          objectManager.createPrimitive?.(objData.primitiveType, {
             name: objData.name,
             position: objData.position,
             rotation: objData.rotation,
             scale: objData.scale,
             userData: objData.userData
           });
-
         } else {
-          // 普通primitive对象
-          const primitiveObj2 = objectManager.createPrimitive?.(objData.type, {
+          objectManager.createPrimitive?.(objData.type, {
             name: objData.name,
             position: objData.position,
             rotation: objData.rotation,
@@ -246,39 +230,23 @@ class SceneManager {
       }
     }
   }
-  
-  /**
-   * 初始化场景
-   */
+
   init() {
     this.createScene();
     this.createRenderer();
     this.createCamera();
-
-    // 设置默认灯光
     this.setupLights();
-    
-    // 添加网格地面
     this.setupGrid();
-
-    // 初始化后处理
     this.initComposer();
-
     this.state.isInitialized = true;
   }
-  
-  /**
-   * 创建场景
-   */
+
   createScene() {
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(0x222222);
     this.scene.fog = new THREE.Fog(0x222222, 1000, 10000);
   }
-  
-  /**
-   * 创建渲染器
-   */
+
   createRenderer() {
     this.renderer = new THREE.WebGLRenderer({
       antialias: true,
@@ -295,9 +263,6 @@ class SceneManager {
     this.renderer.toneMappingExposure = 1;
   }
 
-  /**
-   * 初始化后处理
-   */
   initComposer() {
     if (this.renderer && this.scene && this.camera) {
       this.composer = new EffectComposer(this.renderer);
@@ -307,11 +272,6 @@ class SceneManager {
     }
   }
 
-  /**
-   * 添加后处理Pass
-   * @param {Pass} pass
-   * @param {number} index
-   */
   addPass(pass, index) {
     if (!this.composer) return;
     if (typeof index === 'number' && index >= 0 && index < this.composer.passes.length) {
@@ -324,10 +284,6 @@ class SceneManager {
     }
   }
 
-  /**
-   * 移除后处理Pass
-   * @param {Pass} pass
-   */
   removePass(pass) {
     if (!this.composer) return;
     const idx = this.composer.passes.indexOf(pass);
@@ -337,11 +293,6 @@ class SceneManager {
     }
   }
 
-  /**
-   * 修改指定Pass参数
-   * @param {Pass} pass
-   * @param {object} params
-   */
   setPassParams(pass, params) {
     if (!pass || !params) return;
     Object.entries(params).forEach(([key, value]) => {
@@ -350,64 +301,45 @@ class SceneManager {
       }
     });
   }
-  
-  /**
-   * 创建相机
-   */
+
   createCamera() {
     this.camera = new THREE.PerspectiveCamera(
-      75, // fov
-      800 / 600, // aspect
-      0.1, // near
-      1000 // far
+      75,
+      800 / 600,
+      0.1,
+      1000
     );
-    
     this.camera.position.set(5, 5, 5);
     this.camera.lookAt(0, 0, 0);
   }
-  
-  /**
-   * 设置光照
-   */
-  async setupLights() {
-      const { useObjectManager } = await import('./ObjectManager.js');
-      const objectManager = useObjectManager();
-      
-      // 环境光
-      {
-        const ambient = objectManager.createPrimitive?.('AmbientLight', {
-          color: 0x404040,
-          intensity: 10
-        });
-        if (ambient) this.addObject(ambient);
-      }
 
-      // 方向光
-      {
-        const directional = objectManager.createPrimitive?.('DirectionalLight', {
-          color: 0xffffff,
-          intensity: 1,
-          position: [50, 50, 50],
-          castShadow: true,
-          shadowMapSize: { width: 2048, height: 2048 },
-          shadowCameraNear: 0.5,
-          shadowCameraFar: 500,
-          shadowCameraLeft: -50,
-          shadowCameraRight: 50,
-          shadowCameraTop: 50,
-          shadowCameraBottom: -50
-        });
-        if (directional) this.addObject(directional);
-      }
+  async setupLights() {
+    const { useObjectManager } = await import('./ObjectManager.js');
+    const objectManager = useObjectManager();
+    const ambient = objectManager.createPrimitive?.('AmbientLight', {
+      color: 0x404040,
+      intensity: 10
+    });
+    if (ambient) this.addObject(ambient);
+
+    const directional = objectManager.createPrimitive?.('DirectionalLight', {
+      color: 0xffffff,
+      intensity: 1,
+      position: [50, 50, 50],
+      castShadow: true,
+      shadowMapSize: { width: 2048, height: 2048 },
+      shadowCameraNear: 0.5,
+      shadowCameraFar: 500,
+      shadowCameraLeft: -50,
+      shadowCameraRight: 50,
+      shadowCameraTop: 50,
+      shadowCameraBottom: -50
+    });
+    if (directional) this.addObject(directional);
   }
-  
-  /**
-   * 设置网格地面
-   * 读取编辑器配置
-   */
+
   setupGrid() {
     const { editorConfig } = useEditorConfig();
-    // 只创建一次
     if (!this.gridHelper) {
       this.gridHelper = new THREE.GridHelper(
         editorConfig.gridSize,
@@ -418,7 +350,6 @@ class SceneManager {
       this.gridHelper.name = 'grid_helper';
       this.scene.add(this.gridHelper);
     }
-    // 添加坐标轴
     if (!this.axesHelper) {
       this.axesHelper = new THREE.AxesHelper(editorConfig.axesSize);
       this.axesHelper.name = 'axes_helper';
@@ -426,10 +357,6 @@ class SceneManager {
     }
   }
 
-  /**
-   * 控制网格和坐标轴显示/隐藏
-   * @param {boolean} visible
-   */
   setGridVisible(visible) {
     if (this.gridHelper) {
       this.gridHelper.visible = visible;
@@ -438,11 +365,7 @@ class SceneManager {
       this.axesHelper.visible = visible;
     }
   }
-  
-  /**
-   * 设置容器
-   * @param {HTMLElement} container DOM容器
-   */
+
   setContainer(container) {
     this.container = container;
     if (container && this.renderer) {
@@ -452,21 +375,10 @@ class SceneManager {
       window.addEventListener('resize', this.resizeHandler);
     }
   }
-  
-  /**
-   * 切换控制器类型
-   * @param {string} type
-   */
-  /**
-   * 切换控制器类型
-   * 切换前将当前controls的target（如有）同步到新controls
-   * 新增：切换controls后自动同步TransformControls，确保拖拽时镜头不会跟随移动
-   */
+
   switchControls(type) {
-    // 保存当前controls的target
     let lastTarget = null;
     if (this.controls && this.controls.target) {
-      // target为THREE.Vector3实例
       lastTarget = this.controls.target.clone();
     }
     if (this.controls) {
@@ -497,19 +409,16 @@ class SceneManager {
       this.controls.autoForward = false;
       this.controls.dragToLook = true;
     }
-    // 通用参数
     if (this.controls) {
       this.controls.rotateSpeed = 1.0;
       this.controls.zoomSpeed = 1.0;
       this.controls.panSpeed = 1.0;
-      // 切换后恢复target
       if (this.controls.target && lastTarget) {
         this.controls.target.copy(lastTarget);
       } else if (this.controls.target) {
         this.controls.target.set(0, 0, 0);
       }
       this.controls.update && this.controls.update();
-      // 新增：切换controls后自动同步TransformControls
       const { initTransformControls } = useObjectSelection();
       initTransformControls({
         scene: this.scene,
@@ -517,66 +426,61 @@ class SceneManager {
         renderer: this.renderer,
         controls: this.controls
       });
+      this.setControlsLocked(this.controlsLocked);
     }
   }
 
-  /**
-   * 设置控制器（根据editorConfig.controlsType）
-   */
   setupControls() {
     const { editorConfig } = useEditorConfig();
     this.switchControls(editorConfig.controlsType);
   }
 
-  
-  /**
-   * 更新控制器配置
-   * @param {object} config 控制器配置
-   */
+  setControlsLocked(locked) {
+    this.controlsLocked = !!locked;
+    if (this.controls) {
+      this.controls.enabled = !this.controlsLocked;
+    }
+    // 强制同步controls.enabled，防止被其它逻辑覆盖
+    if (this.controls) {
+      setTimeout(() => {
+        this.controls.enabled = !this.controlsLocked;
+      }, 0);
+    }
+  }
+
+  getControlsLocked() {
+    return !!this.controlsLocked;
+  }
+
   updateControlsConfig(config) {
     if (!this.controls) return;
-    
     Object.entries(config).forEach(([key, value]) => {
       if (this.controls.hasOwnProperty(key)) {
         this.controls[key] = value;
       }
     });
-    
     this.controls.update();
   }
-  
-  /**
-   * 处理窗口大小变化
-   */
+
   handleResize() {
     if (!this.container || !this.renderer || !this.camera) return;
-
     const width = this.container.clientWidth;
     const height = this.container.clientHeight;
-
     this.camera.aspect = width / height;
     this.camera.updateProjectionMatrix();
-
     this.renderer.setSize(width, height);
     if (this.composer) {
       this.composer.setSize(width, height);
     }
   }
-  
-  /**
-   * 开始渲染循环
-   */
+
   startRender() {
     if (this.state.isRendering) return;
-    
     this.state.isRendering = true;
     this.lastTime = performance.now();
     this.animate();
   }
-  
-  /**
-   * 停止渲染循环
-   */
+
   stopRender() {
     if (this.animationId) {
       cancelAnimationFrame(this.animationId);
@@ -584,14 +488,9 @@ class SceneManager {
     }
     this.state.isRendering = false;
   }
-  
-  /**
-   * 动画循环
-   * 新增：统一驱动所有对象动画
-   */
+
   animate() {
     this.animationId = requestAnimationFrame(() => this.animate());
-    // 计算FPS
     const currentTime = performance.now();
     this.frameCount++;
     if (currentTime - this.lastTime >= 1000) {
@@ -599,33 +498,24 @@ class SceneManager {
       this.frameCount = 0;
       this.lastTime = currentTime;
     }
-    // 计算delta
     const now = performance.now();
     const delta = (now - this.lastRenderTime) / 1000;
     this.lastRenderTime = now;
-    // 动画驱动
     this.updateAllMixers(delta);
     this.render();
     this.state.frameCount++;
   }
 
-  /**
-   * 统一驱动所有对象动画
-   * @param {number} delta 秒
-   */
   updateAllMixers(delta) {
     this.mixers = [];
     this.scene.traverse(obj => {
       if (obj.animations && Array.isArray(obj.animations) && obj.animations.length > 0) {
-        // 若未挂载mixer则自动挂载到主对象
         if (!obj._mixer) {
           obj._mixer = new THREE.AnimationMixer(obj);
         }
         this.mixers.push(obj._mixer);
-        // 动画切换
         const idx = typeof obj.userData.animationIndex === 'number' ? obj.userData.animationIndex : -1;
         if (idx >= 0 && obj.animations[idx]) {
-          // 若当前action未激活则激活
           if (!obj._activeAction || obj._activeAction._clip !== obj.animations[idx]) {
             if (obj._activeAction) {
               obj._activeAction.stop();
@@ -634,7 +524,6 @@ class SceneManager {
             obj._activeAction.reset().play();
           }
         } else {
-          // 无动画或无效索引，停止所有action
           if (obj._activeAction) {
             obj._activeAction.stop();
             obj._activeAction = null;
@@ -642,19 +531,12 @@ class SceneManager {
         }
       }
     });
-    // 统一update
     this.mixers.forEach(mixer => mixer.update(delta));
   }
 
-  /**
-   * 渲染场景
-   * 根据控制器类型更新
-   */
   render() {
-    // 更新控制器
     if (this.controls) {
       this.controls.update();
-      // 坐标轴位置与大小同步到controls的target
       if (this.axesHelper && this.controls && this.controls.target && this.camera) {
         this.axesHelper.position.copy(this.controls.target);
         const distance = this.camera.position.distanceTo(this.controls.target);
@@ -668,45 +550,30 @@ class SceneManager {
       this.renderer.render(this.scene, this.camera);
     }
   }
-  
-  /**
-   * 添加对象到场景
-   * @param {THREE.Object3D} object 3D对象
-   */
+
   addObject(object) {
     this.scene.add(object);
     let objectManager = useObjectManager();
     objectManager.addObject(object);
   }
-  
-  /**
-   * 从场景移除对象
-   * @param {THREE.Object3D} object 3D对象
-   */
+
   removeObject(object) {
     let idx = this.scene.children.findIndex(child => child === object || child.uuid === object.uuid);
     if (idx > -1) {
       this.scene.remove(object);
-      
       let idx2 = this.scene.children.findIndex(child => child === object || child.uuid === object.uuid);
-      // 如果常规移除失败，尝试强制移除
       if (idx2 > -1) {
-          this.scene.children.splice(idx2, 1);
+        this.scene.children.splice(idx2, 1);
       }
     }
   }
-  
-  /**
-   * 清空场景，但保留网格辅助线和坐标轴辅助线
-   */
+
   clearScene() {
-    // 仅移除非 gridHelper/axesHelper 的对象
     const reservedNames = ['grid_helper', 'axes_helper'];
     for (let i = this.scene.children.length - 1; i >= 0; i--) {
       const child = this.scene.children[i];
       if (!reservedNames.includes(child.name)) {
         this.scene.remove(child);
-        // 清理几何体和材质
         if (child.geometry) {
           child.geometry.dispose();
         }
@@ -719,47 +586,26 @@ class SceneManager {
         }
       }
     }
-
-    // 添加网格地面
     this.setupGrid();
-
-    // 同步清理 ObjectManager 中的对象
-      const objectManager = useObjectManager();
-      objectManager.clear();
+    const objectManager = useObjectManager();
+    objectManager.clear();
   }
-  
-  /**
-   * 设置场景背景
-   * @param {THREE.Color|THREE.Texture} background 背景
-   */
+
   setBackground(background) {
     this.scene.background = background;
   }
-  
-  /**
-   * 获取场景对象列表
-   * @returns {THREE.Object3D[]} 对象列表
-   */
+
   getObjects() {
     return this.scene.children.filter(child => 
       !(child instanceof THREE.Light) && 
       !(child instanceof THREE.Camera)
     );
   }
-  
-  /**
-   * 根据名称查找对象
-   * @param {string} name 对象名称
-   * @returns {THREE.Object3D|null} 找到的对象
-   */
+
   findObjectByName(name) {
     return this.scene.getObjectByName(name);
   }
-  
-  /**
-   * 导出场景数据
-   * @returns {object} 场景数据
-   */
+
   exportScene() {
     const sceneData = {
       objects: [],
@@ -774,7 +620,6 @@ class SceneManager {
       background: this.scene.background instanceof THREE.Color ? 
         this.scene.background.getHex() : null
     };
-    
     this.scene.children.forEach(child => {
       if (child instanceof THREE.Light) {
         sceneData.lights.push({
@@ -795,37 +640,27 @@ class SceneManager {
     });
     return sceneData;
   }
-  
-  /**
-   * 销毁场景管理器
-   */
+
   dispose() {
     this.stopRender();
-    
     if (this.container && this.resizeHandler) {
       window.removeEventListener('resize', this.resizeHandler);
     }
-    
-    // 清理控制器
     if (this.controls) {
       this.controls.dispose();
       this.controls = null;
     }
-    
     this.clearScene();
-
     if (this.composer) {
       this.composer = null;
       this.passes = [];
     }
-
     if (this.renderer) {
       this.renderer.dispose();
     }
   }
 }
 
-// 单例模式
 let instance = null;
 
 export function useSceneManager() {

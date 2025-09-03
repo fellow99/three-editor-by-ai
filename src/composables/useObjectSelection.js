@@ -1,6 +1,7 @@
 /**
  * 对象选择与变换控制管理 Composable
  * 提供对象选择、TransformControls、选中对象辅助显示等功能
+ * 新增功能：拖拽结束时根据SceneManager的controlsLocked状态决定是否恢复controls.enabled，避免与镜头锁定冲突。
  */
 
 import { ref, reactive, computed, watch } from 'vue';
@@ -97,6 +98,7 @@ export function useObjectSelection() {
     });
 
     // 拖拽时禁用当前控制器（OrbitControls、MapControls、FlyControls）
+    // 拖拽时禁用当前控制器（OrbitControls、MapControls、FlyControls）
     transformControls.addEventListener('dragging-changed', (event) => {
       if (controls) {
         // 判断控制器类型，禁用对应控制器
@@ -105,6 +107,18 @@ export function useObjectSelection() {
           // 拖拽结束后，主动重置控制器状态
           if (!event.value && typeof controls.state !== 'undefined') {
             controls.state = -1; // _STATE.NONE
+          }
+          // 拖拽结束时，若镜头锁定则保持controls.enabled=false
+          if (!event.value) {
+            try {
+              const { useSceneManager } = require('../core/SceneManager.js');
+              const sceneManager = useSceneManager();
+              if (sceneManager.getControlsLocked && sceneManager.getControlsLocked()) {
+                controls.enabled = false;
+              }
+            } catch (e) {
+              // ignore
+            }
           }
         }
       }
@@ -312,9 +326,19 @@ export function useObjectSelection() {
   
   /**
    * 清空选择
+   * 保证镜头锁定状态优先，主动同步SceneManager的controlsLocked到controls.enabled
    */
   function clearSelection() {
     objectManager.clearSelection();
+    try {
+      const { useSceneManager } = require('../core/SceneManager.js');
+      const sceneManager = useSceneManager();
+      if (sceneManager.controls && sceneManager.getControlsLocked) {
+        sceneManager.controls.enabled = !sceneManager.getControlsLocked();
+      }
+    } catch (e) {
+      // ignore
+    }
   }
   
   /**
@@ -415,6 +439,34 @@ export function useObjectSelection() {
   }
   
   /**
+   * 取消选择对象
+   * 保证镜头锁定状态优先，主动同步SceneManager的controlsLocked到controls.enabled
+   * @param {string|THREE.Object3D} objectOrId 对象或ID
+   */
+  function deselectObject(objectOrId) {
+    let id;
+    
+    if (typeof objectOrId === 'string') {
+      id = objectOrId;
+    } else {
+      id = objectOrId.userData.id;
+    }
+    
+    if (!id) return;
+    
+    objectManager.deselectObjects(id);
+    try {
+      const { useSceneManager } = require('../core/SceneManager.js');
+      const sceneManager = useSceneManager();
+      if (sceneManager.controls && sceneManager.getControlsLocked) {
+        sceneManager.controls.enabled = !sceneManager.getControlsLocked();
+      }
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  /**
    * 处理鼠标点击选择
    * 使用ObjectManager.getIntersectedFirstObject(raycaster)高效获取第一个相交对象
    * @param {object} event 鼠标事件数据
@@ -422,27 +474,24 @@ export function useObjectSelection() {
    */
   function handleClickSelection(event, camera) {
     if (!camera) return;
-    
     const raycaster = inputManager.getRaycaster(camera);
     const targetObject = objectManager.getIntersectedFirstObject(raycaster);
-    
     if (targetObject) {
       // 如果对象被锁定，则不允许选中
       if (targetObject.userData && targetObject.userData.locked) {
         return;
       }
       const addToSelection = event.modifiers?.ctrl || event.modifiers?.shift;
-      
       if (addToSelection && selectionMode.value === 'multiple') {
         toggleSelection(targetObject);
       } else {
         selectObject(targetObject, false);
       }
-    } else {
-      // 点击空白区域，清空选择
-      if (!event.modifiers?.ctrl && !event.modifiers?.shift) {
-        clearSelection();
-      }
+      return;
+    }
+    // 点击空白区域，清空选择
+    if (!event.modifiers?.ctrl && !event.modifiers?.shift) {
+      clearSelection();
     }
   }
   
