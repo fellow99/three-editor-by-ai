@@ -145,6 +145,8 @@ three-editor-by-ai/
   - 如需加载Draco压缩的glTF模型，请将node_modules/three/examples/jsm/libs/draco/目录中的文件复制到 /draco/ 目录下。
   - 如需加载KTX2纹理，请将node_modules/three/examples/jsm/libs/basis目录中的文件放入 /basis/ 目录下。
   - 如需加载Meshopt压缩的glTF模型，请将node_modules/three/examples/jsm/libs/meshopt_decoder.module.js文件放入 public/meshopt/ 目录下。
+- SceneManager.js中：
+  - loadScene()方法加载场景时，灯光和对象会完整恢复userData到Three.js对象，包括自定义属性、动画索引等，确保序列化与反序列化一致。
 - ObjectManager.js中：
   - 新增 getUnlockedObjects() 方法，支持获取所有未被锁定（userData.locked !== true）的对象；
   - getIntersectedObjects() 和 getIntersectedFirstObject() 仅返回未锁定对象；

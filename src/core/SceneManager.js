@@ -113,6 +113,8 @@ class SceneManager {
   /**
    * 加载场景数据，根据json结构重建场景
    * @param {object} json 场景数据
+   * 新增功能：加载灯光和对象后，会将json中的userData完整恢复到Three.js对象的userData属性，包括自定义属性、动画索引等。
+   * 这样可确保场景序列化与反序列化时所有对象的自定义数据都能正确还原。
    */
   async loadScene(json) {
     // 1. 清空场景
@@ -155,13 +157,18 @@ class SceneManager {
     // 4. 恢复灯光
     if (Array.isArray(json.lights)) {
       const objectManager = useObjectManager();
-      json.lights.forEach(lightData => {
-        objectManager.createPrimitive?.(lightData.type, {
-          color: lightData.color,
-          intensity: lightData.intensity,
-          position: lightData.position
-        });
-      });
+json.lights.forEach(lightData => {
+  // 创建灯光对象
+  const lightObj = objectManager.createPrimitive?.(lightData.type, {
+    color: lightData.color,
+    intensity: lightData.intensity,
+    position: lightData.position
+  });
+  // 恢复userData
+  if (lightObj && lightData.userData) {
+    lightObj.userData = { ...lightData.userData };
+  }
+});
     }
 
     // 5. 恢复对象
@@ -202,9 +209,10 @@ class SceneManager {
               scale: objData.scale
             };
             const addedObj = await addModelToScene(modelInfo.id, addOptions);
-            if (addedObj && objData.userData && typeof objData.userData.animationIndex === 'number') {
-              addedObj.userData.animationIndex = objData.userData.animationIndex;
-            }
+if (addedObj && objData.userData) {
+  // 恢复完整userData
+  addedObj.userData = { ...objData.userData };
+}
           } catch (e) {
             console.error('加载模型文件失败', e);
           }
@@ -217,9 +225,9 @@ class SceneManager {
             scale: objData.scale
           });
           // 动画索引恢复
-          if (primitiveObj && objData.userData && typeof objData.userData.animationIndex === 'number') {
-            primitiveObj.userData.animationIndex = objData.userData.animationIndex;
-          }
+if (primitiveObj && objData.userData) {
+  primitiveObj.userData = { ...objData.userData };
+}
         } else {
           // 普通primitive对象
           const primitiveObj2 = objectManager.createPrimitive?.(objData.type, {
@@ -229,9 +237,9 @@ class SceneManager {
             scale: objData.scale
           });
           // 动画索引恢复
-          if (primitiveObj2 && objData.userData && typeof objData.userData.animationIndex === 'number') {
-            primitiveObj2.userData.animationIndex = objData.userData.animationIndex;
-          }
+if (primitiveObj2 && objData.userData) {
+  primitiveObj2.userData = { ...objData.userData };
+}
         }
       }
     }
