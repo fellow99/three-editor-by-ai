@@ -96,10 +96,17 @@ export function useObjectSelection() {
       }
     });
 
-    // 拖拽时禁用OrbitControls
+    // 拖拽时禁用当前控制器（OrbitControls、MapControls、FlyControls）
     transformControls.addEventListener('dragging-changed', (event) => {
       if (controls) {
-        controls.enabled = !event.value;
+        // 判断控制器类型，禁用对应控制器
+        if (controls.constructor?.name === 'OrbitControls' || controls.constructor?.name === 'MapControls' || controls.constructor?.name === 'FlyControls') {
+          controls.enabled = !event.value;
+          // 拖拽结束后，主动重置控制器状态
+          if (!event.value && typeof controls.state !== 'undefined') {
+            controls.state = -1; // _STATE.NONE
+          }
+        }
       }
     });
 
