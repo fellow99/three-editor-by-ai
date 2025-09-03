@@ -691,8 +691,8 @@ class ObjectManager {
     objects = objects.filter(obj => !obj.isLight);
     return {
       objects: objects.map(obj => {
-        // 导出userData时，去除_mixer/_activeAction等运行时字段，仅保留animationIndex等可序列化数据
-        const { _mixer, _activeAction, ...userDataExport } = obj.userData || {};
+        // 导出userData时，仅保留可序列化数据（如animationIndex），不处理主对象上的_mixer/_activeAction等运行时字段
+        const { animationIndex, ...userDataExport } = obj.userData || {};
         // 导出时，type=primitive时增加primitiveType字段
         let type = obj.userData.type;
         let primitiveType = undefined;
@@ -703,6 +703,10 @@ class ObjectManager {
         if (!type && obj.isLight) {
           type = 'light';
           primitiveType = obj.type;
+        }
+        // 保留animationIndex字段
+        if (typeof obj.userData.animationIndex !== 'undefined') {
+          userDataExport.animationIndex = obj.userData.animationIndex;
         }
         return {
           id: obj.userData.id,

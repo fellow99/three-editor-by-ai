@@ -600,27 +600,27 @@ if (primitiveObj2 && objData.userData) {
     this.mixers = [];
     this.scene.traverse(obj => {
       if (obj.animations && Array.isArray(obj.animations) && obj.animations.length > 0) {
-        // 若未挂载mixer则自动挂载
-        if (!obj.userData._mixer) {
-          obj.userData._mixer = new THREE.AnimationMixer(obj);
+        // 若未挂载mixer则自动挂载到主对象
+        if (!obj._mixer) {
+          obj._mixer = new THREE.AnimationMixer(obj);
         }
-        this.mixers.push(obj.userData._mixer);
+        this.mixers.push(obj._mixer);
         // 动画切换
         const idx = typeof obj.userData.animationIndex === 'number' ? obj.userData.animationIndex : -1;
         if (idx >= 0 && obj.animations[idx]) {
           // 若当前action未激活则激活
-          if (!obj.userData._activeAction || obj.userData._activeAction._clip !== obj.animations[idx]) {
-            if (obj.userData._activeAction) {
-              obj.userData._activeAction.stop();
+          if (!obj._activeAction || obj._activeAction._clip !== obj.animations[idx]) {
+            if (obj._activeAction) {
+              obj._activeAction.stop();
             }
-            obj.userData._activeAction = obj.userData._mixer.clipAction(obj.animations[idx]);
-            obj.userData._activeAction.reset().play();
+            obj._activeAction = obj._mixer.clipAction(obj.animations[idx]);
+            obj._activeAction.reset().play();
           }
         } else {
           // 无动画或无效索引，停止所有action
-          if (obj.userData._activeAction) {
-            obj.userData._activeAction.stop();
-            obj.userData._activeAction = null;
+          if (obj._activeAction) {
+            obj._activeAction.stop();
+            obj._activeAction = null;
           }
         }
       }

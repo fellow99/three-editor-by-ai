@@ -149,6 +149,9 @@ three-editor-by-ai/
   - 如需加载Meshopt压缩的glTF模型，请将node_modules/three/examples/jsm/libs/meshopt_decoder.module.js文件放入 public/meshopt/ 目录下。
 - SceneManager.js中：
   - loadScene()方法加载场景时，灯光和对象会完整恢复userData到Three.js对象，包括自定义属性、动画索引等，确保序列化与反序列化一致。
+  - 运行时创建的动画相关对象（如_mixer、_activeAction等）不再挂载到userData，而是直接挂在主对象上（如obj._mixer、obj._activeAction），所有运行时临时对象均采用此设计，避免序列化污染，提升运行时管理效率。
+- ObjectManager.js中：
+  - 导出对象数据时，仅保留可序列化字段（如animationIndex），所有运行时对象（如_mixer、_activeAction等）均直接挂主对象，不再出现在userData中。
 - ObjectManager.js中：
   - 新增 getUnlockedObjects() 方法，支持获取所有未被锁定（userData.locked !== true）的对象；
   - getIntersectedObjects() 和 getIntersectedFirstObject() 仅返回未锁定对象；
