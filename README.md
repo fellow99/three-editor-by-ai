@@ -58,6 +58,7 @@ three-editor-by-ai/
 │   │   │   ├── ScenePropertyPane.vue         # 场景属性编辑面板
 │   │   │   ├── BasePropertyPane.vue          # 对象基础属性编辑面板
 │   │   │   ├── UserDataPropertyPane.vue      # userData属性编辑面板
+│   │   │   ├── UserDataPropertyPane-metro-device.vue # 地铁设备专用属性编辑面板，设备专业/类型字段支持下拉联动
 │   │   │   ├── TransformPropertyPane.vue     # 变换属性面板（位置、旋转、缩放）
 │   │   │   ├── AnimationPropertyPane.vue     # 动画属性面板（动画选择与播放）
 │   │   │   ├── MaterialPropertyPane.vue      # 材质编辑面板
@@ -97,6 +98,8 @@ three-editor-by-ai/
 │   │   ├── fileUtils.js      # 文件处理工具
 │   ├── constants/            # 常量定义
 │   │   ├── PRIMITIVES.json   # 预定义几何体与灯光类型数据
+│   │   ├── StationActiveMajorTypeInfo.json # 地铁设备专业-类型数据字典，供属性面板下拉选择使用
+│   │   ├── AllStationInfo.json   # 地铁线路-车站-空间-子空间数据字典，供属性面板下拉选择使用
 │   ├── App.vue               # 根组件（仅负责引入Editor.vue）
 │   ├── Editor.vue            # 主编辑器组件（包含全部业务与UI）
 │   ├── main.js               # 应用入口

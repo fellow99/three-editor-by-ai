@@ -1,0 +1,12 @@
+{
+  "AFC": ["AGM", "TVM", "STM", "BOM", "ISM", "SSM", "SDG", "ICM", "CSM", "BOM", "ITVM"],
+  "PSD": ["PED", "ASD", "EED", "PSL"],
+  "ZNHK": ["AHU", "AHU_D1", "AHU_D2", "AHU_X1", "PUM1", "PUM2", "PUM6", "RAF1", "RAF2", "EAF", "EAF1", "TEF", "TVF", "PAU", "PAU_X1", "JEF", "IMF", "PUM5", "RAF/EAF1", "FAF", "FAF1", "FAF2", "IPFAN3", "AHU3", "AHU2", "TEF_HTD"],
+  "ZNJD": ["ESC1", "ESC2", "DT", "FDJL", "ESC3"],
+  "CCTV": ["QiangJi", "BanQiu", "QuanQiu", "CAM"],
+  "NULL": ["NULL"],
+  "NormalEntity": ["CCTV", "EnvironmentInfo", "FAS", "FireExport", "TH1", "CCTV-QiangJi", "CCTV-QiuJi"],
+  "ACS": ["CR", "FCR"],
+  "SIG": ["PLAN"],
+  "BAS": ["DFT_1", "DFT_2", "FDJL"]
+}

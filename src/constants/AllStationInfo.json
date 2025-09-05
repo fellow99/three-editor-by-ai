@@ -1,0 +1,174 @@
+{
+  "lineName": "7号线",
+  "stations": [
+    {
+      "stationName": "番禺广场",
+      "stationAcronym": "PYS",
+      "spaces": [
+        { "spaceName": "负一层", "subSpaces": ["A口", "B口", "3B口"] },
+        { "spaceName": "站厅", "subSpaces": ["A口", "B口"] },
+        { "spaceName": "站台", "subSpaces": ["A口", "B口", "E口", "F口", "H口"] },
+        { "spaceName": "出入口", "subSpaces": ["A口", "B口"] },
+        { "spaceName": "其他", "subSpaces": ["A口", "B口"] }
+      ]
+    },
+    {
+      "stationName": "汉溪长隆",
+      "stationAcronym": "HLZ",
+      "spaces": [
+        { "spaceName": "负一层", "subSpaces": ["A口", "B口"] },
+        { "spaceName": "站厅", "subSpaces": ["A口", "B口", "A口", "B口", "C口"] },
+        { "spaceName": "站台", "subSpaces": ["A口", "B口"] }
+      ]
+    },
+    {
+      "stationName": "南村万博",
+      "stationAcronym": "WQS",
+      "spaces": [
+        { "spaceName": "负一层", "subSpaces": ["A口", "B口", "A口", "B口", "C口", "D口"] },
+        { "spaceName": "站厅", "subSpaces": ["A口", "B口"] }
+      ]
+    },
+    {
+      "stationName": "员岗",
+      "stationAcronym": "CTG",
+      "spaces": [
+        { "spaceName": "负一层", "subSpaces": ["A口", "B口", "D口", "A口", "B口"] },
+        { "spaceName": "站厅", "subSpaces": ["A口", "B口"] }
+      ]
+    },
+    {
+      "stationName": "板桥",
+      "stationAcronym": "SGL",
+      "spaces": [
+        { "spaceName": "负一层", "subSpaces": ["A口", "B口", "A口", "C口", "D口"] },
+        { "spaceName": "站厅", "subSpaces": ["A口", "B口"] }
+      ]
+    },
+    {
+      "stationName": "大学城南",
+      "stationAcronym": "GZN",
+      "spaces": [
+        { "spaceName": "负一层", "subSpaces": ["A口", "B口"] },
+        { "spaceName": "站厅", "subSpaces": ["A口", "B口"] },
+        { "spaceName": "站台", "subSpaces": ["A口", "B口"] },
+        { "spaceName": "其他", "subSpaces": ["A口", "B口"] }
+      ]
+    },
+    {
+      "stationName": "深井",
+      "stationAcronym": "SXZ",
+      "spaces": [
+        { "spaceName": "负一层", "subSpaces": ["A口", "B口", "A口", "B口", "D口", "E口"] },
+        { "spaceName": "站厅", "subSpaces": ["A口", "B口", "C口"] },
+        { "spaceName": "站台", "subSpaces": ["A口", "B口"] }
+      ]
+    },
+    {
+      "stationName": "南村",
+      "stationAcronym": "MDS",
+      "spaces": [
+        { "spaceName": "负一层", "subSpaces": ["A口", "B口", "E口", "H口", "J口"] },
+        { "spaceName": "站厅", "subSpaces": ["A口", "B口"] },
+        { "spaceName": "站台", "subSpaces": ["A口", "B口"] }
+      ]
+    },
+    {
+      "stationName": "石壁",
+      "stationAcronym": "LTZ",
+      "spaces": [
+        { "spaceName": "负一层", "subSpaces": ["A口", "B口", "B口", "C口", "D口"] },
+        { "spaceName": "站厅", "subSpaces": ["A口", "B口"] },
+        { "spaceName": "站台", "subSpaces": ["A口", "B口"] }
+      ]
+    },
+    {
+      "stationName": "谢村",
+      "stationAcronym": "XCZ",
+      "spaces": [
+        { "spaceName": "负一层", "subSpaces": ["A口", "B口", "A口", "G口"] },
+        { "spaceName": "站厅", "subSpaces": ["A口", "B口"] },
+        { "spaceName": "站台", "subSpaces": ["A口", "B口"] }
+      ]
+    },
+    {
+      "stationName": "钟村",
+      "stationAcronym": "NCZ",
+      "spaces": [
+        { "spaceName": "负一层", "subSpaces": ["A口", "B口", "D口", "G口"] },
+        { "spaceName": "站厅", "subSpaces": ["A口", "B口", "C口", "E口"] },
+        { "spaceName": "站台", "subSpaces": ["A口", "B口"] },
+        { "spaceName": "其他", "subSpaces": ["A口", "B口"] }
+      ]
+    },
+    {
+      "stationName": "长隆",
+      "stationAcronym": "XLZ",
+      "spaces": [
+        { "spaceName": "负一层", "subSpaces": ["A口", "A口", "B口", "C口"] },
+        { "spaceName": "站厅", "subSpaces": ["A口", "B口"] },
+        { "spaceName": "站台", "subSpaces": ["A口", "B口"] }
+      ]
+    },
+    {
+      "stationName": "南浦",
+      "stationAcronym": "NJZ",
+      "spaces": [
+        { "spaceName": "负一层", "subSpaces": ["A口", "B口", "1口", "2口", "3口"] },
+        { "spaceName": "站厅", "subSpaces": ["A口", "B口"] }
+      ]
+    },
+    {
+      "stationName": "南洲",
+      "stationAcronym": "FCZ",
+      "spaces": [
+        { "spaceName": "负一层", "subSpaces": ["A口", "B口", "A口", "B口", "C口"] },
+        { "spaceName": "站厅", "subSpaces": ["A口", "B口"] },
+        { "spaceName": "站台", "subSpaces": ["A口", "B口"] },
+        { "spaceName": "其他", "subSpaces": ["A口", "B口"] }
+      ]
+    },
+    {
+      "stationName": "南沙客运港",
+      "stationAcronym": "NPX",
+      "spaces": [
+        { "spaceName": "负一层", "subSpaces": ["A口", "B口", "1口", "2口", "3口"] },
+        { "spaceName": "站厅", "subSpaces": ["A口", "B口"] },
+        { "spaceName": "站台", "subSpaces": ["A口", "B口"] },
+        { "spaceName": "其他", "subSpaces": ["A口", "B口"] }
+      ]
+    },
+    {
+      "stationName": "石溪",
+      "stationAcronym": "SGZ",
+      "spaces": [
+        { "spaceName": "负一层", "subSpaces": ["A口", "B口", "A口", "B口", "C口", "D口"] },
+        { "spaceName": "站厅", "subSpaces": ["A口", "B口"] }
+      ]
+    },
+    {
+      "stationName": "大沙东",
+      "stationAcronym": "CQZ",
+      "spaces": [
+        { "spaceName": "负一层", "subSpaces": ["A口", "B口", "A口", "B口", "D口"] },
+        { "spaceName": "站厅", "subSpaces": ["A口", "B口"] }
+      ]
+    },
+    {
+      "stationName": "大沙地",
+      "stationAcronym": "CYC",
+      "spaces": [
+        { "spaceName": "负一层", "subSpaces": ["A1口", "A口", "A口", "B口", "C口"] },
+        { "spaceName": "站厅", "subSpaces": ["A口", "B口"] }
+      ]
+    },
+    {
+      "stationName": "黄埔",
+      "stationAcronym": "JZZ",
+      "spaces": [
+        { "spaceName": "负一层", "subSpaces": ["A口", "B口", "B口", "C口", "D口"] },
+        { "spaceName": "站厅", "subSpaces": ["A口", "B口"] }
+      ]
+    }
+  ]
+}

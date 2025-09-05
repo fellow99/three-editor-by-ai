@@ -1,0 +1,101 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0e54c07406639a548b11dc6cb86523a1, type: 3}
+  m_Name: StationActiveMajorTypeInfo
+  m_EditorClassIdentifier: 
+  m_MajorTypeInfo:
+    m_keys:
+    - AFC
+    - PSD
+    - ZNHK
+    - ZNJD
+    - CCTV
+    - NULL
+    - NormalEntity
+    - ACS
+    - SIG
+    - BAS
+    m_values:
+    - m_EquipmentTypes:
+      - AGM
+      - TVM
+      - STM
+      - BOM
+      - ISM
+      - SSM
+      - SDG
+      - ICM
+      - CSM
+      - BOM
+      - ITVM
+    - m_EquipmentTypes:
+      - PED
+      - ASD
+      - EED
+      - PSL
+    - m_EquipmentTypes:
+      - AHU
+      - AHU_D1
+      - AHU_D2
+      - AHU_X1
+      - PUM1
+      - PUM2
+      - PUM6
+      - RAF1
+      - RAF2
+      - EAF
+      - EAF1
+      - TEF
+      - TVF
+      - PAU
+      - PAU_X1
+      - JEF
+      - IMF
+      - PUM5
+      - RAF/EAF1
+      - FAF
+      - FAF1
+      - FAF2
+      - IPFAN3
+      - AHU3
+      - AHU2
+      - TEF_HTD
+    - m_EquipmentTypes:
+      - ESC1
+      - ESC2
+      - DT
+      - FDJL
+      - ESC3
+    - m_EquipmentTypes:
+      - QiangJi
+      - BanQiu
+      - QuanQiu
+      - CAM
+    - m_EquipmentTypes:
+      - NULL
+    - m_EquipmentTypes:
+      - CCTV
+      - EnvironmentInfo
+      - FAS
+      - FireExport
+      - TH1
+      - CCTV-QiangJi
+      - CCTV-QiuJi
+    - m_EquipmentTypes:
+      - CR
+      - FCR
+    - m_EquipmentTypes:
+      - PLAN
+    - m_EquipmentTypes:
+      - DFT_1
+      - DFT_2
+      - FDJL

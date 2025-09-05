@@ -8,6 +8,7 @@
 import { ref, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useObjectSelection } from '../../composables/useObjectSelection.js'
+import UserDataPropertyPaneMetroDevice from './UserDataPropertyPane-metro-device.vue'
 
 /** 对象选择管理器 */
 const objectSelection = useObjectSelection()
@@ -33,6 +34,8 @@ const userDataEntries = computed(() => {
   for (const [key, value] of Object.entries(selectedObject.value.userData)) {
     if(key === 'id') {
       entries.unshift({ key, value: value })
+    } else if (key === 'deviceInfo') {
+      // deviceInfo不添加到表格中
     } else if (key === 'fileInfo' && value && typeof value === 'object') {
       // fileInfo特殊格式
       const { drive, path, name } = value
@@ -88,43 +91,97 @@ function onUserDataBlur() {
     userDataError.value = 'JSON格式错误，请检查输入'
   }
 }
+
+/**
+ * 添加地铁设备信息字段
+ * 向userData添加deviceInfo字段及初始内容
+ */
+function addDeviceInfo() {
+  if (!selectedObject.value) return
+  const defaultDeviceInfo = {
+    uniqueId: 0,
+    author: '',
+    changeTime: '',
+    lineName: '',
+    stationName: '',
+    stationSpaceName: '',
+    stationSubSpaceName: '',
+    equipmentUniqueId: '',
+    equipmentMajor: '',
+    equipmentType: '',
+    equipmentSystem: '',
+    name: '',
+    position: '',
+    quaternion: '',
+    scale: '',
+    equipmentSubType: '',
+    parentName: ''
+  }
+  if (!selectedObject.value.userData) selectedObject.value.userData = {}
+  selectedObject.value.userData.deviceInfo = defaultDeviceInfo
+  refreshUserData()
+  ElMessage.success('已添加设备信息字段')
+}
+
+/**
+ * 更新地铁设备信息
+ * 用于子组件表单双向绑定
+ */
+function updateDeviceInfo(newDeviceInfo) {
+  if (!selectedObject.value) return
+  if (!selectedObject.value.userData) selectedObject.value.userData = {}
+  selectedObject.value.userData.deviceInfo = newDeviceInfo
+  refreshUserData()
+}
 </script>
 
 <template>
   <div v-if="hasSelection" class="property-section">
     <h4>userData</h4>
-    <!-- userData key-value 表格展示 -->
-    <el-table
-      v-if="userDataEntries.length"
-      :data="userDataEntries"
-      border
-      size="small"
-      style="margin-bottom: 12px;"
-      :show-header="true"
-    >
-      <el-table-column prop="key" label="Key" width="80" />
-      <el-table-column prop="value" label="Value">
-        <template #default="scope">
-          <pre v-if="scope.row.value && typeof scope.row.value === 'string' && scope.row.value.startsWith('{')" style="white-space: pre-wrap; margin: 0;">{{ scope.row.str }}</pre>
-          <span v-else-if="scope.row.str">{{ scope.row.str }}</span>
-          <span v-else>{{ scope.row.value }}</span>
-        </template>
-      </el-table-column>
-    </el-table>
-    <el-form label-width="60px" class="property-form">
-        <el-input
-          class="user-data-input"
-          type="textarea"
-          v-model="userDataText"
-          :rows="4"
-          placeholder="请输入合法的JSON"
-          @blur="onUserDataBlur"
-          size="small"
-        />
-        <div v-if="userDataError" style="color: #f56c6c; font-size: 12px; margin-top: 4px;">
-          {{ userDataError }}
-        </div>
-    </el-form>
+      <el-table
+        v-if="userDataEntries.length"
+        :data="userDataEntries"
+        border
+        size="small"
+        style="margin-bottom: 12px;"
+        :show-header="true"
+      >
+        <el-table-column prop="key" label="Key" width="80" />
+        <el-table-column prop="value" label="Value">
+          <template #default="scope">
+            <pre v-if="scope.row.value && typeof scope.row.value === 'string' && scope.row.value.startsWith('{')" style="white-space: pre-wrap; margin: 0;">{{ scope.row.str }}</pre>
+            <span v-else-if="scope.row.str">{{ scope.row.str }}</span>
+            <span v-else>{{ scope.row.value }}</span>
+          </template>
+        </el-table-column>
+      </el-table>
+    <!-- 如果包含deviceInfo字段，显示地铁设备专用属性面板 -->
+    <UserDataPropertyPaneMetroDevice
+      v-if="selectedObject && selectedObject.userData && selectedObject.userData.deviceInfo"
+      :device-info="selectedObject.userData.deviceInfo"
+      @update:device-info="updateDeviceInfo"
+    />
+      <el-button
+        v-else
+        type="primary"
+        size="small"
+        style="margin-bottom: 12px;"
+        @click="addDeviceInfo"
+      >添加设备信息</el-button>
+      <el-form label-width="60px" class="property-form">
+          <el-input
+            class="user-data-input"
+            type="textarea"
+            v-model="userDataText"
+            :rows="4"
+            placeholder="请输入合法的JSON"
+            @blur="onUserDataBlur"
+            size="small"
+          />
+          <div v-if="userDataError" style="color: #f56c6c; font-size: 12px; margin-top: 4px;">
+            {{ userDataError }}
+          </div>
+      </el-form>
   </div>
 </template>
 
