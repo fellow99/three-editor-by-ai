@@ -23,6 +23,38 @@ const hasSelection = computed(() => objectSelection.hasSelection.value)
   用于展示和编辑选中对象的userData属性（JSON字符串）
 */
 const userDataText = ref('')
+
+/** userData属性表格数据
+  用于以key-value表格方式展示userData
+*/
+const userDataEntries = computed(() => {
+  if (!selectedObject.value || !selectedObject.value.userData) return []
+  const entries = []
+  for (const [key, value] of Object.entries(selectedObject.value.userData)) {
+    if(key === 'id') {
+      entries.unshift({ key, value: value })
+    } else if (key === 'fileInfo' && value && typeof value === 'object') {
+      // fileInfo特殊格式
+      const { drive, path, name } = value
+      entries.push({
+        key,
+        value,
+        str: `${drive}:${path}/${name}`
+      })
+    } else if (value && typeof value === 'object') {
+      // 其他对象序列化
+      entries.push({
+        key,
+        value,
+        str: JSON.stringify(value, null, 2)
+      })
+    } else {
+      entries.push({ key, value: value })
+    }
+  }
+  return entries
+})
+
 /** userData校验错误信息
   用于提示userData输入的JSON格式错误
 */
@@ -61,6 +93,24 @@ function onUserDataBlur() {
 <template>
   <div v-if="hasSelection" class="property-section">
     <h4>userData</h4>
+    <!-- userData key-value 表格展示 -->
+    <el-table
+      v-if="userDataEntries.length"
+      :data="userDataEntries"
+      border
+      size="small"
+      style="margin-bottom: 12px;"
+      :show-header="true"
+    >
+      <el-table-column prop="key" label="Key" width="80" />
+      <el-table-column prop="value" label="Value">
+        <template #default="scope">
+          <pre v-if="scope.row.value && typeof scope.row.value === 'string' && scope.row.value.startsWith('{')" style="white-space: pre-wrap; margin: 0;">{{ scope.row.str }}</pre>
+          <span v-else-if="scope.row.str">{{ scope.row.str }}</span>
+          <span v-else>{{ scope.row.value }}</span>
+        </template>
+      </el-table-column>
+    </el-table>
     <el-form label-width="60px" class="property-form">
         <el-input
           class="user-data-input"
@@ -97,7 +147,7 @@ function onUserDataBlur() {
 }
 .user-data-input {
   width: 100%;
-  height: 50vh;
+  height: 20em;
   &:deep(.el-textarea__inner) {
     height: 100%;
   }
