@@ -1,23 +1,85 @@
 <!--
   地铁设备专用属性编辑面板
   以表单方式上下布局展示deviceInfo各字段，支持编辑并通过emit更新父组件。
-  本文件实现了线路、车站、空间、子空间的级联下拉选择，数据来源于AllStationInfo.json。
-  新增用法：动态import加载JSON，级联下拉联动，ref变量注释齐全。
+  数据结构例子如下：
+  {
+      "uniqueId": 18303,
+      "lineName": "7号线",
+      "stationName": "大沙东",
+      "stationSpaceName": "负一层",
+      "stationSubSpaceName": "站厅",
+      "equipmentUniqueId": "DSD.AFC.AFC.AGM3005",
+      "equipmentMajor": "AFC",
+      "equipmentType": "AGM1",
+      "equipmentSubType": "Null",
+      "equipmentSystem": "Custom",
+      "parentName": "AFC",
+      "name": "DSD.AFC.AFC.AGM3005",
+      "position": "-47.552|0.1120542|-76.87899",
+      "quaternion": "0.000000|-0.707107|0.000000|-0.707107",
+      "scale": "1|1|1",
+      "author": "xk",
+      "changeTime": "2023-06-09 11:54:46",
+      "userData": "NULL"
+    }  
 -->
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
+import { useObjectSelection } from '../../composables/useObjectSelection.js'
 
 /** 父组件传入的地铁设备信息对象 */
 const props = defineProps({
+  /** 地铁设备信息对象 */
   deviceInfo: {
     type: Object,
     required: true
   }
 })
 
+/** 直接获取当前选中对象，避免父组件高频传递，提升性能 */
+const objectSelection = useObjectSelection()
+const selectedObject = computed(() => {
+  const arr = objectSelection.selectedObjects.value
+  return arr.length === 1 ? arr[0] : null
+})
+
 /** 用于表单双向绑定的本地副本 */
 const localDeviceInfo = ref({ ...props.deviceInfo })
+
+/**
+ * 手动获取选中对象的position/quaternion/scale，点击按钮时触发
+ */
+function fetchPosition() {
+  const obj = selectedObject.value
+  if (obj) {
+    localDeviceInfo.value.position = Array.isArray(obj.position)
+      ? obj.position.join('|')
+      : (typeof obj.position === 'object' && obj.position !== null)
+        ? [obj.position.x, obj.position.y, obj.position.z].join('|')
+        : (obj.position ?? '')
+  }
+}
+function fetchQuaternion() {
+  const obj = selectedObject.value
+  if (obj) {
+    localDeviceInfo.value.quaternion = Array.isArray(obj.quaternion)
+      ? obj.quaternion.join('|')
+      : (typeof obj.quaternion === 'object' && obj.quaternion !== null)
+        ? [obj.quaternion.x, obj.quaternion.y, obj.quaternion.z, obj.quaternion.w].join('|')
+        : (obj.quaternion ?? '')
+  }
+}
+function fetchScale() {
+  const obj = selectedObject.value
+  if (obj) {
+    localDeviceInfo.value.scale = Array.isArray(obj.scale)
+      ? obj.scale.join('|')
+      : (typeof obj.scale === 'object' && obj.scale !== null)
+        ? [obj.scale.x, obj.scale.y, obj.scale.z].join('|')
+        : (obj.scale ?? '')
+  }
+}
 
 /** 设备专业-类型数据字典 */
 import majorTypeInfo from '../../constants/StationActiveMajorTypeInfo.json'
@@ -198,14 +260,25 @@ function onFieldChange() {
     <el-form-item label="父级名称">
       <el-input v-model="localDeviceInfo.parentName" @input="onFieldChange" />
     </el-form-item>
+    <!--
+      位置（position）、四元数（quaternion）、缩放（scale）字段
+      只读，数据来自selectedObject，随选中模型实时同步
+    -->
+    <!--
+      位置（position）、四元数（quaternion）、缩放（scale）字段
+      只读，通过按钮手动获取选中对象的最新值
+    -->
     <el-form-item label="位置">
-      <el-input v-model="localDeviceInfo.position" @input="onFieldChange" />
+      <el-input v-model="localDeviceInfo.position" readonly style="width:calc(100% - 70px);display:inline-block;" />
+      <el-button type="primary" size="small" style="margin-left:8px;" @click="fetchPosition">获取</el-button>
     </el-form-item>
     <el-form-item label="四元数">
-      <el-input v-model="localDeviceInfo.quaternion" @input="onFieldChange" />
+      <el-input v-model="localDeviceInfo.quaternion" readonly style="width:calc(100% - 70px);display:inline-block;" />
+      <el-button type="primary" size="small" style="margin-left:8px;" @click="fetchQuaternion">获取</el-button>
     </el-form-item>
     <el-form-item label="缩放">
-      <el-input v-model="localDeviceInfo.scale" @input="onFieldChange" />
+      <el-input v-model="localDeviceInfo.scale" readonly style="width:calc(100% - 70px);display:inline-block;" />
+      <el-button type="primary" size="small" style="margin-left:8px;" @click="fetchScale">获取</el-button>
     </el-form-item>
     <el-form-item label="作者">
       <el-input v-model="localDeviceInfo.author" @input="onFieldChange" />
