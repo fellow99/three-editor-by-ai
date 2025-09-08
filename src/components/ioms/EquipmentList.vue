@@ -3,19 +3,13 @@
   用于显示某站点的所有设备信息。
   - 顶部通过el-select实现线路-站点级联选择，数据来源src/constants/AllStationInfo.json。
   - 选择站点后，调用equipment-service.js的list函数获取设备，按lineName=>stationName=>stationSpaceName=>stationSubSpaceName用el-tree展示。
-  - 使用Vue3 <script setup>语法，所有ref/shallowRef变量均加注释。
-  - 每个函数顶部添加必要注释。
-  - 通过instanceof判断实例类型。
-  - 依赖element-plus。
-  - 文件顶部注明新语法：<script setup>、ref、async/await、解构赋值。
 -->
 
 <script setup>
 /**
  * 该组件用于显示某站点的所有设备信息。
- * 新语法：<script setup>、ref、async/await、解构赋值。
  */
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import { ElCascader, ElTree, ElMessage } from 'element-plus';
 import equipmentService from '../../services/equipment-service.js';
 import allStationInfo from '../../constants/AllStationInfo.json';
@@ -31,7 +25,58 @@ const equipmentTreeData = ref([]); // el-tree数据
 // 是否正在加载设备，ref变量
 const loading = ref(false);
 
-// 级联选择器选项，格式转换
+/**
+ * 搜索关键字，ref变量
+ * 用于设备名称模糊搜索
+ */
+const searchKeyword = ref('');
+
+/**
+ * 搜索结果，ref变量
+ * 存放搜索到的设备节点
+ */
+const searchResults = ref([]);
+
+/**
+ * 监听searchKeyword变化，自动搜索或恢复设备树
+ */
+watch(searchKeyword, (val) => {
+  if (!val) {
+    searchResults.value = [];
+  } else {
+    handleSearch();
+  }
+});
+
+/**
+ * 设备搜索函数
+ * 根据searchKeyword递归查找设备节点，结果存入searchResults
+ */
+function handleSearch() {
+  // 清空上次结果
+  searchResults.value = [];
+  const keyword = searchKeyword.value.trim();
+  if (!keyword) return;
+  // 递归遍历设备树，收集匹配节点
+  function searchTree(nodes) {
+    if (!Array.isArray(nodes)) return;
+    for (const node of nodes) {
+      // 只匹配设备节点（有data属性）
+      if (node.data && node.label && node.label.includes(keyword)) {
+        searchResults.value.push({
+          label: node.label,
+          ...node.data
+        });
+      }
+      if (node.children) searchTree(node.children);
+    }
+  }
+  searchTree(equipmentTreeData.value);
+}
+
+/**
+ * 级联选择器选项，格式转换
+ */
 function formatCascaderOptions(raw) {
   // raw为AllStationInfo.json对象
   if (!raw || !raw.lineName || !raw.stations) return [];
@@ -64,6 +109,8 @@ async function handleStationChange(val) {
 function clearEquipmentList() {
   selectedStation.value = null;
   equipmentTreeData.value = [];
+  searchKeyword.value = '';
+  searchResults.value = [];
 }
 
 /**
@@ -128,8 +175,7 @@ function buildEquipmentTree(list) {
 
 <template>
   <div class="equipment-list">
-    <!-- 顶部级联选择器 -->
-    <div class="equipment-list__selector">
+    <div class="station__selector">
       站点：
       <el-cascader
         :options="stationData"
@@ -138,10 +184,20 @@ function buildEquipmentTree(list) {
         @change="handleStationChange"
         @clear="clearEquipmentList"
         clearable
+        style="width: 150px"
       />
+      &nbsp;
+      <el-button>布点</el-button>
+    </div>
+    <div class="station__search">
+      <el-input v-model="searchKeyword" placeholder="搜索设备" style="width: 200px" />
+      &nbsp;
+      <el-button @click="handleSearch">搜索</el-button>
+      <!-- 输入框变化自动搜索，无需手动点击 -->
     </div>
     <!-- 设备树 -->
     <el-tree
+      v-show="!searchKeyword || !searchResults.length"
       v-loading="loading"
       :data="equipmentTreeData"
       node-key="value"
@@ -151,6 +207,23 @@ function buildEquipmentTree(list) {
       class="equipment-list__tree"
       style="margin-top: 16px"
     />
+    <!-- 搜索结果 -->
+    <el-table
+      v-show="searchKeyword && searchResults.length"
+      v-loading="loading"
+      :data="searchResults"
+      style="margin-top: 16px"
+      >
+      <el-table-column prop="label" label="设备名称">
+        <template #default="{ row }">
+        {{ row.equipmentUniqueId }}
+        <br/>
+        {{ row.equipmentMajor }} / {{ row.equipmentType }} / {{ row.equipmentSystem }}
+        <br/>
+        {{ row.stationSpaceName }} / {{ row.stationSubSpaceName }}
+        </template>
+      </el-table-column>
+    </el-table>
   </div>
 </template>
 
@@ -164,7 +237,7 @@ function buildEquipmentTree(list) {
   display: flex;
   flex-direction: column;
 }
-.equipment-list__selector {
+.station__selector {
   margin-bottom: 8px;
 }
 .equipment-list__tree {

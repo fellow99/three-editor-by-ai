@@ -70,7 +70,7 @@ three-editor-by-ai/
 │   │   │   ├── VfsFileChooserDialog.vue      # 虚拟文件系统文件选择对话框
 │   │   │   ├── VfsFileSaverDialog.vue        # 虚拟文件系统文件保存对话框
 │   │   ├── ioms/                             # IOMS相关业务组件
-│   │   │   ├── EquipmentList.vue             # 站点设备列表组件，级联选择线路和站点，树形展示设备信息
+│   │   │   ├── EquipmentList.vue             # 站点设备列表组件，级联选择线路和站点，树形展示设备信息，支持设备名称模糊搜索
 │   │   ├── scene/                            # 3D 场景组件
 │   │   │   ├── SceneViewer.vue               # 主场景视图，支持拖拽添加对象到当前视点位置
 │   │   │   ├── StatHints.vue                 # 性能监控面板
