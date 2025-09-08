@@ -173,7 +173,7 @@ const appState = reactive({
   leftPanelCollapsed: false,
   rightPanelCollapsed: false,
   bottomPanelCollapsed: true,
-  activeLeftTab: 'primitives', // 'primitives' | 'files' | 'assets' | 'inspector'
+  activeLeftTab: 'equipment', // 'primitives' | 'files' | 'assets' | 'inspector' | 'equipment'
   panels: {
     leftWidth: 300,
     rightWidth: 300,

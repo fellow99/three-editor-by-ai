@@ -13,6 +13,15 @@ export default defineConfig({
   build: {
     outDir: `dist/${pkg.name}`
   },
+  server: {
+    proxy: {
+      '/ioms': {
+        target: 'http://172.25.11.135:9110',
+        changeOrigin: true,
+        rewrite: path => path.replace(/^\/ioms/, ''),
+      }
+    }
+  },
   plugins: [
     vue(),
     viteStaticCopy({

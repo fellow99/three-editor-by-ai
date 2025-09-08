@@ -10,6 +10,7 @@ import AssetBrowser from './AssetBrowser.vue';
 import Inspector from './Inspector.vue';
 import VfsFileBrowser from './VfsFileBrowser.vue';
 import PrimitiveBrowser from './PrimitiveBrowser.vue';
+import EquipmentList from '../ioms/EquipmentList.vue';
 
 const scene = inject('scene');
 
@@ -44,23 +45,29 @@ function handleDeleteSelected() {
     <!-- 标签页头部 -->
     <div class="panel-tabs">
       <button 
+        @click="props.setActiveLeftTab('equipment')" 
+        :class="['tab-btn', { active: props.activeLeftTab === 'equipment' }]"
+      >
+        站点设备
+      </button>
+      <!-- <button 
         @click="props.setActiveLeftTab('primitives')" 
         :class="['tab-btn', { active: props.activeLeftTab === 'primitives' }]"
       >
         几何体
-      </button>
+      </button> -->
       <button 
         @click="props.setActiveLeftTab('files')" 
         :class="['tab-btn', { active: props.activeLeftTab === 'files' }]"
       >
         文件
       </button>
-      <button 
+      <!-- <button 
         @click="props.setActiveLeftTab('assets')" 
         :class="['tab-btn', { active: props.activeLeftTab === 'assets' }]"
       >
         资源
-      </button>
+      </button> -->
       <button 
         @click="props.setActiveLeftTab('inspector')" 
         :class="['tab-btn', { active: props.activeLeftTab === 'inspector' }]"
@@ -75,6 +82,7 @@ function handleDeleteSelected() {
       />
       <AssetBrowser v-show="props.activeLeftTab === 'assets'" />
       <Inspector v-show="props.activeLeftTab === 'inspector'" @delete-selected="handleDeleteSelected" />
+      <EquipmentList v-show="props.activeLeftTab === 'equipment'" />
     </div>
   </div>
 </template>
