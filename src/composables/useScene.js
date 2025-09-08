@@ -334,6 +334,37 @@ export function useScene() {
   }
   
   /**
+   * 递归查找场景中第一个property等于value的对象
+   * 新增方法：getObjectByProperty(property, value)
+   * @param {string} property 属性名（支持嵌套如userData.id）
+   * @param {*} value 属性值
+   * @returns {THREE.Object3D|null}
+   */
+  function getObjectByProperty(property, value) {
+    // 支持userData.id等嵌套属性
+    function getProp(obj, propPath) {
+      return propPath.split('.').reduce((o, k) => (o && o[k] !== undefined ? o[k] : undefined), obj);
+    }
+    function traverse(obj) {
+      if (!obj) return null;
+      if (getProp(obj, property) === value) return obj;
+      if (obj.children && obj.children.length) {
+        for (const child of obj.children) {
+          const found = traverse(child);
+          if (found) return found;
+        }
+      }
+      return null;
+    }
+    const allRoots = objectManager.getAllObjects();
+    for (const root of allRoots) {
+      const found = traverse(root);
+      if (found) return found;
+    }
+    return null;
+  }
+
+  /**
    * 聚焦到对象
    * 计算对象包围盒中心点，设置OrbitControls target为该位置对象
    * @param {string|THREE.Object3D} objectOrId 对象或ID
@@ -407,6 +438,7 @@ export function useScene() {
     exportScene,
     resetScene,
     focusOnObject,
+    getObjectByProperty,
     
     // 管理器实例
     sceneManager,

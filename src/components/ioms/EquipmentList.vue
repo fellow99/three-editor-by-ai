@@ -302,8 +302,28 @@ function createSceneData() {
     sceneData.objects.push(eqModel);
   }
 
-  console.log('生成场景数据：', sceneData);
   return sceneData;
+}
+
+/**
+ * 设备树节点点击事件处理
+ * @param {Object} data 节点数据
+ */
+function handleEquipmentNodeClick(data) {
+  // 只处理设备节点（有data且有equipmentUniqueId）
+  if (!data || !data.equipmentUniqueId) return;
+  const equipmentId = data.equipmentUniqueId;
+  // 查找三维场景中的对象，userData.id等于equipmentId
+  const object = scene.getObjectByProperty && scene.getObjectByProperty('userData.id', equipmentId);
+  if (object) {
+    objectSelection.selectObject(object);
+    // 选中后再聚焦，确保聚焦目标为最新选中对象
+    setTimeout(() => {
+      scene.focusOnObject(object);
+    }, 0);
+  } else {
+    ElMessage.warning('未找到对应三维对象');
+  }
 }
 </script>
 
@@ -340,6 +360,7 @@ function createSceneData() {
       highlight-current
       class="equipment-list__tree"
       style="margin-top: 16px"
+      @node-click="handleEquipmentNodeClick($event.data)"
     />
     <!-- 搜索结果 -->
     <el-table
@@ -347,10 +368,11 @@ function createSceneData() {
       v-loading="loading"
       :data="searchResults"
       style="margin-top: 16px"
+      @row-click=""
       >
       <el-table-column prop="label" label="设备名称">
         <template #default="{ row }">
-        {{ row.equipmentUniqueId }}
+        <el-link type="primary" :underline="false" @click="handleEquipmentNodeClick(row)">{{ row.equipmentUniqueId }}</el-link>
         <br/>
         {{ row.equipmentMajor }} / {{ row.equipmentType }} / {{ row.equipmentSystem }}
         <br/>
