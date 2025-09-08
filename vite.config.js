@@ -15,10 +15,15 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      '/ioms': {
-        target: 'http://172.25.11.135:9110',
+      '/mics-datahub/equipmentinfo': {
+        target: 'http://172.25.107.202:9110',
         changeOrigin: true,
-        rewrite: path => path.replace(/^\/ioms/, ''),
+        rewrite: path => path.replace(/^\/mics-datahub\/equipmentinfo/, '/equipmentinfo'),
+      },
+      '/mics-datahub/device': {
+        target: 'http://172.25.107.202:8081',
+        changeOrigin: true,
+        rewrite: path => path.replace(/^\/mics-datahub\/device/, '/device'),
       }
     }
   },
