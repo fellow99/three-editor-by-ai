@@ -248,7 +248,7 @@ export function useAssets() {
     });
 
     const modelInfo = {
-      id: model.userData.id || generateId(),
+      id: file.name, // model.userData.id || generateId(),
       name: getFileName(file.name),
       filename: file.name,
       size: file.size,

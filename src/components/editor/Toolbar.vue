@@ -221,10 +221,6 @@ export default {
       sceneManager.setControlsLocked(controlsLocked.value);
     });
     
-    // 方法
-    /**
-     * 新建场景，清空所有内容
-     */
     /**
      * 新建场景，清空所有内容
      */
@@ -242,9 +238,6 @@ export default {
       }).catch(() => {});
     }
     
-    /**
-     * 保存当前场景为JSON文件
-     */
     /**
      * 导出当前场景为JSON文件
      */

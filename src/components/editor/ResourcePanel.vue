@@ -48,7 +48,7 @@ function handleDeleteSelected() {
         @click="props.setActiveLeftTab('equipment')" 
         :class="['tab-btn', { active: props.activeLeftTab === 'equipment' }]"
       >
-        站点设备
+        站点
       </button>
       <!-- <button 
         @click="props.setActiveLeftTab('primitives')" 
@@ -62,12 +62,12 @@ function handleDeleteSelected() {
       >
         文件
       </button>
-      <!-- <button 
+      <button 
         @click="props.setActiveLeftTab('assets')" 
         :class="['tab-btn', { active: props.activeLeftTab === 'assets' }]"
       >
         资源
-      </button> -->
+      </button>
       <button 
         @click="props.setActiveLeftTab('inspector')" 
         :class="['tab-btn', { active: props.activeLeftTab === 'inspector' }]"

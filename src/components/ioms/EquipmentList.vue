@@ -10,14 +10,25 @@
  * 该组件用于显示某站点的所有设备信息。
  */
 import { ref, watch } from 'vue';
-import { ElCascader, ElTree, ElMessage } from 'element-plus';
+import { ElCascader, ElTree, ElMessage, ElMessageBox } from 'element-plus';
 import equipmentService from '../../services/equipment-service.js';
 import allStationInfo from '../../constants/AllStationInfo.json';
+import { useSceneManager } from '../../core/SceneManager.js';
+import { useObjectSelection } from '../../composables/useObjectSelection.js';
+import useTransform from '../../composables/useTransform.js';
+import { useScene } from '../../composables/useScene.js';
+
+const scene = useScene();
+const objectSelection = useObjectSelection();
+const transform = useTransform();
 
 const stationData = ref(formatCascaderOptions(allStationInfo)); // 用于级联选择的数据
 
 // 当前选中的站点信息，ref变量
 const selectedStation = ref(null); // { lineName, stationName }
+
+// 当前设备列表，ref变量
+const equipmentList = ref([]); // 原始设备列表
 
 // 当前设备树数据，ref变量
 const equipmentTreeData = ref([]); // el-tree数据
@@ -109,6 +120,7 @@ async function handleStationChange(val) {
 function clearEquipmentList() {
   selectedStation.value = null;
   equipmentTreeData.value = [];
+  equipmentList.value = [];
   searchKeyword.value = '';
   searchResults.value = [];
 }
@@ -122,6 +134,7 @@ async function loadEquipmentList() {
   try {
     const list = await equipmentService.list({ stationName: selectedStation.value.stationName });
     equipmentTreeData.value = buildEquipmentTree(list);
+    equipmentList.value = list; // 保存原始列表
   } catch (e) {
     ElMessage.error('设备信息加载失败');
     equipmentTreeData.value = [];
@@ -171,6 +184,127 @@ function buildEquipmentTree(list) {
   return tree;
 }
 
+/**
+ * syncScene，先清空所有内容，再按照equipmentList来构建场景
+ */
+function syncScene() {
+  ElMessageBox.confirm('确定要新建场景吗？这将清除当前所有内容。', '提示', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning'
+  }).then(async () => {
+    objectSelection.clearSelection();
+    transform.clearHistory();
+
+    scene.clearScene();
+    scene.resetScene();
+
+    // 创建场景JSON
+    let sceneData = createSceneData();
+
+    // 加载场景
+    const sceneManager = useSceneManager();
+    await sceneManager.loadScene(sceneData);
+  })
+}
+
+/**
+ * 创建场景JSON
+ */
+function createSceneData() {
+  let { lineName, stationName } = selectedStation.value || {};
+  if (!lineName || !stationName) {
+    ElMessage.error('请先选择站点');
+    return null;
+  }
+  let drive = 'vfs';
+
+  let sceneData = {
+    "objects": [],
+    "lights": [
+      {
+        "type": "AmbientLight",
+        "position": [ 0, 0, 0 ],
+        "color": 4210752,
+        "intensity": 10
+      },
+      {
+        "type": "DirectionalLight",
+        "position": [ 50, 50, 50 ],
+        "color": 16777215,
+        "intensity": 1
+      }
+    ],
+    "camera": {
+      "position": { "x": 200, "y": 200, "z": 200 },
+      "target": { "x": 0, "y": 0, "z": 0 },
+      "fov": 75, "near": 0.1, "far": 1000
+    },
+    "background": 2236962,
+    "config": {
+      "backgroundColor": "#222222",
+      "shadowsEnabled": true,
+      "toneMappingEnabled": true,
+      "exposure": 1
+    }
+  };
+
+  // 添加站点模型
+  let station = {
+    "id": stationName,
+    "name": "",
+    "position": [ 0, 0, 0 ],
+    "rotation": [ 0, 0, 0, "XYZ" ],
+    "scale": [ 0.01, 0.01, 0.01 ],
+    "userData": {
+      "unitScaleFactor": 1,
+      "fileInfo": {
+        "drive": drive,
+        "path": "/" + lineName,
+        "name": stationName + ".fbx",
+        "type": "FILE"
+      },
+      "id": stationName,
+      "locked": true
+    }
+  }
+  sceneData.objects.push(station);
+
+  // 枚举设备，添加设备模型
+  for (let eq of equipmentList.value) {
+    let { position, quaternion, scale } = eq;
+    let { equipmentUniqueId, name, equipmentMajor, equipmentType } = eq;
+    if(equipmentType != 'AGM1')continue; // 目前仅支持AGM1设备模型
+
+    position = position ? position.split('|').map(v => parseFloat(v)) : [0,0,0];
+    quaternion = quaternion ? quaternion.split('|').map(v => parseFloat(v)) : [0,0,0,1];
+    scale = scale ? scale.split('|').map(v => parseFloat(v)) : [1,1,1];
+    scale = scale.map(v => v * 0.01); // 设备模型缩小100倍
+    let rotation = [0,0,0,'XYZ']; // 默认欧拉角
+
+    let eqModel = {
+      "id": equipmentUniqueId,
+      "name": name,
+      "position": position,
+      "rotation": rotation,
+      "scale": scale,
+      "userData": {
+        "fileInfo": {
+          "drive": drive,
+          "path": "/" + equipmentMajor,
+          "name": equipmentType + ".fbx",
+          "type": "FILE"
+        },
+        "id": equipmentUniqueId,
+        "deviceInfo": eq
+      }
+    };
+    sceneData.objects.push(eqModel);
+  }
+
+  console.log('生成场景数据：', sceneData);
+  return sceneData;
+}
 </script>
 
 <template>
@@ -187,7 +321,7 @@ function buildEquipmentTree(list) {
         style="width: 150px"
       />
       &nbsp;
-      <el-button>布点</el-button>
+      <el-button @click="syncScene">布点</el-button>
     </div>
     <div class="station__search">
       <el-input v-model="searchKeyword" placeholder="搜索设备" style="width: 200px" />
