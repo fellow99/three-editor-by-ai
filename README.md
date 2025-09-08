@@ -70,7 +70,7 @@ three-editor-by-ai/
 │   │   │   ├── VfsFileChooserDialog.vue      # 虚拟文件系统文件选择对话框
 │   │   │   ├── VfsFileSaverDialog.vue        # 虚拟文件系统文件保存对话框
 │   │   ├── ioms/                             # IOMS相关业务组件
-│   │   │   ├── EquipmentList.vue             # 站点设备列表组件，级联选择线路和站点，树形展示设备信息，支持设备名称模糊搜索，支持点击设备树节点选中并聚焦三维场景对象
+│   │   │   ├── EquipmentList.vue             # 站点设备列表组件，线路-站点数据来源于src/services/device-service.js的lineList接口，级联选择线路和站点，树形展示设备信息，支持设备名称模糊搜索，支持点击设备树节点选中并聚焦三维场景对象
 │   │   ├── scene/                            # 3D 场景组件
 │   │   │   ├── SceneViewer.vue               # 主场景视图，支持拖拽添加对象到当前视点位置
 │   │   │   ├── StatHints.vue                 # 性能监控面板
@@ -101,7 +101,7 @@ three-editor-by-ai/
 │   ├── constants/            # 常量定义
 │   │   ├── PRIMITIVES.json   # 预定义几何体与灯光类型数据
 │   │   ├── StationActiveMajorTypeInfo.json # 地铁设备专业-类型数据字典，供属性面板下拉选择使用
-│   │   ├── AllStationInfo.json   # 地铁线路-车站-空间-子空间数据字典，供属性面板下拉选择使用
+│   │   ├── AllStationInfo.json   # 地铁线路-车站-空间-子空间数据字典，仅供属性面板下拉选择使用，设备列表组件已不再依赖
 │   ├── App.vue               # 根组件（仅负责引入Editor.vue）
 │   ├── Editor.vue            # 主编辑器组件（包含全部业务与UI）
 │   ├── main.js               # 应用入口

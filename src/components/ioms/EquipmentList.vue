@@ -1,18 +1,19 @@
 <!--
   设备列表组件
   用于显示某站点的所有设备信息。
-  - 顶部通过el-select实现线路-站点级联选择，数据来源src/constants/AllStationInfo.json。
+  - 顶部通过el-cascader实现线路-站点级联选择，数据来源src/services/device-service.js的lineList接口。
   - 选择站点后，调用equipment-service.js的list函数获取设备，按lineName=>stationName=>stationSpaceName=>stationSubSpaceName用el-tree展示。
+  - 本组件已适配lineList接口返回的新结构。
 -->
 
 <script setup>
 /**
  * 该组件用于显示某站点的所有设备信息。
  */
-import { ref, watch } from 'vue';
+import { ref, watch, onMounted } from 'vue';
 import { ElCascader, ElTree, ElMessage, ElMessageBox } from 'element-plus';
 import equipmentService from '../../services/equipment-service.js';
-import allStationInfo from '../../constants/AllStationInfo.json';
+import deviceService from '../../services/device-service.js';
 import { useSceneManager } from '../../core/SceneManager.js';
 import { useObjectSelection } from '../../composables/useObjectSelection.js';
 import useTransform from '../../composables/useTransform.js';
@@ -22,7 +23,39 @@ const scene = useScene();
 const objectSelection = useObjectSelection();
 const transform = useTransform();
 
-const stationData = ref(formatCascaderOptions(allStationInfo)); // 用于级联选择的数据
+const stationData = ref([]); // 用于级联选择的数据
+
+/**
+ * 页面初始化时加载线路-站点数据
+ */
+onMounted(async () => {
+  try {
+    const lines = await deviceService.lineList();
+    stationData.value = formatCascaderOptions(lines);
+  } catch (e) {
+    stationData.value = [];
+    ElMessage.error('线路-站点数据加载失败');
+  }
+});
+
+/**
+ * 格式化lineList接口返回的数据为el-cascader所需格式
+ * @param {Array} lines
+ * @returns {Array}
+ */
+function formatCascaderOptions(lines) {
+  if (!Array.isArray(lines)) return [];
+  return lines.map(line => ({
+    value: line.lineCn,
+    label: line.lineCn,
+    children: Array.isArray(line.stations)
+      ? line.stations.map(st => ({
+          value: st.nameCn,
+          label: st.nameCn
+        }))
+      : []
+  }));
+}
 
 // 当前选中的站点信息，ref变量
 const selectedStation = ref(null); // { lineName, stationName }
@@ -85,23 +118,6 @@ function handleSearch() {
   searchTree(equipmentTreeData.value);
 }
 
-/**
- * 级联选择器选项，格式转换
- */
-function formatCascaderOptions(raw) {
-  // raw为AllStationInfo.json对象
-  if (!raw || !raw.lineName || !raw.stations) return [];
-  return [
-    {
-      value: raw.lineName,
-      label: raw.lineName,
-      children: raw.stations.map(st => ({
-        value: st.stationName,
-        label: st.stationName
-      }))
-    }
-  ];
-}
 
 
 /**
@@ -274,7 +290,7 @@ function createSceneData() {
   for (let eq of equipmentList.value) {
     let { position, quaternion, scale } = eq;
     let { equipmentUniqueId, name, equipmentMajor, equipmentType } = eq;
-    if(equipmentType != 'AGM1')continue; // 目前仅支持AGM1设备模型
+    if(equipmentType.indexOf('AGM') != 0)continue; // 目前仅支持AGM1设备模型
 
     position = position ? position.split('|').map(v => parseFloat(v)) : [0,0,0];
     quaternion = quaternion ? quaternion.split('|').map(v => parseFloat(v)) : [0,0,0,1];
