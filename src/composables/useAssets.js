@@ -248,7 +248,8 @@ export function useAssets() {
     });
 
     const modelInfo = {
-      id: model.userData.id || generateId(),
+      //id: model.userData.id || generateId(),
+      id: file.name, // 用文件名作为ID，cache机制中用文件名查找
       name: getFileName(file.name),
       filename: file.name,
       size: file.size,
