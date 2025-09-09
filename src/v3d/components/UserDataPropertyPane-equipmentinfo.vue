@@ -82,7 +82,7 @@ function fetchScale() {
 }
 
 /** 设备专业-类型数据字典 */
-import majorTypeInfo from '../../constants/StationActiveMajorTypeInfo.json'
+import majorTypeInfo from '../constants/StationActiveMajorTypeInfo.json'
 
 /** 专业选项 */
 const majorOptions = Object.keys(majorTypeInfo)
