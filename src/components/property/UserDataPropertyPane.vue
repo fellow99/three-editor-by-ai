@@ -8,7 +8,7 @@
 import { ref, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useObjectSelection } from '../../composables/useObjectSelection.js'
-import UserDataPropertyPaneMetroDevice from './UserDataPropertyPane-metro-device.vue'
+import UserDataPropertyPaneEquipmentinfo from '@/v3d/components/UserDataPropertyPane-equipmentinfo.vue'
 
 /** 对象选择管理器 */
 const objectSelection = useObjectSelection()
@@ -85,11 +85,11 @@ function onUserDataBlur() {
 
 /**
  * 添加地铁设备信息字段
- * 向userData添加deviceInfo字段及初始内容
+ * 向userData添加equipmentInfo字段及初始内容
  */
-function addDeviceInfo() {
+function addEquipmentInfo() {
   if (!selectedObject.value) return
-  const defaultDeviceInfo = {
+  const defaultEquipmentInfo = {
     uniqueId: 0,
     author: '',
     changeTime: '',
@@ -109,7 +109,7 @@ function addDeviceInfo() {
     parentName: ''
   }
   if (!selectedObject.value.userData) selectedObject.value.userData = {}
-  selectedObject.value.userData.deviceInfo = defaultDeviceInfo
+  selectedObject.value.userData.equipmentInfo = defaultEquipmentInfo
   refreshUserData()
   ElMessage.success('已添加设备信息字段')
 }
@@ -118,10 +118,10 @@ function addDeviceInfo() {
  * 更新地铁设备信息
  * 用于子组件表单双向绑定
  */
-function updateDeviceInfo(newDeviceInfo) {
+function updateEquipmentInfo(newEquipmentInfo) {
   if (!selectedObject.value) return
   if (!selectedObject.value.userData) selectedObject.value.userData = {}
-  selectedObject.value.userData.deviceInfo = newDeviceInfo
+  selectedObject.value.userData.equipmentInfo = newEquipmentInfo
   refreshUserData()
 }
 </script>
@@ -130,18 +130,18 @@ function updateDeviceInfo(newDeviceInfo) {
   <div v-if="hasSelection" class="property-section">
     <el-tabs>
       <el-tab-pane label="设备信息">
-        <!-- 如果包含deviceInfo字段，显示地铁设备专用属性面板 -->
-        <UserDataPropertyPaneMetroDevice
-          v-if="selectedObject && selectedObject.userData && selectedObject.userData.deviceInfo"
-          :device-info="selectedObject.userData.deviceInfo"
-          @update:device-info="updateDeviceInfo"
+        <!-- 如果包含equipmentInfo字段，显示地铁设备专用属性面板 -->
+        <UserDataPropertyPaneEquipmentinfo
+          v-if="selectedObject && selectedObject.userData && selectedObject.userData.equipmentInfo"
+          :equipment-info="selectedObject.userData.equipmentInfo"
+          @update:equipment-info="updateEquipmentInfo"
         />
           <el-button
             v-else
             type="primary"
             size="small"
             style="margin-bottom: 12px;"
-            @click="addDeviceInfo"
+            @click="addEquipmentInfo"
           >添加设备信息</el-button>
       </el-tab-pane>
       <el-tab-pane label="表格视图">

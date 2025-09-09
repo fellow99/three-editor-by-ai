@@ -42,6 +42,7 @@
 ## 📁 项目结构
 
 ```
+> 已支持 Vite 配置别名 @，可用于 import xxx from '@/utils/xxx' 方式引用 src 目录下文件。
 three-editor-by-ai/
 ├── src/
 │   ├── components/                           # Vue 组件
@@ -58,7 +59,6 @@ three-editor-by-ai/
 │   │   │   ├── ScenePropertyPane.vue         # 场景属性编辑面板
 │   │   │   ├── BasePropertyPane.vue          # 对象基础属性编辑面板
 │   │   │   ├── UserDataPropertyPane.vue      # userData属性编辑面板
-│   │   │   ├── UserDataPropertyPane-metro-device.vue # 地铁设备专用属性编辑面板，设备专业/类型字段支持下拉联动
 │   │   │   ├── TransformPropertyPane.vue     # 变换属性面板（位置、旋转、缩放）
 │   │   │   ├── AnimationPropertyPane.vue     # 动画属性面板（动画选择与播放）
 │   │   │   ├── MaterialPropertyPane.vue      # 材质编辑面板
@@ -69,8 +69,6 @@ three-editor-by-ai/
 │   │   │   ├── EditorConfigDialog.vue        # 编辑器配置对话框
 │   │   │   ├── VfsFileChooserDialog.vue      # 虚拟文件系统文件选择对话框
 │   │   │   ├── VfsFileSaverDialog.vue        # 虚拟文件系统文件保存对话框
-│   │   ├── ioms/                             # IOMS相关业务组件
-│   │   │   ├── EquipmentList.vue             # 站点设备列表组件，线路-站点数据来源于src/services/device-service.js的lineList接口，级联选择线路和站点，树形展示设备信息，支持设备名称模糊搜索，支持点击设备树节点选中并聚焦三维场景对象
 │   │   ├── scene/                            # 3D 场景组件
 │   │   │   ├── SceneViewer.vue               # 主场景视图，支持拖拽添加对象到当前视点位置
 │   │   │   ├── StatHints.vue                 # 性能监控面板
@@ -102,6 +100,15 @@ three-editor-by-ai/
 │   │   ├── PRIMITIVES.json   # 预定义几何体与灯光类型数据
 │   │   ├── StationActiveMajorTypeInfo.json # 地铁设备专业-类型数据字典，供属性面板下拉选择使用
 │   │   ├── AllStationInfo.json   # 地铁线路-车站-空间-子空间数据字典，仅供属性面板下拉选择使用，设备列表组件已不再依赖
+│   ├── v3d/                      # 智慧车站专用扩展包
+│   │   ├── components/           # Vue 组件
+│   │   │   ├── EquipmentList.vue # 站点设备列表组件
+│   │   │   ├── UserDataPropertyPane-equipmentinfo.vue # 地铁设备专用属性编辑面板
+│   │   ├── services/             # 数据请求和外部接口
+│   │   │   ├── device-service.js # device服务接口
+│   │   │   ├── equipment-service.js # equipment服务接口
+│   │   ├── composables/          # Vue Composition API 可组合函数
+│   │   │   ├── useV3D.js         # 智慧车站专用组合函数
 │   ├── App.vue               # 根组件（仅负责引入Editor.vue）
 │   ├── Editor.vue            # 主编辑器组件（包含全部业务与UI）
 │   ├── main.js               # 应用入口

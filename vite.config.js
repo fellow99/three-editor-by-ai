@@ -1,6 +1,7 @@
 /**
  * Vite 配置文件
  * - base 和 build.outDir 动态读取 package.json 的 name 字段
+ * - 配置 @ 别名指向 src 目录，便于简洁引用（如 import xxx from '@/utils/xxx'）
  */
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
@@ -25,6 +26,11 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: path => path.replace(/^\/mics-datahub\/device/, '/device'),
       }
+    }
+  },
+  resolve: {
+    alias: {
+      '@': '/src'
     }
   },
   plugins: [

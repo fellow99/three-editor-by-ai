@@ -1,6 +1,6 @@
 <!--
   地铁设备专用属性编辑面板
-  以表单方式上下布局展示deviceInfo各字段，支持编辑并通过emit更新父组件。
+  以表单方式上下布局展示equipmentInfo各字段，支持编辑并通过emit更新父组件。
   数据结构例子如下：
   {
       "uniqueId": 18303,
@@ -31,7 +31,7 @@ import { useObjectSelection } from '../../composables/useObjectSelection.js'
 /** 父组件传入的地铁设备信息对象 */
 const props = defineProps({
   /** 地铁设备信息对象 */
-  deviceInfo: {
+  equipmentInfo: {
     type: Object,
     required: true
   }
@@ -45,7 +45,7 @@ const selectedObject = computed(() => {
 })
 
 /** 用于表单双向绑定的本地副本 */
-const localDeviceInfo = ref({ ...props.deviceInfo })
+const localEquipmentInfo = ref({ ...props.equipmentInfo })
 
 /**
  * 手动获取选中对象的position/quaternion/scale，点击按钮时触发
@@ -53,7 +53,7 @@ const localDeviceInfo = ref({ ...props.deviceInfo })
 function fetchPosition() {
   const obj = selectedObject.value
   if (obj) {
-    localDeviceInfo.value.position = Array.isArray(obj.position)
+    localEquipmentInfo.value.position = Array.isArray(obj.position)
       ? obj.position.join('|')
       : (typeof obj.position === 'object' && obj.position !== null)
         ? [obj.position.x, obj.position.y, obj.position.z].join('|')
@@ -63,7 +63,7 @@ function fetchPosition() {
 function fetchQuaternion() {
   const obj = selectedObject.value
   if (obj) {
-    localDeviceInfo.value.quaternion = Array.isArray(obj.quaternion)
+    localEquipmentInfo.value.quaternion = Array.isArray(obj.quaternion)
       ? obj.quaternion.join('|')
       : (typeof obj.quaternion === 'object' && obj.quaternion !== null)
         ? [obj.quaternion.x, obj.quaternion.y, obj.quaternion.z, obj.quaternion.w].join('|')
@@ -73,7 +73,7 @@ function fetchQuaternion() {
 function fetchScale() {
   const obj = selectedObject.value
   if (obj) {
-    localDeviceInfo.value.scale = Array.isArray(obj.scale)
+    localEquipmentInfo.value.scale = Array.isArray(obj.scale)
       ? obj.scale.join('|')
       : (typeof obj.scale === 'object' && obj.scale !== null)
         ? [obj.scale.x, obj.scale.y, obj.scale.z].join('|')
@@ -107,7 +107,7 @@ const subSpaceOptions = ref([])
 
 /** 监听线路变化，联动车站选项 */
 watch(
-  () => localDeviceInfo.value.lineName,
+  () => localEquipmentInfo.value.lineName,
   (line) => {
     if (line === allStationInfo.lineName) {
       stationOptions.value = allStationInfo.stations.map(s => ({
@@ -118,8 +118,8 @@ watch(
       stationOptions.value = []
     }
     // 自动重置下级
-    if (!stationOptions.value.some(opt => opt.value === localDeviceInfo.value.stationName)) {
-      localDeviceInfo.value.stationName = ''
+    if (!stationOptions.value.some(opt => opt.value === localEquipmentInfo.value.stationName)) {
+      localEquipmentInfo.value.stationName = ''
     }
   },
   { immediate: true }
@@ -127,7 +127,7 @@ watch(
 
 /** 监听车站变化，联动空间选项 */
 watch(
-  () => localDeviceInfo.value.stationName,
+  () => localEquipmentInfo.value.stationName,
   (stationAcronym) => {
     const station = allStationInfo.stations.find(s => s.stationName === stationAcronym)
     if (station) {
@@ -138,8 +138,8 @@ watch(
     } else {
       spaceOptions.value = []
     }
-    if (!spaceOptions.value.some(opt => opt.value === localDeviceInfo.value.stationSpaceName)) {
-      localDeviceInfo.value.stationSpaceName = ''
+    if (!spaceOptions.value.some(opt => opt.value === localEquipmentInfo.value.stationSpaceName)) {
+      localEquipmentInfo.value.stationSpaceName = ''
     }
   },
   { immediate: true }
@@ -147,7 +147,7 @@ watch(
 
 /** 监听空间变化，联动子空间选项 */
 watch(
-  [() => localDeviceInfo.value.stationName, () => localDeviceInfo.value.stationSpaceName],
+  [() => localEquipmentInfo.value.stationName, () => localEquipmentInfo.value.stationSpaceName],
   ([stationName, spaceName]) => {
     const station = allStationInfo.stations.find(s => s.stationName === stationName)
     if (station) {
@@ -162,8 +162,8 @@ watch(
     } else {
       subSpaceOptions.value = []
     }
-    if (!subSpaceOptions.value.some(opt => opt.value === localDeviceInfo.value.stationSubSpaceName)) {
-      localDeviceInfo.value.stationSubSpaceName = ''
+    if (!subSpaceOptions.value.some(opt => opt.value === localEquipmentInfo.value.stationSubSpaceName)) {
+      localEquipmentInfo.value.stationSubSpaceName = ''
     }
   },
   { immediate: true }
@@ -171,26 +171,26 @@ watch(
 
 /** 监听专业变化，联动类型选项 */
 watch(
-  () => localDeviceInfo.value.equipmentMajor,
+  () => localEquipmentInfo.value.equipmentMajor,
   (major) => {
     typeOptions.value = majorTypeInfo[major] || []
-    if (!typeOptions.value.includes(localDeviceInfo.value.equipmentType)) {
-      localDeviceInfo.value.equipmentType = ''
+    if (!typeOptions.value.includes(localEquipmentInfo.value.equipmentType)) {
+      localEquipmentInfo.value.equipmentType = ''
     }
   },
   { immediate: true }
 )
 
 /** 向父组件同步更新 */
-const emit = defineEmits(['update:device-info'])
+const emit = defineEmits(['update:equipment-info'])
 
 /**
- * 监听props.deviceInfo变化，保持本地副本同步
+ * 监听props.equipmentInfo变化，保持本地副本同步
  */
 watch(
-  () => props.deviceInfo,
+  () => props.equipmentInfo,
   (val) => {
-    localDeviceInfo.value = { ...val }
+    localEquipmentInfo.value = { ...val }
   },
   { deep: true }
 )
@@ -199,7 +199,7 @@ watch(
  * 表单项变更时，emit更新父组件
  */
 function onFieldChange() {
-  emit('update:device-info', { ...localDeviceInfo.value })
+  emit('update:equipment-info', { ...localEquipmentInfo.value })
 }
 </script>
 
@@ -207,58 +207,58 @@ function onFieldChange() {
   <el-form
     label-width="100px"
     label-position="right"
-    class="metro-device-form"
-    :model="localDeviceInfo"
+    class="equipmentinfo-form"
+    :model="localEquipmentInfo"
     size="small"
     @input="onFieldChange"
   >
     <el-form-item label="唯一ID">
-      <el-input v-model="localDeviceInfo.uniqueId" @input="onFieldChange" />
+      <el-input v-model="localEquipmentInfo.uniqueId" @input="onFieldChange" />
     </el-form-item>
     <el-form-item label="线路名称">
-      <el-select v-model="localDeviceInfo.lineName" @change="onFieldChange" placeholder="请选择线路">
+      <el-select v-model="localEquipmentInfo.lineName" @change="onFieldChange" placeholder="请选择线路">
         <el-option v-for="opt in lineOptions" :key="opt.value" :label="opt.label" :value="opt.value" />
       </el-select>
     </el-form-item>
     <el-form-item label="车站名称">
-      <el-select v-model="localDeviceInfo.stationName" @change="onFieldChange" placeholder="请选择车站">
+      <el-select v-model="localEquipmentInfo.stationName" @change="onFieldChange" placeholder="请选择车站">
         <el-option v-for="opt in stationOptions" :key="opt.value" :label="opt.label" :value="opt.value" />
       </el-select>
     </el-form-item>
     <el-form-item label="空间名称">
-      <el-select v-model="localDeviceInfo.stationSpaceName" @change="onFieldChange" placeholder="请选择空间">
+      <el-select v-model="localEquipmentInfo.stationSpaceName" @change="onFieldChange" placeholder="请选择空间">
         <el-option v-for="opt in spaceOptions" :key="opt.value" :label="opt.label" :value="opt.value" />
       </el-select>
     </el-form-item>
     <el-form-item label="子空间名称">
-      <el-select v-model="localDeviceInfo.stationSubSpaceName" @change="onFieldChange" placeholder="请选择子空间">
+      <el-select v-model="localEquipmentInfo.stationSubSpaceName" @change="onFieldChange" placeholder="请选择子空间">
         <el-option v-for="opt in subSpaceOptions" :key="opt.value" :label="opt.label" :value="opt.value" />
       </el-select>
     </el-form-item>
     <el-form-item label="设备专业">
-      <el-select v-model="localDeviceInfo.equipmentMajor" @change="onFieldChange" placeholder="请选择设备专业">
+      <el-select v-model="localEquipmentInfo.equipmentMajor" @change="onFieldChange" placeholder="请选择设备专业">
         <el-option v-for="major in majorOptions" :key="major" :label="major" :value="major" />
       </el-select>
     </el-form-item>
     <el-form-item label="设备类型">
-      <el-select v-model="localDeviceInfo.equipmentType" @change="onFieldChange" placeholder="请选择设备类型">
+      <el-select v-model="localEquipmentInfo.equipmentType" @change="onFieldChange" placeholder="请选择设备类型">
         <el-option v-for="type in typeOptions" :key="type" :label="type" :value="type" />
       </el-select>
     </el-form-item>
     <el-form-item label="设备系统">
-      <el-input v-model="localDeviceInfo.equipmentSystem" @input="onFieldChange" />
+      <el-input v-model="localEquipmentInfo.equipmentSystem" @input="onFieldChange" />
     </el-form-item>
     <el-form-item label="设备子类型">
-      <el-input v-model="localDeviceInfo.equipmentSubType" @input="onFieldChange" />
+      <el-input v-model="localEquipmentInfo.equipmentSubType" @input="onFieldChange" />
     </el-form-item>
     <el-form-item label="设备唯一编号">
-      <el-input v-model="localDeviceInfo.equipmentUniqueId" @input="onFieldChange" />
+      <el-input v-model="localEquipmentInfo.equipmentUniqueId" @input="onFieldChange" />
     </el-form-item>
     <el-form-item label="名称">
-      <el-input v-model="localDeviceInfo.name" @input="onFieldChange" />
+      <el-input v-model="localEquipmentInfo.name" @input="onFieldChange" />
     </el-form-item>
     <el-form-item label="父级名称">
-      <el-input v-model="localDeviceInfo.parentName" @input="onFieldChange" />
+      <el-input v-model="localEquipmentInfo.parentName" @input="onFieldChange" />
     </el-form-item>
     <!--
       位置（position）、四元数（quaternion）、缩放（scale）字段
@@ -269,31 +269,31 @@ function onFieldChange() {
       只读，通过按钮手动获取选中对象的最新值
     -->
     <el-form-item label="位置">
-      <el-input v-model="localDeviceInfo.position" readonly style="width:calc(100% - 70px);display:inline-block;" />
+      <el-input v-model="localEquipmentInfo.position" readonly style="width:calc(100% - 70px);display:inline-block;" />
       <el-button type="primary" size="small" style="margin-left:8px;" @click="fetchPosition">获取</el-button>
     </el-form-item>
     <el-form-item label="四元数">
-      <el-input v-model="localDeviceInfo.quaternion" readonly style="width:calc(100% - 70px);display:inline-block;" />
+      <el-input v-model="localEquipmentInfo.quaternion" readonly style="width:calc(100% - 70px);display:inline-block;" />
       <el-button type="primary" size="small" style="margin-left:8px;" @click="fetchQuaternion">获取</el-button>
     </el-form-item>
     <el-form-item label="缩放">
-      <el-input v-model="localDeviceInfo.scale" readonly style="width:calc(100% - 70px);display:inline-block;" />
+      <el-input v-model="localEquipmentInfo.scale" readonly style="width:calc(100% - 70px);display:inline-block;" />
       <el-button type="primary" size="small" style="margin-left:8px;" @click="fetchScale">获取</el-button>
     </el-form-item>
     <el-form-item label="作者">
-      <el-input v-model="localDeviceInfo.author" @input="onFieldChange" />
+      <el-input v-model="localEquipmentInfo.author" @input="onFieldChange" />
     </el-form-item>
     <el-form-item label="修改时间">
-      <el-input v-model="localDeviceInfo.changeTime" @input="onFieldChange" />
+      <el-input v-model="localEquipmentInfo.changeTime" @input="onFieldChange" />
     </el-form-item>
     <el-form-item label="用户数据">
-      <el-input v-model="localDeviceInfo.userData" @input="onFieldChange" />
+      <el-input v-model="localEquipmentInfo.userData" @input="onFieldChange" />
     </el-form-item>
   </el-form>
 </template>
 
 <style lang="scss" scoped>
-.metro-device-form {
+.equipmentinfo-form {
   display: flex;
   flex-direction: column;
   gap: 0;

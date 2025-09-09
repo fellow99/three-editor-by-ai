@@ -10,7 +10,7 @@ import AssetBrowser from './AssetBrowser.vue';
 import Inspector from './Inspector.vue';
 import VfsFileBrowser from './VfsFileBrowser.vue';
 import PrimitiveBrowser from './PrimitiveBrowser.vue';
-import EquipmentList from '../ioms/EquipmentList.vue';
+import EquipmentList from '../../v3d/components/EquipmentList.vue';
 
 const scene = inject('scene');
 
