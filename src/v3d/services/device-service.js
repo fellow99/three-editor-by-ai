@@ -35,9 +35,9 @@ async function systemList(params = {}) {
  */
 async function deviceKlassList(params = {}) {
     let url = `${BASE_URL}/device/micsDeviceKlass/listBySystemId?`;
-    if(params.lineId) url += `lineId=${params.lineId}`;
-    if(params.systemId) url += `systemId=${params.systemId}`;
-    if(params.systemName) url += `stationName=${params.systemName}`;
+    if(params.lineId) url += `&lineId=${params.lineId}`;
+    if(params.systemId) url += `&systemId=${params.systemId}`;
+    if(params.systemName) url += `&systemName=${params.systemName}`;
     let resp = await fetch(url);
     let json = await resp.json();
     if(json.code !== 0) throw new Error(json.message);

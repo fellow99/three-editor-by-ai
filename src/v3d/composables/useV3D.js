@@ -26,6 +26,13 @@ export default function useV3D() {
   const equipmentList = ref([]);
 
   /**
+   * systemDeviceKlass变量：存储当前系统下的设备分类列表
+   * @type {import('vue').Ref<Array>}
+   * 用于属性面板等组件动态下拉选择
+   */
+  const systemDeviceKlass = ref([]); // 当前系统设备分类列表
+
+  /**
    * 清空设备列表及选中站点
    * 用于切换站点或重置
    */
@@ -45,6 +52,46 @@ export default function useV3D() {
       equipmentList.value = list;
     } catch (e) {
       equipmentList.value = [];
+      throw e;
+    }
+  }
+
+  /**
+   * 加载所有系统的设备分类
+   * 1. 先获取所有系统分类（deviceKlassList无参）
+   * 2. 再根据当前站点lineName，枚举每个系统调用deviceKlassList({lineId, systemId, systemName})获取设备类型
+   * 3. 组织为 { 系统: [类型, ...] } 结构
+   * @returns {Promise<void>}
+   */
+  async function loadSystemDeviceKlass() {
+    systemDeviceKlass.value = {};
+    const lineId = selectedStation.value?.lineId;
+    try {
+      // 1. 获取所有系统分类
+      const systemList = await deviceService.systemList();
+      // 3. 枚举每个系统，获取设备类型
+      const result = systemList;
+      if (Array.isArray(systemList)) {
+        for (const sys of systemList) {
+          const systemId = sys.id;
+          const systemName = sys.name;
+          if (!lineId || !systemId) continue;
+          let params = { lineId, systemName };
+          // 获取该系统下所有设备类型
+          let types = [];
+          try {
+            const deviceKlassList = await deviceService.deviceKlassList(params);
+            sys.deviceKlassList = deviceKlassList || [];
+          } catch (e) {
+            // 某个系统失败不影响整体
+            console.error(`加载系统${systemName}的设备分类失败`, e);
+            sys.deviceKlassList = [];
+          }
+        }
+      }
+      systemDeviceKlass.value = result;
+    } catch (e) {
+      systemDeviceKlass.value = {};
       throw e;
     }
   }
@@ -173,6 +220,8 @@ export default function useV3D() {
     clearEquipmentList,
     createSceneData,
     getLineList,
-    getAllStationInfo
+    getAllStationInfo,
+    systemDeviceKlass,      // 当前系统设备分类列表
+    loadSystemDeviceKlass   // 加载设备分类方法
   };
 }

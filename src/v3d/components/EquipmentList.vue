@@ -23,12 +23,11 @@ const transform = useTransform();
 
 // 引入智慧车站设备组合函数，统一管理设备相关状态与操作
 import useV3D from '../composables/useV3D.js';
-const { getLineList, selectedStation, equipmentList, loadEquipmentList, clearEquipmentList, createSceneData } = useV3D();
+const { getLineList, selectedStation, equipmentList, loadEquipmentList, clearEquipmentList, createSceneData, loadSystemDeviceKlass } = useV3D();
 
 /**
  * 级联选择数据，自动响应 lineList 变化
  */
-import { computed } from 'vue';
 const stationData = ref([]); // el-cascader数据
 
 /**
@@ -47,11 +46,11 @@ onMounted(async () => {
 function formatCascaderOptions(lines) {
   if (!Array.isArray(lines)) return [];
   return lines.map(line => ({
-    value: line.lineCn,
+    value: line.lineId,
     label: line.lineCn,
     children: Array.isArray(line.stations)
       ? line.stations.map(st => ({
-          value: st.nameCn,
+          value: st.stationId,
           label: st.nameCn
         }))
       : []
@@ -91,18 +90,20 @@ watch(searchKeyword, (val) => {
 /**
  * 设备搜索函数
  * 根据searchKeyword递归查找设备节点，结果存入searchResults
+ * 搜索关键字不区分大小写
+ * 新语法：使用String.prototype.toLowerCase()实现不区分大小写的模糊匹配
  */
 function handleSearch() {
   // 清空上次结果
   searchResults.value = [];
-  const keyword = searchKeyword.value.trim();
+  const keyword = searchKeyword.value.trim().toLowerCase();
   if (!keyword) return;
   // 递归遍历设备树，收集匹配节点
   function searchTree(nodes) {
     if (!Array.isArray(nodes)) return;
     for (const node of nodes) {
-      // 只匹配设备节点（有data属性）
-      if (node.data && node.label && node.label.includes(keyword)) {
+      // 只匹配设备节点（有data属性），不区分大小写
+      if (node.data && node.label && node.label.toLowerCase().includes(keyword)) {
         searchResults.value.push({
           label: node.label,
           ...node.data
@@ -124,7 +125,19 @@ async function handleStationChange(val) {
   if (!val || val.length < 2) {
     clearEquipmentListWrapper();
   } else {
-    selectedStation.value = { lineName: val[0], stationName: val[1] };
+    let lineId = val[0];
+    let stationId = val[1];
+    // 由于lineList接口返回的数据结构变化，需从stationData中查找对应的中文名称
+    let line = stationData.value.find(l => l.value === lineId);
+    let station = line ? line.children.find(s => s.value === stationId) : null;
+    if (!line || !station) {
+      ElMessage.error('未找到对应线路或站点');
+      clearEquipmentListWrapper();
+      return;
+    }
+    let lineName = line.label;
+    let stationName = station.label;
+    selectedStation.value = { lineId, lineName, stationId, stationName };
     await loadEquipmentListWrapper();
   }
 }
@@ -142,13 +155,19 @@ function clearEquipmentListWrapper() {
 /**
  * 包装加载设备列表，加载后构建本地树
  */
+/**
+ * 包装加载设备列表，加载后构建本地树，并同步加载系统设备分类
+ */
 async function loadEquipmentListWrapper() {
   if (!selectedStation.value || !selectedStation.value.stationName) return;
   loading.value = true;
   try {
     await loadEquipmentList();
     equipmentTreeData.value = buildEquipmentTree(equipmentList.value);
+    // 加载系统设备分类，参数可根据实际业务调整
+    await loadSystemDeviceKlass();
   } catch (e) {
+    console.error('加载设备列表失败', e);
     equipmentTreeData.value = [];
   } finally {
     loading.value = false;

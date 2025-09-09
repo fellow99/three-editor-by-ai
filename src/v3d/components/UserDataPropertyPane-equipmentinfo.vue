@@ -81,18 +81,28 @@ function fetchScale() {
   }
 }
 
-/** 设备专业-类型数据字典 */
-import majorTypeInfo from '../constants/StationActiveMajorTypeInfo.json'
-
-/** 专业选项 */
-const majorOptions = Object.keys(majorTypeInfo)
-
-/** 类型选项，随专业联动 */
-const typeOptions = ref([])
-
-/** 线路-车站-空间-子空间数据字典（通过useV3D获取） */
+/**
+ * 设备专业-类型数据字典已废弃，改为动态获取systemDeviceKlass
+ * 专业和类型选项均从systemDeviceKlass生成
+ */
 import useV3D from '../composables/useV3D.js'
-const { selectedStation, getAllStationInfo } = useV3D()
+const { selectedStation, getAllStationInfo, systemDeviceKlass } = useV3D()
+
+/** 专业选项，取所有系统分类name */
+const majorOptions = computed(() => {
+  if (!Array.isArray(systemDeviceKlass.value)) return [];
+  return systemDeviceKlass.value.map(sys => sys.name).filter(Boolean);
+});
+
+/** 类型选项，随专业联动，取当前major的deviceKlassList.name */
+const typeOptions = computed(() => {
+  const major = localEquipmentInfo.value.equipmentMajor;
+  if (!major || !Array.isArray(systemDeviceKlass.value)) return [];
+  const sys = systemDeviceKlass.value.find(sys => sys.name === major);
+  if (!sys || !Array.isArray(sys.deviceKlassList)) return [];
+  return sys.deviceKlassList.map(item => item.name).filter(Boolean);
+});
+
 /** 当前选中站点的线路和车站名称 */
 const lineName = computed(() => selectedStation.value?.lineName || '')
 const stationName = computed(() => selectedStation.value?.stationName || '')
@@ -183,11 +193,10 @@ watch(
   { immediate: true }
 )
 
-/** 监听专业变化，联动类型选项 */
+/** 监听专业变化，联动类型选项，若类型不在可选范围则重置 */
 watch(
   () => localEquipmentInfo.value.equipmentMajor,
   (major) => {
-    typeOptions.value = majorTypeInfo[major] || []
     if (!typeOptions.value.includes(localEquipmentInfo.value.equipmentType)) {
       localEquipmentInfo.value.equipmentType = ''
     }

@@ -7,7 +7,7 @@ let BASE_URL = '/mics-datahub';
  */
 async function list(params = {}) {
     let url = `${BASE_URL}/equipmentinfo/list?`;
-    if(params.stationName) url += `stationName=${params.stationName}`;
+    if(params.stationName) url += `&stationName=${params.stationName}`;
     let resp = await fetch(url);
     let json = await resp.json();
     if(json.code !== 0) throw new Error(json.message);

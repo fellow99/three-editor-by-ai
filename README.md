@@ -103,12 +103,15 @@ three-editor-by-ai/
 │   ├── v3d/                      # 智慧车站专用扩展包
 │   │   ├── components/           # Vue 组件
 │   │   │   ├── EquipmentList.vue # 站点设备列表组件
-│   │   │   ├── UserDataPropertyPane-equipmentinfo.vue # 地铁设备专用属性编辑面板
+│   │   │   ├── UserDataPropertyPane-equipmentinfo.vue # 地铁设备专用属性编辑面板（设备专业/类型下拉动态获取systemDeviceKlass）
 │   │   ├── services/             # 数据请求和外部接口
 │   │   │   ├── device-service.js # device服务接口
 │   │   │   ├── equipment-service.js # equipment服务接口
 │   │   ├── composables/          # Vue Composition API 可组合函数
 │   │   │   ├── useV3D.js         # 智慧车站专用组合函数
+│   │   ├── constants/            # 常量定义
+│   │   │   ├── StationActiveMajorTypeInfo.json # 地铁设备专业-类型数据字典（数据例子）
+│   │   │   ├──  AllStationInfo.json   # 地铁线路-车站-空间-子空间数据字典（数据例子）
 │   ├── App.vue               # 根组件（仅负责引入Editor.vue）
 │   ├── Editor.vue            # 主编辑器组件（包含全部业务与UI）
 │   ├── main.js               # 应用入口
