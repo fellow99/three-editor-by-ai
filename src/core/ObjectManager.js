@@ -21,7 +21,6 @@ function generateId() {
   });
 }
 import { createBoxGeometry, createSphereGeometry, createCylinderGeometry } from '../utils/geometryUtils.js';
-import { useSceneManager } from './SceneManager.js';
 import { useObjectSelection } from '../composables/useObjectSelection.js';
 
 /**

@@ -33,7 +33,8 @@ import vfsService from '../../services/vfs-service.js';
 import { useAssetLoader } from '../../core/AssetLoader.js';
 import { useAssets } from '../../composables/useAssets.js';
 import { ElMessage } from 'element-plus';
-import 'element-plus/es/components/message/style/css';
+import useV3D from '@/v3d/composables/useV3D.js';
+const { stringToScale } = useV3D();
 
 export default {
   name: 'SceneViewer',
@@ -71,6 +72,7 @@ export default {
         const target = scene.sceneManager.controls.target;
         options.position = [target.x, target.y, target.z];
       }
+      options.scale = stringToScale('1|1|1'); // 针对智慧车站专用，该函数内部计算缩放
       try {
         // 优先判断拖拽类型
         // 1. 基础几何体/灯光

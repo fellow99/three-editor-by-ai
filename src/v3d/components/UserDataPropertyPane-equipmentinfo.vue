@@ -28,7 +28,7 @@
 import { ref, watch, computed } from 'vue'
 import { useObjectSelection } from '../../composables/useObjectSelection.js'
 import useV3D from '../composables/useV3D.js'
-const { selectedStation, getAllStationInfo, systemDeviceKlass } = useV3D()
+const { selectedStation, getAllStationInfo, systemDeviceKlass, scaleToString } = useV3D()
 
 
 /** 父组件传入的地铁设备信息对象 */
@@ -76,11 +76,7 @@ function fetchQuaternion() {
 function fetchScale() {
   const obj = selectedObject.value
   if (obj) {
-    localEquipmentInfo.value.scale = Array.isArray(obj.scale)
-      ? obj.scale.join('|')
-      : (typeof obj.scale === 'object' && obj.scale !== null)
-        ? [obj.scale.x, obj.scale.y, obj.scale.z].join('|')
-        : (obj.scale ?? '')
+    localEquipmentInfo.value.scale = scaleToString(obj.scale)
   }
 }
 

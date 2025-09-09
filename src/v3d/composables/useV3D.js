@@ -136,9 +136,9 @@ function createSceneData() {
   let station = {
     "id": stationName,
     "name": "",
-    "position": [ 0, 0, 0 ],
-    "rotation": [ 0, 0, 0, "XYZ" ],
-    "scale": [ 0.01, 0.01, 0.01 ],
+    "position": stringToPosition('0|0|0'),
+    "rotation": stringToQuaternion('0|0|0|1'),
+    "scale": stringToScale('1|1|1'),
     "userData": {
       "unitScaleFactor": 1,
       "fileInfo": {
@@ -159,11 +159,10 @@ function createSceneData() {
     let { equipmentUniqueId, name, equipmentMajor, equipmentType } = eq;
     if (typeof equipmentType !== 'string' || equipmentType.indexOf('AGM') !== 0) continue; // 仅支持AGM1设备模型
 
-    position = position ? position.split('|').map(v => parseFloat(v)) : [0,0,0];
-    quaternion = quaternion ? quaternion.split('|').map(v => parseFloat(v)) : [0,0,0,1];
-    scale = scale ? scale.split('|').map(v => parseFloat(v)) : [1,1,1];
-    scale = scale.map(v => v * 0.01); // 设备模型缩小100倍
-    let rotation = [0,0,0,'XYZ']; // 默认欧拉角
+    position = stringToPosition(position);
+    quaternion = stringToQuaternion(quaternion);
+    let rotation = quaternionToRotation(quaternion);
+    scale = stringToScale(eq.scale);
 
     let eqModel = {
       "id": equipmentUniqueId,
@@ -209,6 +208,91 @@ async function getAllStationInfo(lineName){
 }
 
 /**
+ * 将scale转为字符串，注意要乘以100
+ */
+function scaleToString(scale) {
+  if (Array.isArray(scale) && scale.length === 3) {
+    return scale.map(v => (parseFloat(v) * 100)).join('|');
+  } else if (typeof scale === 'object' && scale !== null) {
+    return [scale.x, scale.y, scale.z].map(v => (parseFloat(v) * 100)).join('|');
+  }
+  return '';
+}
+
+/**
+ * 将字符串转为scale数组，注意要除以100
+ */
+function stringToScale(scaleStr) {
+  if (typeof scaleStr === 'string' && scaleStr.length > 0) {
+    let parts = scaleStr.split('|').map(v => parseFloat(v) / 100);
+    if (parts.length === 3) {
+      return parts;
+    }
+  }
+  return [1,1,1];
+}
+
+function quaternionToEuler(q) {
+  let [x, y, z, w] = q;
+  let ysqr = y * y;
+
+  // roll (x-axis rotation)
+  let t0 = +2.0 * (w * x + y * z);
+  let t1 = +1.0 - 2.0 * (x * x + ysqr);
+  let roll = Math.atan2(t0, t1);
+  // pitch (y-axis rotation)
+  let t2 = +2.0 * (w * y - z * x);
+  t2 = t2 > +1.0 ? +1.0 : t2;
+  t2 = t2 < -1.0 ? -1.0 : t2;
+  let pitch = Math.asin(t2);
+  // yaw (z-axis rotation)
+  let t3 = +2.0 * (w * z + x * y);
+  let t4 = +1.0 - 2.0 * (ysqr + z * z);  
+  let yaw = Math.atan2(t3, t4);
+  return [roll, pitch, yaw];
+}
+
+function eulerToQuaternion(e) {
+  let [roll, pitch, yaw] = e;
+  let cy = Math.cos(yaw * 0.5);
+  let sy = Math.sin(yaw * 0.5);
+  let cr = Math.cos(roll * 0.5);
+  let sr = Math.sin(roll * 0.5);
+  let cp = Math.cos(pitch * 0.5);
+  let sp = Math.sin(pitch * 0.5);
+  let w = cy * cr * cp + sy * sr * sp;
+  let x = cy * sr * cp - sy * cr * sp;
+  let y = cy * cr * sp + sy * sr * cp;
+  let z = sy * cr * cp - cy * sr * sp;
+  return [x, y, z, w];
+}
+
+function quaternionToRotation(q) {
+  let e = quaternionToEuler(q);
+  return [e[0], e[1], e[2], 'XYZ'];
+}
+
+function stringToQuaternion(str) {
+  if (typeof str === 'string' && str.length > 0) {
+    let parts = str.split('|').map(v => parseFloat(v));
+    if (parts.length === 4) {
+      return parts;
+    }
+  }
+  return [0,0,0,1];
+}
+
+function stringToPosition(str) {
+  if (typeof str === 'string' && str.length > 0) {
+    let parts = str.split('|').map(v => parseFloat(v));
+    if (parts.length === 3) {
+      return parts;
+    }
+  }
+  return [0,0,0];
+}
+
+/**
  * 智慧车站设备列表相关组合函数
  * 提供站点选择、设备列表加载与清空、场景数据生成等功能
  */
@@ -222,6 +306,13 @@ export default function useV3D() {
     getLineList,
     getAllStationInfo,
     systemDeviceKlass,      // 当前系统设备分类列表
-    loadSystemDeviceKlass   // 加载设备分类方法
+    loadSystemDeviceKlass,   // 加载设备分类方法
+    scaleToString,
+    stringToScale,
+    quaternionToEuler,
+    quaternionToRotation,
+    eulerToQuaternion,
+    stringToQuaternion,
+    stringToPosition,
   };
 }
