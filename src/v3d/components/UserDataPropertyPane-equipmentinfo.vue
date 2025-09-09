@@ -27,6 +27,9 @@
 <script setup>
 import { ref, watch, computed } from 'vue'
 import { useObjectSelection } from '../../composables/useObjectSelection.js'
+import useV3D from '../composables/useV3D.js'
+const { selectedStation, getAllStationInfo, systemDeviceKlass } = useV3D()
+
 
 /** 父组件传入的地铁设备信息对象 */
 const props = defineProps({
@@ -81,13 +84,6 @@ function fetchScale() {
   }
 }
 
-/**
- * 设备专业-类型数据字典已废弃，改为动态获取systemDeviceKlass
- * 专业和类型选项均从systemDeviceKlass生成
- */
-import useV3D from '../composables/useV3D.js'
-const { selectedStation, getAllStationInfo, systemDeviceKlass } = useV3D()
-
 /** 专业选项，取所有系统分类name */
 const majorOptions = computed(() => {
   if (!Array.isArray(systemDeviceKlass.value)) return [];
@@ -109,19 +105,9 @@ const stationName = computed(() => selectedStation.value?.stationName || '')
 
 /** 线路-车站-空间-子空间数据字典（异步获取，随lineName变化自动更新） */
 const allStationInfo = ref({})
-watch(lineName, async (val) => {
-  if (val) {
-    allStationInfo.value = await getAllStationInfo(val)
-  } else {
-    allStationInfo.value = {}
-  }
-}, { immediate: true })
 
-/** 线路选项（只有一条线路，仍做成数组便于扩展） */
-const lineOptions = ref([
-  { label: allStationInfo.value.lineName ?? '', value: allStationInfo.value.lineName ?? '' }
-])
-
+/** 线路选项 */
+const lineOptions = ref([])
 /** 车站选项，随线路变化联动 */
 const stationOptions = ref([])
 /** 空间选项，随车站变化联动 */
@@ -129,22 +115,54 @@ const spaceOptions = ref([])
 /** 子空间选项，随空间变化联动 */
 const subSpaceOptions = ref([])
 
+
+watch(lineName, async (val) => {
+  if (val) {
+    allStationInfo.value = await getAllStationInfo(val)
+  } else {
+    allStationInfo.value = {stations: []}
+  }
+  // 线路下拉选项
+  lineOptions.value = [{ label: val, value: val }]
+  // 车站下拉选项
+  stationOptions.value = (allStationInfo.value.stations || []).map(s => ({
+    label: s.stationName ?? '',
+    value: s.stationName ?? ''
+  }))
+
+  // 空间下拉选项
+  const station = (allStationInfo.value.stations || []).find(s => s.stationName === stationName.value)
+  if (station) {
+    spaceOptions.value = (station.spaces || []).map((sp) => ({
+      label: sp.spaceName ?? '',
+      value: sp.spaceName ?? ''
+    }))
+  } else {
+    spaceOptions.value = []
+  }
+
+  // 子空间下拉选项
+  const space = station ? (station.spaces || []).find(sp => sp.spaceName === localEquipmentInfo.value.stationSpaceName) : null
+  if (space) {
+    subSpaceOptions.value = (space.subSpaces || [])
+      .filter(sub => typeof sub === 'string' && sub.trim() !== '')
+      .map(sub => ({ label: sub, value: sub }))
+  } else {
+    subSpaceOptions.value = []
+  }
+}, { immediate: true })
+
 /** 监听线路变化，联动车站选项（allStationInfo响应式） */
 watch(
   [() => localEquipmentInfo.value.lineName, () => allStationInfo],
   ([line], _, onCleanup) => {
-    if (line === allStationInfo.value.lineName) {
-      stationOptions.value = (allStationInfo.value.stations || []).map(s => ({
-        label: s.stationName ?? '',
-        value: s.stationName ?? ''
-      }))
-    } else {
-      stationOptions.value = []
-    }
-    // 自动重置下级
-    if (!stationOptions.value.some(opt => opt.value === localEquipmentInfo.value.stationName)) {
-      localEquipmentInfo.value.stationName = ''
-    }
+    stationOptions.value = (allStationInfo.value.stations || []).map(s => ({
+      label: s.stationName ?? '',
+      value: s.stationName ?? ''
+    }))
+    // if (!stationOptions.value.some(opt => opt.value === localEquipmentInfo.value.stationName)) {
+    //   localEquipmentInfo.value.stationName = ''
+    // }
   },
   { immediate: true }
 )
@@ -152,8 +170,8 @@ watch(
 /** 监听车站变化，联动空间选项（allStationInfo响应式） */
 watch(
   [() => localEquipmentInfo.value.stationName, () => allStationInfo],
-  ([stationAcronym], _, onCleanup) => {
-    const station = (allStationInfo.value.stations || []).find(s => s.stationName === stationAcronym)
+  ([stationName], _, onCleanup) => {
+    const station = (allStationInfo.value.stations || []).find(s => s.stationName === stationName)
     if (station) {
       spaceOptions.value = (station.spaces || []).map((sp) => ({
         label: sp.spaceName ?? '',
@@ -162,9 +180,9 @@ watch(
     } else {
       spaceOptions.value = []
     }
-    if (!spaceOptions.value.some(opt => opt.value === localEquipmentInfo.value.stationSpaceName)) {
-      localEquipmentInfo.value.stationSpaceName = ''
-    }
+    // if (!spaceOptions.value.some(opt => opt.value === localEquipmentInfo.value.stationSpaceName)) {
+    //   localEquipmentInfo.value.stationSpaceName = ''
+    // }
   },
   { immediate: true }
 )
@@ -186,9 +204,9 @@ watch(
     } else {
       subSpaceOptions.value = []
     }
-    if (!subSpaceOptions.value.some(opt => opt.value === localEquipmentInfo.value.stationSubSpaceName)) {
-      localEquipmentInfo.value.stationSubSpaceName = ''
-    }
+    // if (!subSpaceOptions.value.some(opt => opt.value === localEquipmentInfo.value.stationSubSpaceName)) {
+    //   localEquipmentInfo.value.stationSubSpaceName = ''
+    // }
   },
   { immediate: true }
 )
@@ -197,9 +215,9 @@ watch(
 watch(
   () => localEquipmentInfo.value.equipmentMajor,
   (major) => {
-    if (!typeOptions.value.includes(localEquipmentInfo.value.equipmentType)) {
-      localEquipmentInfo.value.equipmentType = ''
-    }
+    // if (!typeOptions.value.includes(localEquipmentInfo.value.equipmentType)) {
+    //   localEquipmentInfo.value.equipmentType = ''
+    // }
   },
   { immediate: true }
 )
@@ -283,14 +301,6 @@ function onFieldChange() {
     <el-form-item label="父级名称">
       <el-input v-model="localEquipmentInfo.parentName" @input="onFieldChange" />
     </el-form-item>
-    <!--
-      位置（position）、四元数（quaternion）、缩放（scale）字段
-      只读，数据来自selectedObject，随选中模型实时同步
-    -->
-    <!--
-      位置（position）、四元数（quaternion）、缩放（scale）字段
-      只读，通过按钮手动获取选中对象的最新值
-    -->
     <el-form-item label="位置">
       <el-input v-model="localEquipmentInfo.position" readonly style="width:calc(100% - 70px);display:inline-block;" />
       <el-button type="primary" size="small" style="margin-left:8px;" @click="fetchPosition">获取</el-button>
