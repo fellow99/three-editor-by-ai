@@ -381,21 +381,22 @@ function handleKeyboard(event) {
   
   // 单键快捷键
   switch (event.code) {
-    case 'Delete':
-      if (objectSelection.hasSelection.value) {
-        ElMessageBox.confirm('确定要删除选中的对象吗？', '提示', {
-          confirmButtonText: '确定',
-          cancelButtonText: '取消',
-          type: 'warning'
-        }).then(() => {
-          const selectedIds = Array.from(objectSelection.selectedObjectIds.value);
-          selectedIds.forEach(id => {
-            scene.removeObjectFromScene(id);
-          });
-          objectSelection.clearSelection();
-        }).catch(() => {});
-      }
-      break;
+    // 禁用删除键
+    // case 'Delete':
+    //   if (objectSelection.hasSelection.value) {
+    //     ElMessageBox.confirm('确定要删除选中的对象吗？', '提示', {
+    //       confirmButtonText: '确定',
+    //       cancelButtonText: '取消',
+    //       type: 'warning'
+    //     }).then(() => {
+    //       const selectedIds = Array.from(objectSelection.selectedObjectIds.value);
+    //       selectedIds.forEach(id => {
+    //         scene.removeObjectFromScene(id);
+    //       });
+    //       objectSelection.clearSelection();
+    //     }).catch(() => {});
+    //   }
+    //   break;
     case 'Escape':
       objectSelection?.clearSelection?.();
       break;

@@ -155,8 +155,6 @@
 <script>
 import { ref, computed, inject, watch } from 'vue';
 import { ElMessageBox, ElMessage } from 'element-plus';
-import 'element-plus/es/components/message/style/css';
-import 'element-plus/es/components/message-box/style/css';
 import { useScene } from '../../composables/useScene.js';
 import { useObjectSelection } from '../../composables/useObjectSelection.js';
 import useTransform from '../../composables/useTransform.js';
