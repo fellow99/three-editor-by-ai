@@ -23,19 +23,22 @@ const scene = useScene();
 const objectSelection = useObjectSelection();
 const transform = useTransform();
 
-const stationData = ref([]); // 用于级联选择的数据
+// 引入智慧车站设备组合函数，统一管理设备相关状态与操作
+import useV3D from '../composables/useV3D.js';
+const { getLineList, selectedStation, equipmentList, loadEquipmentList, clearEquipmentList, createSceneData } = useV3D();
+
+/**
+ * 级联选择数据，自动响应 lineList 变化
+ */
+import { computed } from 'vue';
+const stationData = ref([]); // el-cascader数据
 
 /**
  * 页面初始化时加载线路-站点数据
  */
 onMounted(async () => {
-  try {
-    const lines = await deviceService.lineList();
-    stationData.value = formatCascaderOptions(lines);
-  } catch (e) {
-    stationData.value = [];
-    ElMessage.error('线路-站点数据加载失败');
-  }
+  const lines = await getLineList();
+  stationData.value = formatCascaderOptions(lines);
 });
 
 /**
@@ -57,11 +60,6 @@ function formatCascaderOptions(lines) {
   }));
 }
 
-// 当前选中的站点信息，ref变量
-const selectedStation = ref(null); // { lineName, stationName }
-
-// 当前设备列表，ref变量
-const equipmentList = ref([]); // 原始设备列表
 
 // 当前设备树数据，ref变量
 const equipmentTreeData = ref([]); // el-tree数据
@@ -126,33 +124,33 @@ function handleSearch() {
  */
 async function handleStationChange(val) {
   if (!val || val.length < 2) {
-    clearEquipmentList();
+    clearEquipmentListWrapper();
   } else {
     selectedStation.value = { lineName: val[0], stationName: val[1] };
-    await loadEquipmentList();
+    await loadEquipmentListWrapper();
   }
 }
 
-function clearEquipmentList() {
-  selectedStation.value = null;
+/**
+ * 包装清空设备列表，重置本地树和搜索状态
+ */
+function clearEquipmentListWrapper() {
+  clearEquipmentList();
   equipmentTreeData.value = [];
-  equipmentList.value = [];
   searchKeyword.value = '';
   searchResults.value = [];
 }
 
 /**
- * 加载当前站点的设备信息，并转换为树结构
+ * 包装加载设备列表，加载后构建本地树
  */
-async function loadEquipmentList() {
+async function loadEquipmentListWrapper() {
   if (!selectedStation.value || !selectedStation.value.stationName) return;
   loading.value = true;
   try {
-    const list = await equipmentService.list({ stationName: selectedStation.value.stationName });
-    equipmentTreeData.value = buildEquipmentTree(list);
-    equipmentList.value = list; // 保存原始列表
+    await loadEquipmentList();
+    equipmentTreeData.value = buildEquipmentTree(equipmentList.value);
   } catch (e) {
-    ElMessage.error('设备信息加载失败');
     equipmentTreeData.value = [];
   } finally {
     loading.value = false;
@@ -224,102 +222,6 @@ function syncScene() {
   })
 }
 
-/**
- * 创建场景JSON
- */
-function createSceneData() {
-  let { lineName, stationName } = selectedStation.value || {};
-  if (!lineName || !stationName) {
-    ElMessage.error('请先选择站点');
-    return null;
-  }
-  let drive = 'vfs';
-
-  let sceneData = {
-    "objects": [],
-    "lights": [
-      {
-        "type": "AmbientLight",
-        "position": [ 0, 0, 0 ],
-        "color": 4210752,
-        "intensity": 10
-      },
-      {
-        "type": "DirectionalLight",
-        "position": [ 50, 50, 50 ],
-        "color": 16777215,
-        "intensity": 1
-      }
-    ],
-    "camera": {
-      "position": { "x": 200, "y": 200, "z": 200 },
-      "target": { "x": 0, "y": 0, "z": 0 },
-      "fov": 75, "near": 0.1, "far": 1000
-    },
-    "background": 2236962,
-    "config": {
-      "backgroundColor": "#222222",
-      "shadowsEnabled": true,
-      "toneMappingEnabled": true,
-      "exposure": 1
-    }
-  };
-
-  // 添加站点模型
-  let station = {
-    "id": stationName,
-    "name": "",
-    "position": [ 0, 0, 0 ],
-    "rotation": [ 0, 0, 0, "XYZ" ],
-    "scale": [ 0.01, 0.01, 0.01 ],
-    "userData": {
-      "unitScaleFactor": 1,
-      "fileInfo": {
-        "drive": drive,
-        "path": "/" + lineName,
-        "name": stationName + ".fbx",
-        "type": "FILE"
-      },
-      "id": stationName,
-      "locked": true
-    }
-  }
-  sceneData.objects.push(station);
-
-  // 枚举设备，添加设备模型
-  for (let eq of equipmentList.value) {
-    let { position, quaternion, scale } = eq;
-    let { equipmentUniqueId, name, equipmentMajor, equipmentType } = eq;
-    if(equipmentType.indexOf('AGM') != 0)continue; // 目前仅支持AGM1设备模型
-
-    position = position ? position.split('|').map(v => parseFloat(v)) : [0,0,0];
-    quaternion = quaternion ? quaternion.split('|').map(v => parseFloat(v)) : [0,0,0,1];
-    scale = scale ? scale.split('|').map(v => parseFloat(v)) : [1,1,1];
-    scale = scale.map(v => v * 0.01); // 设备模型缩小100倍
-    let rotation = [0,0,0,'XYZ']; // 默认欧拉角
-
-    let eqModel = {
-      "id": equipmentUniqueId,
-      "name": name,
-      "position": position,
-      "rotation": rotation,
-      "scale": scale,
-      "userData": {
-        "fileInfo": {
-          "drive": drive,
-          "path": "/" + equipmentMajor,
-          "name": equipmentType + ".fbx",
-          "type": "FILE"
-        },
-        "id": equipmentUniqueId,
-        "equipmentInfo": eq
-      }
-    };
-    sceneData.objects.push(eqModel);
-  }
-
-  return sceneData;
-}
 
 /**
  * 设备树节点点击事件处理
@@ -352,7 +254,7 @@ function handleEquipmentNodeClick(data) {
         :props="{ expandTrigger: 'hover' }"
         placeholder="请选择线路和站点"
         @change="handleStationChange"
-        @clear="clearEquipmentList"
+        @clear="clearEquipmentListWrapper"
         clearable
         style="width: 150px"
       />

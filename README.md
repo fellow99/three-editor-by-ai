@@ -108,7 +108,7 @@ three-editor-by-ai/
 │   │   │   ├── device-service.js # device服务接口
 │   │   │   ├── equipment-service.js # equipment服务接口
 │   │   ├── composables/          # Vue Composition API 可组合函数
-│   │   │   ├── useV3D.js         # 智慧车站专用组合函数
+│   │   │   ├── useV3D.js         # 智慧车站专用组合函数（封装设备列表相关状态与操作，供设备列表等组件复用）
 │   ├── App.vue               # 根组件（仅负责引入Editor.vue）
 │   ├── Editor.vue            # 主编辑器组件（包含全部业务与UI）
 │   ├── main.js               # 应用入口
