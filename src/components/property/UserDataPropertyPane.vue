@@ -33,17 +33,8 @@ const userDataEntries = computed(() => {
   const entries = []
   for (const [key, value] of Object.entries(selectedObject.value.userData)) {
     if(key === 'id') {
+      // id字段放在最前面
       entries.unshift({ key, value: value })
-    } else if (key === 'deviceInfo') {
-      // deviceInfo不添加到表格中
-    } else if (key === 'fileInfo' && value && typeof value === 'object') {
-      // fileInfo特殊格式
-      const { drive, path, name } = value
-      entries.push({
-        key,
-        value,
-        str: `${drive}:${path}/${name}`
-      })
     } else if (value && typeof value === 'object') {
       // 其他对象序列化
       entries.push({
@@ -137,51 +128,62 @@ function updateDeviceInfo(newDeviceInfo) {
 
 <template>
   <div v-if="hasSelection" class="property-section">
-    <h4>userData</h4>
-      <el-table
-        v-if="userDataEntries.length"
-        :data="userDataEntries"
-        border
-        size="small"
-        style="margin-bottom: 12px;"
-        :show-header="true"
-      >
-        <el-table-column prop="key" label="Key" width="80" />
-        <el-table-column prop="value" label="Value">
-          <template #default="scope">
-            <pre v-if="scope.row.value && typeof scope.row.value === 'string' && scope.row.value.startsWith('{')" style="white-space: pre-wrap; margin: 0;">{{ scope.row.str }}</pre>
-            <span v-else-if="scope.row.str">{{ scope.row.str }}</span>
-            <span v-else>{{ scope.row.value }}</span>
-          </template>
-        </el-table-column>
-      </el-table>
-    <!-- 如果包含deviceInfo字段，显示地铁设备专用属性面板 -->
-    <UserDataPropertyPaneMetroDevice
-      v-if="selectedObject && selectedObject.userData && selectedObject.userData.deviceInfo"
-      :device-info="selectedObject.userData.deviceInfo"
-      @update:device-info="updateDeviceInfo"
-    />
-      <el-button
-        v-else
-        type="primary"
-        size="small"
-        style="margin-bottom: 12px;"
-        @click="addDeviceInfo"
-      >添加设备信息</el-button>
-      <el-form label-width="60px" class="property-form">
-          <el-input
-            class="user-data-input"
-            type="textarea"
-            v-model="userDataText"
-            :rows="4"
-            placeholder="请输入合法的JSON"
-            @blur="onUserDataBlur"
+    <el-tabs>
+      <el-tab-pane label="设备信息">
+        <!-- 如果包含deviceInfo字段，显示地铁设备专用属性面板 -->
+        <UserDataPropertyPaneMetroDevice
+          v-if="selectedObject && selectedObject.userData && selectedObject.userData.deviceInfo"
+          :device-info="selectedObject.userData.deviceInfo"
+          @update:device-info="updateDeviceInfo"
+        />
+          <el-button
+            v-else
+            type="primary"
             size="small"
-          />
-          <div v-if="userDataError" style="color: #f56c6c; font-size: 12px; margin-top: 4px;">
-            {{ userDataError }}
-          </div>
-      </el-form>
+            style="margin-bottom: 12px;"
+            @click="addDeviceInfo"
+          >添加设备信息</el-button>
+      </el-tab-pane>
+      <el-tab-pane label="表格视图">
+        <el-table
+          :data="userDataEntries"
+          border
+          size="small"
+          style="margin-bottom: 12px;"
+          :show-header="true"
+        >
+          <el-table-column prop="key" label="Key" width="80" />
+          <el-table-column prop="value" label="Value">
+            <template #default="scope">
+                <el-popover v-if="scope.row.str && (scope.row.str.startsWith('{') || scope.row.str.startsWith('['))" width="400" trigger="hover">
+                  <template #reference>
+                    <el-link size="small">查看</el-link>
+                  </template>
+                  <pre style="white-space: pre-wrap; margin: 0;">{{ scope.row.str }}</pre>
+                </el-popover>
+              <span v-else-if="scope.row.str">{{ scope.row.str }}</span>
+              <span v-else>{{ scope.row.value }}</span>
+            </template>
+          </el-table-column>
+        </el-table>
+      </el-tab-pane>
+      <el-tab-pane label="JSON视图">
+        <el-form label-width="60px" class="property-form">
+            <el-input
+              class="user-data-input"
+              type="textarea"
+              v-model="userDataText"
+              :rows="4"
+              placeholder="请输入合法的JSON"
+              @blur="onUserDataBlur"
+              size="small"
+            />
+            <div v-if="userDataError" style="color: #f56c6c; font-size: 12px; margin-top: 4px;">
+              {{ userDataError }}
+            </div>
+        </el-form>
+      </el-tab-pane>
+    </el-tabs>
   </div>
 </template>
 
@@ -189,22 +191,24 @@ function updateDeviceInfo(newDeviceInfo) {
 .property-section {
   padding: 8px;
   overflow-y: auto;
-  max-height: calc(100vh - 48px - 32px);
+  height: calc(100vh - 160px);
 }
-.property-section h4 {
-  margin: 0 0 12px 0;
-  font-size: 14px;
-  font-weight: 600;
-  color: #ccc;
-  border-bottom: 1px solid #444;
-  padding-bottom: 4px;
+.el-tabs {
+  height: 100%;
+  &:deep(.el-tabs__content) {
+    height: calc(100% - 40px);
+  }
+  .el-tab-pane {
+    height: 100%;
+    overflow: auto;
+  }
 }
-.property-form {
-  margin-top: 8px;
+.el-form {
+  height: calc(100% - 10px);
 }
 .user-data-input {
   width: 100%;
-  height: 20em;
+  height: 100%;
   &:deep(.el-textarea__inner) {
     height: 100%;
   }

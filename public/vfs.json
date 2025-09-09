@@ -8,13 +8,13 @@
     {
         "type": "vfs-server",
         "drive": "vfs",
-        "baseURL": "http://localhost:3001",
+        "baseURL": "http://pvp.pcitech.com:3001",
         "root": ""
     },
     {
         "type": "asset-server",
         "drive": "asset",
-        "baseURL": "http://localhost:3002",
+        "baseURL": "http://pvp.pcitech.com:3002",
         "root": ""
     }
 ]
