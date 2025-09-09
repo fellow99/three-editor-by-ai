@@ -5,6 +5,7 @@
 import { ref } from 'vue';
 import equipmentService from '../services/equipment-service.js';
 import deviceService from '../services/device-service.js';
+import vfsService from '@/services/vfs-service.js';
 
 /**
  * 智慧车站设备列表相关组合函数
@@ -154,12 +155,24 @@ export default function useV3D() {
     return lines;
   }
 
+  /**
+   * 获取指定线路的所有站点信息，主要用于获取站点内的空间分布
+   */
+  async function getAllStationInfo(lineName){
+    let vfs = vfsService.getVfs('vfs');
+    if(!vfs) throw new Error('找不到指定虚拟文件系统：vfs');
+    let path = `/${lineName}/AllStationInfo.json`;
+    let json = await vfs.json(path);
+    return json;
+  }
+
   return {
     selectedStation,
     equipmentList,
-    getLineList,
     loadEquipmentList,
     clearEquipmentList,
-    createSceneData
+    createSceneData,
+    getLineList,
+    getAllStationInfo
   };
 }

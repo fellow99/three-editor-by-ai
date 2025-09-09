@@ -12,8 +12,6 @@
  */
 import { ref, watch, onMounted } from 'vue';
 import { ElCascader, ElTree, ElMessage, ElMessageBox } from 'element-plus';
-import equipmentService from '../services/equipment-service.js';
-import deviceService from '../services/device-service.js';
 import { useSceneManager } from '@/core/SceneManager.js';
 import { useObjectSelection } from '@/composables/useObjectSelection.js';
 import useTransform from '@/composables/useTransform.js';

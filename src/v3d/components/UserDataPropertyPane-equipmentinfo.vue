@@ -90,12 +90,26 @@ const majorOptions = Object.keys(majorTypeInfo)
 /** 类型选项，随专业联动 */
 const typeOptions = ref([])
 
-/** 线路-车站-空间-子空间数据字典 */
-import allStationInfo from '../../constants/AllStationInfo.json'
+/** 线路-车站-空间-子空间数据字典（通过useV3D获取） */
+import useV3D from '../composables/useV3D.js'
+const { selectedStation, getAllStationInfo } = useV3D()
+/** 当前选中站点的线路和车站名称 */
+const lineName = computed(() => selectedStation.value?.lineName || '')
+const stationName = computed(() => selectedStation.value?.stationName || '')
+
+/** 线路-车站-空间-子空间数据字典（异步获取，随lineName变化自动更新） */
+const allStationInfo = ref({})
+watch(lineName, async (val) => {
+  if (val) {
+    allStationInfo.value = await getAllStationInfo(val)
+  } else {
+    allStationInfo.value = {}
+  }
+}, { immediate: true })
 
 /** 线路选项（只有一条线路，仍做成数组便于扩展） */
 const lineOptions = ref([
-  { label: allStationInfo.lineName, value: allStationInfo.lineName }
+  { label: allStationInfo.value.lineName ?? '', value: allStationInfo.value.lineName ?? '' }
 ])
 
 /** 车站选项，随线路变化联动 */
@@ -105,14 +119,14 @@ const spaceOptions = ref([])
 /** 子空间选项，随空间变化联动 */
 const subSpaceOptions = ref([])
 
-/** 监听线路变化，联动车站选项 */
+/** 监听线路变化，联动车站选项（allStationInfo响应式） */
 watch(
-  () => localEquipmentInfo.value.lineName,
-  (line) => {
-    if (line === allStationInfo.lineName) {
-      stationOptions.value = allStationInfo.stations.map(s => ({
-        label: s.stationName,
-        value: s.stationName
+  [() => localEquipmentInfo.value.lineName, () => allStationInfo],
+  ([line], _, onCleanup) => {
+    if (line === allStationInfo.value.lineName) {
+      stationOptions.value = (allStationInfo.value.stations || []).map(s => ({
+        label: s.stationName ?? '',
+        value: s.stationName ?? ''
       }))
     } else {
       stationOptions.value = []
@@ -125,15 +139,15 @@ watch(
   { immediate: true }
 )
 
-/** 监听车站变化，联动空间选项 */
+/** 监听车站变化，联动空间选项（allStationInfo响应式） */
 watch(
-  () => localEquipmentInfo.value.stationName,
-  (stationAcronym) => {
-    const station = allStationInfo.stations.find(s => s.stationName === stationAcronym)
+  [() => localEquipmentInfo.value.stationName, () => allStationInfo],
+  ([stationAcronym], _, onCleanup) => {
+    const station = (allStationInfo.value.stations || []).find(s => s.stationName === stationAcronym)
     if (station) {
-      spaceOptions.value = station.spaces.map((sp) => ({
-        label: sp.spaceName,
-        value: sp.spaceName
+      spaceOptions.value = (station.spaces || []).map((sp) => ({
+        label: sp.spaceName ?? '',
+        value: sp.spaceName ?? ''
       }))
     } else {
       spaceOptions.value = []
@@ -145,16 +159,16 @@ watch(
   { immediate: true }
 )
 
-/** 监听空间变化，联动子空间选项 */
+/** 监听空间变化，联动子空间选项（allStationInfo响应式） */
 watch(
-  [() => localEquipmentInfo.value.stationName, () => localEquipmentInfo.value.stationSpaceName],
-  ([stationName, spaceName]) => {
-    const station = allStationInfo.stations.find(s => s.stationName === stationName)
+  [() => localEquipmentInfo.value.stationName, () => localEquipmentInfo.value.stationSpaceName, () => allStationInfo],
+  ([stationName, spaceName], _, onCleanup) => {
+    const station = (allStationInfo.value.stations || []).find(s => s.stationName === stationName)
     if (station) {
-      const space = station.spaces.find(sp => sp.spaceName === spaceName)
+      const space = (station.spaces || []).find(sp => sp.spaceName === spaceName)
       if (space) {
-        subSpaceOptions.value = space.subSpaces
-          .filter(sub => sub && sub.trim() !== '')
+        subSpaceOptions.value = (space.subSpaces || [])
+          .filter(sub => typeof sub === 'string' && sub.trim() !== '')
           .map(sub => ({ label: sub, value: sub }))
       } else {
         subSpaceOptions.value = []
