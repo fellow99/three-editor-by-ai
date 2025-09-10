@@ -52,10 +52,10 @@
         </button>
       </div>
       <!-- Tab内容区域 -->
-      <ScenePropertyPane v-show="activeTab === '场景'" />
-      <div v-show="activeTab === '光影'" style="padding: 24px; color: #888;">光影内容占位</div>
-      <div v-show="activeTab === '环境'" style="padding: 24px; color: #888;">环境内容占位</div>
-      <div v-show="activeTab === '后处理'" style="padding: 24px; color: #888;">后处理内容占位</div>
+      <ScenePropertyPane v-if="activeTab === '场景'" />
+      <div v-if="activeTab === '光影'" style="padding: 24px; color: #888;">光影内容占位</div>
+      <div v-if="activeTab === '环境'" style="padding: 24px; color: #888;">环境内容占位</div>
+      <div v-if="activeTab === '后处理'" style="padding: 24px; color: #888;">后处理内容占位</div>
       <div v-if="activeTab === '对象'">
         <BasePropertyPane />
         <TransformPropertyPane />
@@ -80,7 +80,7 @@
       </div>
       <MaterialPropertyPane v-if="activeTab === '材质'" />
       <UserDataPropertyPane v-if="activeTab === '属性'" />
-      <div v-show="activeTab === 'userData'">
+      <div v-if="activeTab === 'userData'">
         <SceneUserDataPropertyPane v-show="!hasSelection" />
         <UserDataPropertyPane v-if="selectedObject" v-show="hasSelection" :object="selectedObject" />
       </div>
