@@ -71,6 +71,7 @@ export default {
         const target = scene.sceneManager.controls.target;
         options.position = [target.x, target.y, target.z];
       }
+
       try {
         // 优先判断拖拽类型
         // 1. 基础几何体/灯光
@@ -90,7 +91,7 @@ export default {
           }
           return;
         }
-        // 2. 资源库/虚拟文件系统模型
+        // 2. 资源库模型
         const modelData = event.dataTransfer.getData('application/x-model');
         if (modelData) {
           const modelInfo = JSON.parse(modelData);
@@ -107,42 +108,66 @@ export default {
             }
             return;
           }
+        }
+        // 3. 虚拟文件系统模型文件
+        const modelFile = event.dataTransfer.getData('application/x-model-file');
+        if (modelFile) {
+          const fileInfo = JSON.parse(modelFile);
           /**
-           * 从VfsFileBrowser中拖拽模型，支持modelInfo.url字段
-           * - 若modelInfo有url字段，则fetch该url获取blob
+           * 从VfsFileBrowser中拖拽模型，支持url字段
+           * - 若有url字段，则fetch该url获取blob
            * - 否则按原有方式通过vfs获取blob
            * 新增用法：fetch(url)获取blob并转为File对象
            */
-          if (modelInfo.drive && modelInfo.path && modelInfo.name) {
-            const modelExts = ['.glb', '.gltf', '.fbx', '.obj'];
-            const ext = modelInfo.name ? modelInfo.name.slice(modelInfo.name.lastIndexOf('.')).toLowerCase() : '';
-            if (modelInfo.type !== 'FILE' || !modelExts.includes(ext)) return;
-            let blob;
-            if (modelInfo.url) {
-              // 有url字段，直接fetch获取blob
-              const response = await fetch(modelInfo.url);
-              blob = await response.blob();
-            } else {
-              // 无url字段，按原有方式
-              const vfs = vfsService.getVfs(modelInfo.drive);
-              blob = await vfs.blob(modelInfo.path + '/' + modelInfo.name);
-            }
-            // Blob转File对象
-            const file = new File([blob], modelInfo.name, { type: blob.type });
-            file.fileInfo = modelInfo; // 保留原始文件信息
+          let { drive, path, name, url } = fileInfo;
+          let blob;
+          if (url) {
+            // 有url字段，直接fetch获取blob
+            const resp = await fetch(url);
+            blob = await resp.blob();
+          } else {
+            // 无url字段，按原有方式
+            const vfs = vfsService.getVfs(drive);
+            blob = await vfs.blob(path + '/' + name);
+          }
+          // Blob转File对象
+          const file = new File([blob], name, { type: blob.type });
+          file.fileInfo = fileInfo; // 保留原始文件信息
 
-            // 优先判断资源是否已存在
-            const cached = getCachedModel(file.name, blob.size);
-            if (cached) {
-              addModelToScene(cached.id, options);
-              ElMessage.success('已从缓存加载');
-            } else {
-              // 通过useAssets加载模型并纳入资源库
-              const loaded = await loadModel(file);
-              addModelToScene(loaded.id, options);
-              ElMessage.success('文件加载成功');
-            }
-            return;
+          // 优先判断资源是否已存在
+          const cached = getCachedModel(file.name, blob.size);
+          if (cached) {
+            addModelToScene(cached.id, options);
+            ElMessage.success('已从缓存加载');
+          } else {
+            // 通过useAssets加载模型并纳入资源库
+            const loaded = await loadModel(file);
+            addModelToScene(loaded.id, options);
+            ElMessage.success('文件加载成功');
+          }
+          return;
+        }
+        // 4. 场景文件
+        const sceneFile = event.dataTransfer.getData('application/x-scene-file');
+        if (sceneFile) {
+          const fileInfo = JSON.parse(sceneFile);
+          let { drive, path, name, url } = fileInfo;
+          let json;
+          if (url) {
+            // 有url字段，直接fetch获取blob
+            const resp = await fetch(url);
+            json = await resp.json();
+          } else {
+            // 无url字段，按原有方式
+            const vfs = vfsService.getVfs(drive);
+            json = await vfs.json(path + '/' + name);
+          }
+          if(json && json.objects) {
+            // 通过SceneManager加载场景数据
+            await scene.sceneManager.loadScene(json);
+            ElMessage.success('场景文件加载成功');
+          } else {
+            ElMessage.error('无效的场景文件');
           }
         }
       } catch (e) {
@@ -152,6 +177,7 @@ export default {
         if (appState) appState.isLoading = false;
       }
     }
+
     const containerRef = ref(null);
     const scene = useScene();
     const objectSelection = useObjectSelection();
