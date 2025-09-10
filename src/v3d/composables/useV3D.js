@@ -9,14 +9,38 @@ import vfsService from '@/services/vfs-service.js';
 
 /**
  * 当前选中的站点信息
- * @type {import('vue').Ref<{ lineName: string, stationName: string } | null>}
+ * @type {import('vue').Ref<{ lineId: Number, lineName: string, stationId: Number, stationName: string } | null>}
  */
-const selectedStation = ref(null); // { lineName, stationName }
+const selectedStation = ref(null);
 
 /**
  * 当前设备列表
  * @type {import('vue').Ref<Array>}
  * 保存原始设备数据
+ * 结构示例：
+[
+  {
+      "uniqueId": 88547,
+      "author": "PKX",
+      "changeTime": "2025-06-05 17:44:38",
+      "lineName": "14号线",
+      "stationName": "乐嘉路",
+      "stationSpaceName": "负三层",
+      "stationSubSpaceName": "站台",
+      "equipmentUniqueId": "LJL.PSD.ASD.ASD203",
+      "equipmentMajor": "ZTM",
+      "equipmentType": "ASD",
+      "equipmentSystem": "Custom",
+      "name": "LJL.PSD.ASD.ASD203",
+      "position": "86.34904|-12.6571|-49.20905",
+      "quaternion": "0.000000|0.000000|0.000000|-1.000000",
+      "scale": "0.9503896|1|1",
+      "equipmentSubType": "Null",
+      "parentName": "屏蔽门上",
+      "userData": "NULL"
+  }，
+  ...
+]
  */
 const equipmentList = ref([]);
 
@@ -24,6 +48,27 @@ const equipmentList = ref([]);
  * systemDeviceKlass变量：存储当前系统下的设备分类列表
  * @type {import('vue').Ref<Array>}
  * 用于属性面板等组件动态下拉选择
+ * 结构示例：
+[
+  {
+      "id": 66,
+      "name": "UPS",
+      "description": "不间断电源系统",
+      "status": 0,
+      "deviceKlassList": [
+          {
+              "id": 14061,
+              "systemId": 66,
+              "lineId": 1402,
+              "name": "UPS",
+              "description": "UPS",
+              "status": 0
+          },
+          ...
+      ]
+  },
+  ...
+ ]
  */
 const systemDeviceKlass = ref([]); // 当前系统设备分类列表
 
@@ -49,6 +94,7 @@ async function loadEquipmentList() {
     equipmentList.value = [];
     throw e;
   }
+  console.log('加载设备列表', equipmentList.value);
 }
 
 /**
@@ -89,6 +135,7 @@ async function loadSystemDeviceKlass() {
     systemDeviceKlass.value = {};
     throw e;
   }
+  console.log(systemDeviceKlass.value);
 }
 
 /**

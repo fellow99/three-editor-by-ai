@@ -23,12 +23,14 @@ const transform = useTransform();
 
 // 引入智慧车站设备组合函数，统一管理设备相关状态与操作
 import useV3D from '../composables/useV3D.js';
-const { getLineList, selectedStation, equipmentList, loadEquipmentList, clearEquipmentList, createSceneData, loadSystemDeviceKlass } = useV3D();
+const { selectedStation, equipmentList, systemDeviceKlass, getLineList, loadEquipmentList, clearEquipmentList, createSceneData, loadSystemDeviceKlass } = useV3D();
 
 /**
  * 级联选择数据，自动响应 lineList 变化
  */
 const stationData = ref([]); // el-cascader数据
+
+const treeType = ref('space'); // 设备树类型，'space'按空间位置，'klass'按系统分类
 
 /**
  * 页面初始化时加载线路-站点数据
@@ -162,10 +164,12 @@ async function loadEquipmentListWrapper() {
   if (!selectedStation.value || !selectedStation.value.stationName) return;
   loading.value = true;
   try {
+    // 加载设备列表
     await loadEquipmentList();
-    equipmentTreeData.value = buildEquipmentTree(equipmentList.value);
     // 加载系统设备分类，参数可根据实际业务调整
     await loadSystemDeviceKlass();
+    // 按空间位置构建设备树
+    equipmentTreeData.value = buildEquipmentTreeBySpace(equipmentList.value);
   } catch (e) {
     console.error('加载设备列表失败', e);
     equipmentTreeData.value = [];
@@ -175,30 +179,18 @@ async function loadEquipmentListWrapper() {
 }
 
 /**
- * 将设备列表转换为el-tree需要的树结构
+ * 按空间位置构建设备树
  * @param {Array} list
  * @returns {Array}
  */
-function buildEquipmentTree(list) {
-  // 按lineName=>stationName=>stationSpaceName=>stationSubSpaceName分组
+function buildEquipmentTreeBySpace(list) {
+  // 按stationSpaceName=>stationSubSpaceName分组
   const tree = [];
-  const lineMap = new Map();
   for (const item of list) {
-    let lineNode = lineMap.get(item.lineName);
-    if (!lineNode) {
-      lineNode = { label: item.lineName, children: [], value: item.lineName };
-      lineMap.set(item.lineName, lineNode);
-      tree.push(lineNode);
-    }
-    let stationNode = lineNode.children.find(n => n.label === item.stationName);
-    if (!stationNode) {
-      stationNode = { label: item.stationName, children: [], value: item.stationName };
-      lineNode.children.push(stationNode);
-    }
-    let spaceNode = stationNode.children.find(n => n.label === item.stationSpaceName);
+    let spaceNode = tree.find(n => n.label === item.stationSpaceName);
     if (!spaceNode) {
       spaceNode = { label: item.stationSpaceName, children: [], value: item.stationSpaceName };
-      stationNode.children.push(spaceNode);
+      tree.push(spaceNode);
     }
     let subSpaceNode = spaceNode.children.find(n => n.label === item.stationSubSpaceName);
     if (!subSpaceNode) {
@@ -211,6 +203,58 @@ function buildEquipmentTree(list) {
       value: item.uniqueId,
       data: item // 可用于后续扩展
     });
+  }
+  return tree;
+}
+
+/**
+ * 按系统分类构建设备树
+ * - 一级：systemDeviceKlass（系统）
+ * - 二级：deviceKlassList（设备分类）
+ * - 三级：设备（equipmentList，equipmentType与二级分类name关联）
+ */
+function buildEquipmentTreeByKlass(list) {
+  // systemDeviceKlass结构：[{id, name, description, status, deviceKlassList:[{id, systemId, lineId, name, ...}]}]
+  if (!Array.isArray(systemDeviceKlass.value)) return [];
+  const tree = [];
+  for (const sys of systemDeviceKlass.value) {
+    // 一级节点：系统
+    const sysNode = {
+      label: sys.name,
+      value: sys.id,
+      children: [],
+      data: sys
+    };
+    // 二级节点：设备分类
+    if (Array.isArray(sys.deviceKlassList)) {
+      for (const klass of sys.deviceKlassList) {
+        const klassNode = {
+          label: klass.name,
+          value: klass.id,
+          children: [],
+          data: klass
+        };
+        // 三级节点：设备，equipmentType需与klass.name关联
+        const devices = list.filter(
+          eq => eq.equipmentType === klass.name
+        );
+        for (const eq of devices) {
+          klassNode.children.push({
+            label: eq.name,
+            value: eq.uniqueId,
+            data: eq
+          });
+        }
+        // 仅有设备时才显示该分类
+        if (klassNode.children.length > 0) {
+          sysNode.children.push(klassNode);
+        }
+      }
+    }
+    // 仅有分类时才显示该系统
+    if (sysNode.children.length > 0) {
+      tree.push(sysNode);
+    }
   }
   return tree;
 }
@@ -260,6 +304,14 @@ function handleEquipmentNodeClick(data) {
     ElMessage.warning('未找到对应三维对象');
   }
 }
+
+function changTreeType() {
+  if (treeType.value === 'space') {
+    equipmentTreeData.value = buildEquipmentTreeBySpace(equipmentList.value);
+  } else if (treeType.value === 'klass') {
+    equipmentTreeData.value = buildEquipmentTreeByKlass(equipmentList.value);
+  }
+}
 </script>
 
 <template>
@@ -279,19 +331,24 @@ function handleEquipmentNodeClick(data) {
       <el-button @click="syncScene">布点</el-button>
     </div>
     <div class="station__search">
-      <el-input v-model="searchKeyword" placeholder="搜索设备" style="width: 200px" />
+      <el-input v-model="searchKeyword" clearable placeholder="搜索设备" style="width: 200px" @keyup.enter="handleSearch" />
       &nbsp;
       <el-button @click="handleSearch">搜索</el-button>
-      <!-- 输入框变化自动搜索，无需手动点击 -->
     </div>
+    <div v-show="!searchKeyword" class="station__tree-type">
+      <el-radio-group v-model="treeType" size="mini" @change="changTreeType">
+        <el-radio label="space">按空间位置</el-radio>
+        <el-radio label="klass">按系统分类</el-radio>
+      </el-radio-group>
+    </div>
+
     <!-- 设备树 -->
     <el-tree
-      v-show="!searchKeyword || !searchResults.length"
+      v-show="!searchKeyword"
       v-loading="loading"
       :data="equipmentTreeData"
       node-key="value"
       :props="{ label: 'label', children: 'children' }"
-      default-expand-all
       highlight-current
       class="equipment-list__tree"
       style="margin-top: 16px"
