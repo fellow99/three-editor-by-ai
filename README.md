@@ -98,12 +98,11 @@ three-editor-by-ai/
 │   │   ├── fileUtils.js      # 文件处理工具
 │   ├── constants/            # 常量定义
 │   │   ├── PRIMITIVES.json   # 预定义几何体与灯光类型数据
-│   │   ├── StationActiveMajorTypeInfo.json # 地铁设备专业-类型数据字典，供属性面板下拉选择使用
-│   │   ├── AllStationInfo.json   # 地铁线路-车站-空间-子空间数据字典，仅供属性面板下拉选择使用，设备列表组件已不再依赖
 │   ├── v3d/                      # 智慧车站专用扩展包
 │   │   ├── components/           # Vue 组件
 │   │   │   ├── EquipmentList.vue # 站点设备列表组件
-│   │   │   ├── UserDataPropertyPane-equipmentinfo.vue # 地铁设备专用属性编辑面板（设备专业/类型下拉动态获取systemDeviceKlass）
+│   │   │   ├── StationToSceneDialog.vue # 车站布点对话框组件至此）
+│   │   │   ├── UserDataPropertyPane-equipmentinfo.vue # 地铁设备专用属性编辑面板
 │   │   ├── services/             # 数据请求和外部接口
 │   │   │   ├── device-service.js # device服务接口
 │   │   │   ├── equipment-service.js # equipment服务接口

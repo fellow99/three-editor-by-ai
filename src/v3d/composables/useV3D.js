@@ -76,9 +76,9 @@ const systemDeviceKlass = ref([]); // 当前系统设备分类列表
  * 清空设备列表及选中站点
  * 用于切换站点或重置
  */
-function clearEquipmentList() {
-  selectedStation.value = null;
+async function clearEquipmentList() {
   equipmentList.value = [];
+  await new Promise(resolve => setTimeout(resolve, 0)); // 确保响应式更新
 }
 
 /**
@@ -94,7 +94,6 @@ async function loadEquipmentList() {
     equipmentList.value = [];
     throw e;
   }
-  console.log('加载设备列表', equipmentList.value);
 }
 
 /**
@@ -135,7 +134,6 @@ async function loadSystemDeviceKlass() {
     systemDeviceKlass.value = {};
     throw e;
   }
-  console.log(systemDeviceKlass.value);
 }
 
 /**
@@ -184,7 +182,7 @@ function createSceneData() {
     "id": stationName,
     "name": "",
     "position": stringToPosition('0|0|0'),
-    "rotation": stringToQuaternion('0|0|0|1'),
+    "rotation": quaternionToRotation(stringToQuaternion('0|0|0|1')),
     "scale": stringToScale('1|1|1'),
     "userData": {
       "unitScaleFactor": 1,

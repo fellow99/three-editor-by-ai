@@ -155,7 +155,7 @@ import { useTransform } from './composables/useTransform.js';
 import { useAssets } from './composables/useAssets.js';
 
 // 导入组件
-import Toolbar from './components/editor/Toolbar.vue';
+// import Toolbar from './components/editor/Toolbar.vue';
 import ResourcePanel from './components/editor/ResourcePanel.vue';
 import SceneViewer from './components/scene/SceneViewer.vue';
 import PropertyPanel from './components/editor/PropertyPanel.vue';
@@ -166,6 +166,9 @@ import ViewportControls from './components/scene/ViewportControls.vue';
 import CubeViewportControls from './components/scene/CubeViewportControls.vue';
 import InteractionHints from './components/scene/InteractionHints.vue';
 import StatHints from './components/scene/StatHints.vue';
+
+// V3D专用
+import Toolbar from '@/v3d/components/Toolbar.vue';
 
  // 应用状态管理
 const appState = reactive({

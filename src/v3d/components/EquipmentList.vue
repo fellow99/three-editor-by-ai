@@ -10,54 +10,19 @@
 /**
  * 该组件用于显示某站点的所有设备信息。
  */
-import { ref, watch, onMounted } from 'vue';
+import { ref, watch, onMounted, nextTick } from 'vue';
 import { ElCascader, ElTree, ElMessage, ElMessageBox } from 'element-plus';
-import { useSceneManager } from '@/core/SceneManager.js';
 import { useObjectSelection } from '@/composables/useObjectSelection.js';
-import useTransform from '@/composables/useTransform.js';
 import { useScene } from '@/composables/useScene.js';
 
 const scene = useScene();
 const objectSelection = useObjectSelection();
-const transform = useTransform();
 
 // 引入智慧车站设备组合函数，统一管理设备相关状态与操作
 import useV3D from '../composables/useV3D.js';
-const { selectedStation, equipmentList, systemDeviceKlass, getLineList, loadEquipmentList, clearEquipmentList, createSceneData, loadSystemDeviceKlass } = useV3D();
-
-/**
- * 级联选择数据，自动响应 lineList 变化
- */
-const stationData = ref([]); // el-cascader数据
+const { selectedStation, equipmentList, systemDeviceKlass } = useV3D();
 
 const treeType = ref('space'); // 设备树类型，'space'按空间位置，'klass'按系统分类
-
-/**
- * 页面初始化时加载线路-站点数据
- */
-onMounted(async () => {
-  const lines = await getLineList();
-  stationData.value = formatCascaderOptions(lines);
-});
-
-/**
- * 格式化lineList接口返回的数据为el-cascader所需格式
- * @param {Array} lines
- * @returns {Array}
- */
-function formatCascaderOptions(lines) {
-  if (!Array.isArray(lines)) return [];
-  return lines.map(line => ({
-    value: line.lineId,
-    label: line.lineCn,
-    children: Array.isArray(line.stations)
-      ? line.stations.map(st => ({
-          value: st.stationId,
-          label: st.nameCn
-        }))
-      : []
-  }));
-}
 
 
 // 当前设备树数据，ref变量
@@ -118,38 +83,18 @@ function handleSearch() {
 }
 
 
+/**
+ * 监听selectedStation变化，自动加载设备列表
+ */
+watch(equipmentList, async () => {
+  clear();
+  await loadEquipmentListWrapper();
+});
 
 /**
- * 级联选择变化时回调，更新selectedStation并加载设备
- * @param {Array} val [lineName, stationName]
+ * 重置本地树和搜索状态
  */
-async function handleStationChange(val) {
-  if (!val || val.length < 2) {
-    clearEquipmentListWrapper();
-  } else {
-    let lineId = val[0];
-    let stationId = val[1];
-    // 由于lineList接口返回的数据结构变化，需从stationData中查找对应的中文名称
-    let line = stationData.value.find(l => l.value === lineId);
-    let station = line ? line.children.find(s => s.value === stationId) : null;
-    if (!line || !station) {
-      ElMessage.error('未找到对应线路或站点');
-      clearEquipmentListWrapper();
-      return;
-    }
-    let lineName = line.label;
-    let stationName = station.label;
-    selectedStation.value = { lineId, lineName, stationId, stationName };
-    await loadEquipmentListWrapper();
-  }
-}
-
-/**
- * 包装清空设备列表，重置本地树和搜索状态
- */
-function clearEquipmentListWrapper() {
-  clearEquipmentList();
-  equipmentTreeData.value = [];
+function clear() {
   searchKeyword.value = '';
   searchResults.value = [];
 }
@@ -164,10 +109,6 @@ async function loadEquipmentListWrapper() {
   if (!selectedStation.value || !selectedStation.value.stationName) return;
   loading.value = true;
   try {
-    // 加载设备列表
-    await loadEquipmentList();
-    // 加载系统设备分类，参数可根据实际业务调整
-    await loadSystemDeviceKlass();
     // 按空间位置构建设备树
     equipmentTreeData.value = buildEquipmentTreeBySpace(equipmentList.value);
   } catch (e) {
@@ -259,29 +200,7 @@ function buildEquipmentTreeByKlass(list) {
   return tree;
 }
 
-/**
- * syncScene，先清空所有内容，再按照equipmentList来构建场景
- */
-function syncScene() {
-  ElMessageBox.confirm('确定要新建场景吗？这将清除当前所有内容。', '提示', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
-    type: 'warning'
-  }).then(async () => {
-    objectSelection.clearSelection();
-    transform.clearHistory();
 
-    scene.clearScene();
-    scene.resetScene();
-
-    // 创建场景JSON
-    let sceneData = createSceneData();
-
-    // 加载场景
-    const sceneManager = useSceneManager();
-    await sceneManager.loadScene(sceneData);
-  })
-}
 
 
 /**
@@ -316,27 +235,14 @@ function changTreeType() {
 
 <template>
   <div class="equipment-list">
-    <div class="station__selector">
-      站点：
-      <el-cascader
-        :options="stationData"
-        :props="{ expandTrigger: 'hover' }"
-        placeholder="请选择线路和站点"
-        @change="handleStationChange"
-        @clear="clearEquipmentListWrapper"
-        clearable
-        style="width: 150px"
-      />
-      &nbsp;
-      <el-button @click="syncScene">布点</el-button>
-    </div>
+    <!-- 站点选择与布点功能已迁移到StationToSceneDialog -->
     <div class="station__search">
       <el-input v-model="searchKeyword" clearable placeholder="搜索设备" style="width: 200px" @keyup.enter="handleSearch" />
       &nbsp;
       <el-button @click="handleSearch">搜索</el-button>
     </div>
     <div v-show="!searchKeyword" class="station__tree-type">
-      <el-radio-group v-model="treeType" size="mini" @change="changTreeType">
+      <el-radio-group v-model="treeType" size="small" @change="changTreeType">
         <el-radio label="space">按空间位置</el-radio>
         <el-radio label="klass">按系统分类</el-radio>
       </el-radio-group>
