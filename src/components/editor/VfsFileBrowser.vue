@@ -112,17 +112,27 @@ function onFileClick(file) {
 function onItemDrag(file, event) {
   // 判断是否为支持的3D模型文件
   const modelExts = ['.glb', '.gltf', '.fbx', '.obj'];
-  if (file.type !== 'FILE') return;
   const ext = file.name ? file.name.slice(file.name.lastIndexOf('.')).toLowerCase() : '';
-  if (!modelExts.includes(ext)) return;
-  // 设置拖拽数据，类型统一为application/x-model，便于SceneViewer统一处理
-  event.dataTransfer.setData('application/x-model', JSON.stringify({
-    drive: currentVfs.value?._drive,
-    path: file.path,
-    name: file.name,
-    type: file.type,
-    url: file.url
-  }));
+  if (file.type !== 'FILE') return;
+  if(['.glb', '.gltf', '.fbx', '.obj'].includes(ext)) {
+    // 设置拖拽数据，类型统一为application/x-model，便于SceneViewer统一处理
+    event.dataTransfer.setData('application/x-model-file', JSON.stringify({
+      drive: currentVfs.value?._drive,
+      path: file.path,
+      name: file.name,
+      type: file.type,
+      url: file.url
+    }));
+  } else if(['.json'].includes(ext)) {
+    // 设置拖拽数据，类型统一为application/x-scene，便于SceneViewer统一处理
+    event.dataTransfer.setData('application/x-scene-file', JSON.stringify({
+      drive: currentVfs.value?._drive,
+      path: file.path,
+      name: file.name,
+      type: file.type,
+      url: file.url
+    }));
+  }
 }
 
 onMounted(() => {
