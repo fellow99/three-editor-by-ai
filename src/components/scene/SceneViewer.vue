@@ -124,8 +124,8 @@ export default {
           let blob;
           if (url) {
             // 有url字段，直接fetch获取blob
-            const response = await fetch(url);
-            blob = await response.blob();
+            const resp = await fetch(url);
+            blob = await resp.blob();
           } else {
             // 无url字段，按原有方式
             const vfs = vfsService.getVfs(drive);
@@ -157,7 +157,7 @@ export default {
           if (url) {
             // 有url字段，直接fetch获取blob
             const resp = await fetch(url);
-            json = await response.json();
+            json = await resp.json();
           } else {
             // 无url字段，按原有方式
             const vfs = vfsService.getVfs(drive);

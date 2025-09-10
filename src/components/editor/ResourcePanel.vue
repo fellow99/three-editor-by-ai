@@ -76,13 +76,11 @@ function handleDeleteSelected() {
       </button>
     </div>
     <div class="panel-content">
-      <VfsFileBrowser v-show="props.activeLeftTab === 'files'" />
-      <PrimitiveBrowser
-        v-show="props.activeLeftTab === 'primitives'"
-      />
-      <AssetBrowser v-show="props.activeLeftTab === 'assets'" />
-      <Inspector v-show="props.activeLeftTab === 'inspector'" @delete-selected="handleDeleteSelected" />
-      <EquipmentList v-show="props.activeLeftTab === 'equipment'" />
+      <VfsFileBrowser v-if="props.activeLeftTab === 'files'" />
+      <PrimitiveBrowser v-if="props.activeLeftTab === 'primitives'"/>
+      <AssetBrowser v-if="props.activeLeftTab === 'assets'" />
+      <Inspector v-if="props.activeLeftTab === 'inspector'" @delete-selected="handleDeleteSelected" />
+      <EquipmentList v-if="props.activeLeftTab === 'equipment'" />
     </div>
   </div>
 </template>
