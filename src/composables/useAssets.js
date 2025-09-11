@@ -214,6 +214,7 @@ export function useAssets() {
    * @returns {object|null} 已存在则返回模型信息，否则返回null
    */
   function getCachedModel(filename) {
+    if(!filename) return null;
     return assetLibrary.models.get(filename);
   }
 
@@ -235,7 +236,7 @@ export function useAssets() {
    */
   async function loadModel(file, options = {}) {
     // 缓存检查：按文件名查找
-    const cached = getCachedModel(file.name, file.size);
+    const cached = getCachedModel(file.name);
     if (cached) {
       // 已缓存，直接返回
       return cached;

@@ -128,6 +128,7 @@ class SceneManager {
    * 这样可确保场景序列化与反序列化时所有对象的自定义数据都能正确还原。
    */
   async loadScene(json) {
+    const { loadModel, addModelToScene, getCachedModel } = useAssets();
     await this.clearScene();
 
     const objectManager = useObjectManager();
@@ -180,23 +181,29 @@ class SceneManager {
       for (const objData of json.objects) {
         if (objData.userData && objData.userData.fileInfo) {
           try {
-            const { loadModel, addModelToScene, getCachedModel } = useAssets();
             const fileInfo = objData.userData.fileInfo;
-            let blob;
-            if (fileInfo.url) {
-              const response = await fetch(fileInfo.url);
-              blob = await response.blob();
-            } else {
-              const vfs = vfsService.getVfs(fileInfo.drive);
-              blob = await vfs.blob(fileInfo.path + '/' + fileInfo.name);
-            }
-            const file = new File([blob], fileInfo.name, { type: blob.type });
-            file.fileInfo = fileInfo;
-            const cached = getCachedModel(file.name, blob.size);
+            const cached = getCachedModel(fileInfo.name);
             let modelInfo;
             if (cached) {
+              // 如果模型已缓存，直接使用缓存
               modelInfo = cached;
             } else {
+              // 否则加载模型文件
+              let blob;
+              if (fileInfo.url) {
+                // 如果有url，直接fetch
+                const response = await fetch(fileInfo.url);
+                blob = await response.blob();
+              } else {
+                // 否则从vfs加载
+                const vfs = vfsService.getVfs(fileInfo.drive);
+                blob = await vfs.blob(fileInfo.path + '/' + fileInfo.name);
+              }
+              // 构造File对象以兼容loadModel接口
+              const file = new File([blob], fileInfo.name, { type: blob.type });
+              file.fileInfo = fileInfo;
+
+              // 加载模型
               modelInfo = await loadModel(file);
             }
             const addOptions = {
