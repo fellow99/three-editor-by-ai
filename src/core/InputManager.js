@@ -155,6 +155,7 @@ class InputManager {
       // 这是一个点击事件
       this.emit('click', {
         ...this.state.mouse,
+        modifiers: { ...this.state.keyboard.modifiers }, // 新增：传递修饰键状态
         originalEvent: event
       });
     }
