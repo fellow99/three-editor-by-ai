@@ -354,6 +354,8 @@ export default {
       allObjects,
       selectedObjectIds,
       filteredObjects,
+      // 多选辅助对象集合，便于调试和扩展
+      currentHelpers: objectSelection.currentHelpers,
       
       // 方法
       refreshHierarchy,

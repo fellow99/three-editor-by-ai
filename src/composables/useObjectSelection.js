@@ -24,6 +24,44 @@ import { useInputManager } from '../core/InputManager.js';
 const objectManager = useObjectManager();
 const inputManager = useInputManager();
 
+
+// 响应式状态
+const selectedObjects = computed(() => 
+  Array.from(objectManager.state.selectedObjects)
+    .map(id => objectManager.getObject(id))
+    .filter(Boolean)
+);
+
+const selectedObjectIds = computed(() => 
+  Array.from(objectManager.state.selectedObjects)
+);
+
+const hasSelection = computed(() => 
+  objectManager.state.selectedObjects.size > 0
+);
+
+const selectionCount = computed(() => 
+  objectManager.state.selectedObjects.size
+);
+
+
+// 框选状态
+const boxSelection = reactive({
+  isActive: false,
+  startX: 0,
+  startY: 0,
+  endX: 0,
+  endY: 0
+});
+
+// 选择配置（已去除高亮相关）
+const selectionConfig = reactive({
+  showBoundingBox: true
+});
+
+// 悬停状态
+const hoveredObject = ref(null);
+
 // TransformControls及辅助对象相关
 /** @type {TransformControls|null} */
 let transformControls = null;
@@ -31,8 +69,11 @@ let transformControls = null;
 let transformHelper = null;
 /** @type {THREE.Object3D|null} */
 let currentTransformObject = null;
-/** @type {THREE.Object3D|null} */
-let currentHelper = null;
+/**
+ * 当前选中对象的辅助对象集合
+ * key为对象id，value为helper实例
+ */
+let currentHelpers = {};
 /** @type {object|null} */
 let transform = null; // 外部传入响应式transform对象
 /** @type {object|null} */
@@ -74,9 +115,11 @@ function initTransformControls(options = {}) {
         currentTransformObject.position.y = axesLockState.yValue;
       }
       // 变换时动态更新BoxHelper
-      if (currentHelper && currentHelper instanceof BoxHelper) {
-        currentHelper.update();
-      }
+      Object.values(currentHelpers).forEach(helper => {
+        if (helper instanceof BoxHelper) {
+          helper.update();
+        }
+      });
       if (objectManager && objectManager.setObjectTransform) {
         objectManager.setObjectTransform(
           currentTransformObject.userData.id,
@@ -183,17 +226,16 @@ transformControls.addEventListener('dragging-changed', (event) => {
         if (currentTransformObject.userData && currentTransformObject.userData.locked) {
           transformControls.detach();
           transformControls.visible = false;
-          updateSelectedHelper(currentTransformObject);
         } else {
           transformControls.attach(currentTransformObject);
           transformControls.visible = true;
-          updateSelectedHelper(currentTransformObject);
         }
       } else {
         transformControls.detach();
         transformControls.visible = false;
-        updateSelectedHelper(null);
       }
+      // 多选时也要为每个选中对象生成helper
+      updateSelectedHelpers(objs);
     }, { immediate: true });
   }
 
@@ -222,75 +264,45 @@ function disposeTransformControls() {
 }
 
 /**
- * 选中对象时动态添加helper
- * @param {THREE.Object3D|null} selected
+ * 为每个选中对象动态添加helper
+ * @param {THREE.Object3D[]} selectedObjs
  */
-function updateSelectedHelper(selected) {
-  if (currentHelper && scene) {
-    scene.remove(currentHelper);
-    if (currentHelper.dispose) currentHelper.dispose();
-    currentHelper = null;
-  }
-  if (!selected || !scene) return;
-  let helper = null;
-  if (selected.isDirectionalLight) {
-    helper = new DirectionalLightHelper(selected, 5, 0xffaa00);
-  } else if (selected.isPointLight) {
-    helper = new PointLightHelper(selected, 2, 0x00aaff);
-  } else if (selected.isSpotLight) {
-    helper = new SpotLightHelper(selected, 2, 0xaaff00);
-  } else if (selected.isHemisphereLight) {
-    helper = new HemisphereLightHelper(selected, 2);
-  } else if (selected.isCamera) {
-    helper = new CameraHelper(selected);
-  } else {
-    // 非光源和镜头，添加包围盒辅助对象
-    helper = new BoxHelper(selected, 0xffff00);
-  }
-  if (helper) {
-    scene.add(helper);
-    currentHelper = helper;
-  }
+function updateSelectedHelpers(selectedObjs) {
+  clearCurrentHelpers();
+  if (!scene || !selectedObjs) return;
+  selectedObjs.forEach(selected => {
+    let helper = null;
+    if (selected.isDirectionalLight) {
+      helper = new DirectionalLightHelper(selected, 5, 0xffaa00);
+    } else if (selected.isPointLight) {
+      helper = new PointLightHelper(selected, 2, 0x00aaff);
+    } else if (selected.isSpotLight) {
+      helper = new SpotLightHelper(selected, 2, 0xaaff00);
+    } else if (selected.isHemisphereLight) {
+      helper = new HemisphereLightHelper(selected, 2);
+    } else if (selected.isCamera) {
+      helper = new CameraHelper(selected);
+    } else {
+      helper = new BoxHelper(selected, 0xffff00);
+    }
+    if (helper) {
+      scene.add(helper);
+      currentHelpers[selected.userData.id] = helper;
+    }
+  });
 }
 
-// 响应式状态
-const selectedObjects = computed(() => 
-  Array.from(objectManager.state.selectedObjects)
-    .map(id => objectManager.getObject(id))
-    .filter(Boolean)
-);
-
-const selectedObjectIds = computed(() => 
-  Array.from(objectManager.state.selectedObjects)
-);
-
-const hasSelection = computed(() => 
-  objectManager.state.selectedObjects.size > 0
-);
-
-const selectionCount = computed(() => 
-  objectManager.state.selectedObjects.size
-);
-
-// 选择模式
-const selectionMode = ref('single'); // 'single', 'multiple', 'box'
-
-// 框选状态
-const boxSelection = reactive({
-  isActive: false,
-  startX: 0,
-  startY: 0,
-  endX: 0,
-  endY: 0
-});
-
-// 选择配置（已去除高亮相关）
-const selectionConfig = reactive({
-  showBoundingBox: true
-});
-
-// 悬停状态
-const hoveredObject = ref(null);
+/**
+ * 清除所有当前helper
+ */
+function clearCurrentHelpers() {
+  if (!scene) return;
+  Object.values(currentHelpers).forEach(helper => {
+    scene.remove(helper);
+    if (helper.dispose) helper.dispose();
+  });
+  currentHelpers = {};
+}
 
 /**
  * 选择单个对象
@@ -299,20 +311,13 @@ const hoveredObject = ref(null);
  */
 function selectObject(objectOrId, addToSelection = false) {
   let id;
-  
   if (typeof objectOrId === 'string') {
     id = objectOrId;
   } else {
     id = objectOrId.userData.id;
   }
-  
   if (!id) return;
-  
-  if (selectionMode.value === 'single' && !addToSelection) {
-    objectManager.selectObjects(id);
-  } else {
-    objectManager.selectObjects(id, addToSelection);
-  }
+  objectManager.selectObjects(id, addToSelection);
 }
 
 /**
@@ -351,19 +356,16 @@ function clearSelection() {
  */
 function toggleSelection(objectOrId) {
   let id;
-  
   if (typeof objectOrId === 'string') {
     id = objectOrId;
   } else {
     id = objectOrId.userData.id;
   }
-  
   if (!id) return;
-  
   if (objectManager.state.selectedObjects.has(id)) {
     deselectObject(id);
   } else {
-    selectObject(id, selectionMode.value === 'multiple');
+    selectObject(id, true);
   }
 }
 
@@ -486,7 +488,7 @@ function handleClickSelection(event, camera) {
       return;
     }
     const addToSelection = event.modifiers?.ctrl || event.modifiers?.shift;
-    if (addToSelection && selectionMode.value === 'multiple') {
+    if (addToSelection) {
       toggleSelection(targetObject);
     } else {
       selectObject(targetObject, false);
@@ -507,8 +509,6 @@ function handleClickSelection(event, camera) {
  * @param {number} y 起始Y坐标
  */
 function startBoxSelection(x, y) {
-  if (selectionMode.value !== 'box') return;
-  
   boxSelection.isActive = true;
   boxSelection.startX = x;
   boxSelection.startY = y;
@@ -645,7 +645,6 @@ export function useObjectSelection() {
     selectedObjectIds,
     hasSelection,
     selectionCount,
-    selectionMode,
     boxSelection,
     selectionConfig,
     hoveredObject,
@@ -653,10 +652,10 @@ export function useObjectSelection() {
     // TransformControls相关
     initTransformControls,
     disposeTransformControls,
-    updateSelectedHelper,
+    updateSelectedHelpers,
     get transformControls() { return transformControls; },
     get currentTransformObject() { return currentTransformObject; },
-    get currentHelper() { return currentHelper; },
+    get currentHelpers() { return currentHelpers; },
 
     // 方法
     selectObject,

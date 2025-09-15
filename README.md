@@ -162,6 +162,7 @@ three-editor-by-ai/
   - 新增axesLockState变量，支持Y轴锁定与解锁，供Toolbar、SceneManager、TransformControls等模块联动。
   - 聚焦对象时计算中心点并设置OrbitControls target。
 - useObjectSelection.js中：
+  - 支持多选，selectedObjects 中每个对象对应一个辅助对象 helper，统一由 currentHelpers 管理。
   - 使用ObjectManager.getIntersectedFirstObject(raycaster)高效获取第一个相交对象。
   - 内部定义了 `selectionStore`（响应式对象）：
     - 用于存储选中对象的临时材质信息，key 为对象 id。
