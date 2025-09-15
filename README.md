@@ -48,6 +48,7 @@ three-editor-by-ai/
 │   ├── components/                           # Vue 组件
 │   │   ├── editor/                           # 编辑器 UI 组件
 │   │   │   ├── PropertyPanel.vue             # 属性面板
+│   │   │   ├── MultiSelectPanel.vue          # 多对象批量操作面板（多选时显示，支持位置对齐、分布、旋转、缩放等）
 │   │   │   ├── Toolbar.vue                   # 工具栏
 │   │   │   ├── EditorFooter.vue              # 编辑器底部状态栏
 │   │   │   ├── AssetBrowser.vue              # 资源浏览器

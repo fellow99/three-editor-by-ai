@@ -96,7 +96,8 @@
         class="editor-sidebar right-panel"
         :style="{ width: appState.panels.rightWidth + 'px' }"
       >
-        <PropertyPanel />
+        <MultiSelectPanel v-if="showMultiSelectPanel" />
+        <PropertyPanel v-else />
       </div>
       <!-- 浮动切换按钮（右侧） -->
       <div
@@ -159,6 +160,7 @@ import Toolbar from './components/editor/Toolbar.vue';
 import ResourcePanel from './components/editor/ResourcePanel.vue';
 import SceneViewer from './components/scene/SceneViewer.vue';
 import PropertyPanel from './components/editor/PropertyPanel.vue';
+import MultiSelectPanel from './components/editor/MultiSelectPanel.vue';
 import EditorFooter from './components/editor/EditorFooter.vue';
 
 // 浮动面板组件
@@ -188,11 +190,14 @@ function toggleLeftPanel() {
 
 import { computed } from 'vue';
 
-// 使用各种 composables
+ // 使用各种 composables
 const scene = useScene();
 const objectSelection = useObjectSelection();
 const transform = useTransform();
 const assets = useAssets();
+
+/** 是否显示多选面板（选中对象数大于1） */
+const showMultiSelectPanel = computed(() => objectSelection.selectedObjects.value.length > 1);
 
 import * as THREE from 'three';
 
