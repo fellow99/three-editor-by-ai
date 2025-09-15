@@ -17,7 +17,7 @@
     <!-- 顶部工具栏 -->
     <!-- 主工具栏 -->
     <div class="main-toolbar">
-      <Toolbar @delete-selected="handleDeleteSelected" />
+      <Toolbar @delete-selected="handleDeleteSelected" @duplicate-selected="handleDuplicateSelected" />
     </div>
     
     <!-- 主编辑区域 -->
@@ -428,6 +428,15 @@ function handleDeleteSelected() {
       objectSelection.clearSelection();
     }).catch(() => {});
   }
+}
+
+/**
+ * 复制选中的对象
+ * 由Toolbar抛出duplicate-selected事件时调用
+ */
+function handleDuplicateSelected() {
+  // 调用useObjectSelection.js中的duplicateSelected
+  objectSelection.duplicateSelected();
 }
 
 // 生命周期

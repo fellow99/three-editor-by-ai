@@ -165,7 +165,7 @@ three-editor-by-ai/
     - 用于存储选中对象的临时材质信息，key 为对象 id。
     - selectionStore 生命周期与 useObjectSelection 组合式函数一致，自动随页面刷新或状态重置而清空。
   - TransformControls与选中对象辅助功能已迁移至useObjectSelection.js统一管理，SceneManager.js仅负责场景本身，SceneViewer.vue仅负责初始化调用。
-  - TransformControls拖拽时会自动禁用OrbitControls，避免拖拽时镜头跟随问题。（已迁移至useObjectSelection.js）
+  - TransformControls拖拽时会自动禁用OrbitControls，避免拖拽时镜头跟随问题，并在拖拽开始/结束时自动调用 useTransform 的 startTransform/endTransform，支持撤销/重做历史记录。
 - FlyControls.js中，已支持基于键盘的三维飞行控制（WASD/QE/方向键等），核心逻辑参考 three/examples/jsm/controls/OrbitControls.js、three/examples/jsm/controls/FlyControls.js 实现，支持速度、旋转、拖拽等多种操作。空格键与R键逻辑一致，均可向上飞行。
 - useAssets.js 中：
   - 资源加载函数（如 loadModel、loadTexture）已实现缓存机制：若 assetLibrary 中已存在同名且大小一致的资源，则直接返回缓存，避免重复加载和内存浪费。

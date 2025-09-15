@@ -171,7 +171,7 @@ import vfsService from '../../services/vfs-service.js';
 export default {
   name: 'Toolbar',
   components: { EditorConfigDialog, VfsFileChooserDialog, VfsFileSaverDialog },
-  emits: ['delete-selected'],
+  emits: ['delete-selected', 'duplicate-selected'],
   /**
    * 工具栏组件
    * 提供场景文件、编辑、对象变换等操作入口
@@ -401,9 +401,10 @@ export default {
     
     /**
      * 复制选中的对象
+     * 通过事件抛出，由父组件处理
      */
     function duplicateSelected() {
-      objectManager.duplicateSelected();
+      emit('duplicate-selected');
     }
     
     /**

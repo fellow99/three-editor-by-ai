@@ -7,6 +7,7 @@ import { ref, reactive, computed, watch } from 'vue';
 import * as THREE from 'three';
 import { useObjectManager } from '../core/ObjectManager.js';
 import { degToRad, radToDeg, clamp } from '../utils/mathUtils.js';
+import { useObjectSelection } from './useObjectSelection.js';
 
 let _instance = null;
 export function useTransform() {
@@ -479,6 +480,11 @@ export function useTransform() {
         object.position.copy(state.position);
         object.rotation.copy(state.rotation);
         object.scale.copy(state.scale);
+        // 撤销后更新辅助对象
+        const selection = useObjectSelection();
+        if (selection && selection.updateSelectedHelper) {
+          selection.updateSelectedHelper(object);
+        }
       }
     });
   }
@@ -499,6 +505,11 @@ export function useTransform() {
         object.position.copy(state.position);
         object.rotation.copy(state.rotation);
         object.scale.copy(state.scale);
+        // 重做后更新辅助对象
+        const selection = useObjectSelection();
+        if (selection && selection.updateSelectedHelper) {
+          selection.updateSelectedHelper(object);
+        }
       }
     });
   }

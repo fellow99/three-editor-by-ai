@@ -21,8 +21,6 @@ function generateId() {
   });
 }
 import { createBoxGeometry, createSphereGeometry, createCylinderGeometry } from '../utils/geometryUtils.js';
-import { useSceneManager } from './SceneManager.js';
-import { useObjectSelection } from '../composables/useObjectSelection.js';
 
 /**
  * @class ObjectManager
@@ -492,28 +490,6 @@ class ObjectManager {
     });
 
     return pastedObjects;
-  }
-  
-  /**
-   * 复制选中的对象
-   */
-  duplicateSelected() {
-    const selectedIds = Array.from(this.state.selectedObjects);
-
-    // 用 useObjectSelection 的 deselectObject 取消选择，确保高亮和 userData 恢复
-    const { deselectObject } = useObjectSelection();
-    selectedIds.forEach(id => {
-      const obj = this.getObject(id);
-      if (obj) deselectObject(obj);
-    });
-
-    this.copyObjects(selectedIds);
-
-    const duplicated = this.pasteObjects(new THREE.Vector3(Math.random(), Math.random(), Math.random()));
-    const duplicatedIds = duplicated.map(obj => obj.userData.id);
-    this.selectObjects(duplicatedIds);
-
-    return duplicated;
   }
   
   /**
