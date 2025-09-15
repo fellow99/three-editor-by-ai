@@ -11,6 +11,7 @@
 - 3D场景渲染和管理
 - 多种基础与扩展几何体创建
 - 完整的对象变换系统（移动、旋转、缩放）、撤销重做历史记录
+- 对象变换支持Y轴锁定
 - 多格式3D模型和纹理加载与管理（GLTF、OBJ、FBX等）
 - 拖拽上传、资源管理与资源浏览（支持模型预览和几何体创建）
 - 相机控制与预设视角（OrbitControls、MapControls、FlyControls切换，FlyControls支持基于键盘、鼠标的三维飞行控制）
@@ -158,6 +159,7 @@ three-editor-by-ai/
   - getIntersectedObjects() 和 getIntersectedFirstObject() 仅返回未锁定对象；
   - 变换后分发object-transform-updated事件。
 - useScene.js中：
+  - 新增axesLockState变量，支持Y轴锁定与解锁，供Toolbar、SceneManager、TransformControls等模块联动。
   - 聚焦对象时计算中心点并设置OrbitControls target。
 - useObjectSelection.js中：
   - 使用ObjectManager.getIntersectedFirstObject(raycaster)高效获取第一个相交对象。

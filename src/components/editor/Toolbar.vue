@@ -92,6 +92,18 @@
             <span class="icon">📏</span>
             <div>缩放</div>
           </button>
+          <!-- 锁定Y轴按钮 -->
+          <button
+            @click="toggleLockYAxis"
+            :class="['ribbon-btn', { active: axesLockState.locked }]"
+            title="锁定/解锁Y轴"
+          >
+            <span
+              class="icon"
+              :style="{ color: axesLockState.locked ? '#e53935' : '#1976d2', fontWeight: 'bold' }"
+            >Y</span>
+            <div>锁定Y轴</div>
+          </button>
         </div>
       </div>
       <!-- 视图 -->
@@ -197,6 +209,28 @@ export default {
     const objectSelection = useObjectSelection();
     const transform = useTransform();
     const objectManager = useObjectManager();
+
+    // Y轴锁定相关
+    const axesLockState = scene.axesLockState;
+    const setAxesLockState = scene.setAxesLockState;
+    /**
+     * 切换Y轴锁定状态
+     * 无选中对象时取controls.target.y，有选中对象时取选中对象position.y
+     */
+    function toggleLockYAxis() {
+      if (axesLockState.locked) {
+        setAxesLockState(false, 0);
+        return;
+      }
+      let y = 0;
+      const selected = objectSelection.selectedObjects.value;
+      if (selected && selected.length > 0 && selected[0] && selected[0].position) {
+        y = selected[0].position.y;
+      } else if (scene.sceneManager && scene.sceneManager.controls && scene.sceneManager.controls.target) {
+        y = scene.sceneManager.controls.target.y;
+      }
+      setAxesLockState(true, y);
+    }
     // 相机锁定相关
     const sceneManager = useSceneManager();
     const controlsLocked = ref(sceneManager.getControlsLocked());
@@ -471,7 +505,9 @@ export default {
       sceneJsonText,
       handleFileSaved,
       controlsLocked,
-      toggleLockCamera
+      toggleLockCamera,
+      axesLockState,
+      toggleLockYAxis
     };
   }
 };

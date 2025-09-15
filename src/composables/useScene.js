@@ -3,6 +3,12 @@
  * 提供场景相关的响应式状态和操作方法
  */
 
+/**
+ * 场景管理 Composable
+ * 提供场景相关的响应式状态和操作方法
+ * 新增：Y轴锁定功能，axesLockState用于记录Y轴锁定状态及锁定值
+ */
+
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue';
 import * as THREE from 'three';
 import { useSceneManager } from '../core/SceneManager.js';
@@ -12,6 +18,8 @@ import { useInputManager } from '../core/InputManager.js';
 const sceneManager = useSceneManager();
 const objectManager = useObjectManager();
 const inputManager = useInputManager();
+
+import { axesLockState, setAxesLockState } from './useAxesLockState.js';
 
 // 响应式状态
 const isInitialized = ref(false);
@@ -380,7 +388,8 @@ export function useScene() {
     frameCount,
     sceneConfig,
     cameraState,
-    
+    axesLockState, // 新增：Y轴锁定状态
+
     // 方法
     initScene,
     startRender,
@@ -397,7 +406,8 @@ export function useScene() {
     exportScene,
     resetScene,
     focusOnObject,
-    
+    setAxesLockState, // 新增：设置Y轴锁定状态
+
     // 管理器实例
     sceneManager,
     objectManager,

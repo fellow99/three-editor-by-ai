@@ -23,6 +23,7 @@ import { useObjectManager } from './ObjectManager.js';
 import { useObjectSelection } from '../composables/useObjectSelection.js';
 import vfsService from '../services/vfs-service.js';
 import { useAssets } from '../composables/useAssets.js';
+import { axesLockState } from '../composables/useAxesLockState.js';
 
 /**
  * @class SceneManager
@@ -118,6 +119,35 @@ class SceneManager {
         this.setControlsLocked(this.controlsLocked);
       },
       { deep: true }
+    );
+
+    // 新增：监听Y轴锁定状态，动态调整gridHelper位置和颜色
+    watch(
+      axesLockState,
+      (state) => {
+        if (!this.gridHelper) return;
+        if (state.locked) {
+          // 锁定时，设置y轴位置和颜色为黄色
+          this.gridHelper.position.y = state.yValue;
+          // 线条全部变为黄色
+          const yellow = new THREE.Color(0xffff00);
+          if (this.gridHelper.material) {
+            this.gridHelper.material._originalColor = this.gridHelper.material.color ? this.gridHelper.material.color.clone() : null;
+            this.gridHelper.material.color && this.gridHelper.material.color.copy(yellow);
+          }
+        } else {
+          // 解锁时，恢复y=0和原色
+          this.gridHelper.position.y = 0;
+          const { editorConfig } = useEditorConfig();
+          const centerColor = new THREE.Color(editorConfig.gridColorCenterLine);
+          const gridColor = new THREE.Color(editorConfig.gridColorGrid);
+          if (this.gridHelper.material && this.gridHelper.material._originalColor) {
+            this.gridHelper.material.color.copy(this.gridHelper.material._originalColor);
+            delete this.gridHelper.material._originalColor;
+          }
+        }
+      },
+      { deep: true, immediate: true }
     );
   }
 

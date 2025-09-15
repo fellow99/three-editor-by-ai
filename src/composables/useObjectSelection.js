@@ -11,6 +11,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { MapControls } from 'three/examples/jsm/controls/MapControls.js';
 import { FlyControls } from '../controls/FlyControls.js';
 import { DirectionalLightHelper, PointLightHelper, SpotLightHelper, HemisphereLightHelper, CameraHelper, BoxHelper } from 'three';
+import { axesLockState } from './useAxesLockState.js';
 
 /**
  * selectionStore
@@ -65,6 +66,13 @@ function initTransformControls(options = {}) {
   // 监听变换事件，同步属性
   transformControls.addEventListener('objectChange', () => {
     if (currentTransformObject) {
+      // Y轴锁定：仅translate模式且锁定时生效
+      if (
+        transformControls.mode === 'translate' &&
+        axesLockState.locked
+      ) {
+        currentTransformObject.position.y = axesLockState.yValue;
+      }
       // 变换时动态更新BoxHelper
       if (currentHelper && currentHelper instanceof BoxHelper) {
         currentHelper.update();
