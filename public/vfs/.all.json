@@ -117,6 +117,15 @@
         "size": 0,
         "time": null,
         "url": "/three-editor-by-ai/vfs/textures/hardwood2/hardwood2_roughness.jpg"
+      },
+      {
+        "path": "/",
+        "name": "zoo.json",
+        "ext": "json",
+        "type": "FILE",
+        "size": 0,
+        "time": null,
+        "url": "/three-editor-by-ai/vfs//zoo.json"
       }
     ]
   },

@@ -48,7 +48,7 @@
       ],
       "userData": {
         "fileInfo": {
-          "drive": "vfs",
+          "drive": "demo",
           "path": "/models/gltf",
           "name": "collision-world.glb",
           "type": "FILE"
@@ -79,7 +79,7 @@
       ],
       "userData": {
         "fileInfo": {
-          "drive": "vfs",
+          "drive": "demo",
           "path": "/models/gltf",
           "name": "Stork.glb",
           "type": "FILE"
@@ -110,7 +110,7 @@
       ],
       "userData": {
         "fileInfo": {
-          "drive": "vfs",
+          "drive": "demo",
           "path": "/models/gltf",
           "name": "Parrot.glb",
           "type": "FILE"
@@ -141,7 +141,7 @@
       ],
       "userData": {
         "fileInfo": {
-          "drive": "vfs",
+          "drive": "demo",
           "path": "/models/gltf",
           "name": "Flamingo.glb",
           "type": "FILE"
@@ -172,7 +172,7 @@
       ],
       "userData": {
         "fileInfo": {
-          "drive": "vfs",
+          "drive": "demo",
           "path": "/models/gltf",
           "name": "Horse.glb",
           "type": "FILE"
