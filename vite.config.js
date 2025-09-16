@@ -13,6 +13,11 @@ export default defineConfig({
   build: {
     outDir: `dist/${pkg.name}`
   },
+  resolve: {
+    alias: {
+      '@': '/src'
+    }
+  },
   plugins: [
     vue(),
     viteStaticCopy({
