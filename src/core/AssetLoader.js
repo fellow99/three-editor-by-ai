@@ -1,9 +1,13 @@
 /**
  * 资源加载器
  * 负责加载3D模型、纹理等资源
+ * 
+ * 事件机制：集成mitt库，实现事件收发（on、off、emit），用于资源加载相关事件分发与监听。
+ * 新语法：通过this.emitter = mitt()创建事件总线，提供on、off、emit方法。
  */
 
 import * as THREE from 'three';
+import mitt from 'mitt'; // 事件机制库
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { KTX2Loader } from 'three/examples/jsm/loaders/KTX2Loader.js';
@@ -18,6 +22,10 @@ import { getFileExtension, isSupported3DFormat, isTextureFormat } from '../utils
  * 统一的3D资源加载与缓存管理类，支持模型、纹理等多格式加载
  */
 class AssetLoader {
+  /**
+   * 统一的3D资源加载与缓存管理类，支持模型、纹理等多格式加载
+   * 新增：集成mitt事件机制，支持事件收发
+   */
   constructor() {
     // 响应式状态
     this.state = reactive({
@@ -26,6 +34,12 @@ class AssetLoader {
       loadedAssets: new Map(),
       loadingQueue: []
     });
+
+    // mitt事件机制
+    /**
+     * @property {mitt.Emitter} emitter - mitt事件总线实例
+     */
+    this.emitter = mitt();
     
     // DRACO 解码器
     this.dracoLoader = new DRACOLoader();
@@ -55,7 +69,33 @@ class AssetLoader {
     // 缓存
     this.cache = new Map();
   }
-  
+
+  /**
+   * 注册事件监听器
+   * @param {string} event 事件名
+   * @param {Function} handler 事件处理函数
+   */
+  on(event, handler) {
+    this.emitter.on(event, handler);
+  }
+
+  /**
+   * 注销事件监听器
+   * @param {string} event 事件名
+   * @param {Function} handler 事件处理函数
+   */
+  off(event, handler) {
+    this.emitter.off(event, handler);
+  }
+
+  /**
+   * 触发事件
+   * @param {string} event 事件名
+   * @param {any} payload 事件参数
+   */
+  emit(event, payload) {
+    this.emitter.emit(event, payload);
+  }
   /**
    * 设置加载管理器
    */

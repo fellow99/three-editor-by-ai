@@ -4,9 +4,13 @@
  * 动画机制：遍历场景对象，若对象有mixer（AnimationMixer实例），则在渲染循环中调用mixer.update(delta)。
  * 新语法：为每个有动画的对象挂载mixer到object.userData._mixer，动画选择由userData.animationIndex控制。
  * 新增功能：支持镜头锁定（controlsLocked），锁定时controls.enabled=false，避免与TransformControls拖拽冲突。
+ * 
+ * 事件机制：集成mitt库，实现事件收发（on、off、emit），用于场景相关事件分发与监听。
+ * 新语法：通过this.emitter = mitt()创建事件总线，提供on、off、emit方法。
  */
 
 import * as THREE from 'three';
+import mitt from 'mitt'; // 事件机制库
 /**
  * 新增功能：切换controls后自动同步TransformControls，确保拖拽时镜头不会跟随移动。
  * 新语法：在switchControls方法末尾调用useObjectSelection.js的initTransformControls，传入最新controls实例。
@@ -32,6 +36,7 @@ import { axesLockState } from '../composables/useAxesLockState.js';
 class SceneManager {
   /**
    * Three.js场景管理器，支持OrbitControls和FlyControls切换
+   * 新增：集成mitt事件机制，支持事件收发
    */
   constructor() {
     this.scene = null;
@@ -63,6 +68,12 @@ class SceneManager {
     this.lastTime = 0;
     this.frameCount = 0;
     this.lastRenderTime = performance.now();
+
+    // mitt事件机制
+    /**
+     * @property {mitt.Emitter} emitter - mitt事件总线实例
+     */
+    this.emitter = mitt();
 
     // 事件监听器
     this.resizeHandler = this.handleResize.bind(this);
@@ -149,6 +160,33 @@ class SceneManager {
       },
       { deep: true, immediate: true }
     );
+  }
+
+  /**
+   * 注册事件监听器
+   * @param {string} event 事件名
+   * @param {Function} handler 事件处理函数
+   */
+  on(event, handler) {
+    this.emitter.on(event, handler);
+  }
+
+  /**
+   * 注销事件监听器
+   * @param {string} event 事件名
+   * @param {Function} handler 事件处理函数
+   */
+  off(event, handler) {
+    this.emitter.off(event, handler);
+  }
+
+  /**
+   * 触发事件
+   * @param {string} event 事件名
+   * @param {any} payload 事件参数
+   */
+  emit(event, payload) {
+    this.emitter.emit(event, payload);
   }
 
   /**
@@ -589,9 +627,21 @@ class SceneManager {
   }
 
   addObject(object) {
+    /**
+     * @event before-add-object 场景中添加对象前触发
+     * @param {THREE.Object3D} object 即将添加的对象
+     */
+    this.emit('before-add-object', object);
+    
     this.scene.add(object);
     let objectManager = useObjectManager();
     objectManager.addObject(object);
+
+    /**
+     * @event add-object 场景中添加对象时触发
+     * @param {THREE.Object3D} object 新添加的对象
+     */
+    this.emit('add-object', object);
   }
 
   removeObject(object) {

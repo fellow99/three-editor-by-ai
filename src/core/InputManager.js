@@ -1,9 +1,13 @@
 /**
  * 输入管理器
  * 负责处理鼠标、键盘等输入事件
+ * 
+ * 事件机制：集成mitt库，实现事件收发（on、off、emit），用于输入相关事件分发与监听。
+ * 新语法：通过this.emitter = mitt()创建事件总线，提供on、off、emit方法。
  */
 
 import * as THREE from 'three';
+import mitt from 'mitt'; // 事件机制库
 import { reactive } from 'vue';
 
 /**
@@ -39,9 +43,12 @@ class InputManager {
         deltaY: 0
       }
     });
-    
-    // 事件监听器
-    this.eventListeners = new Map();
+
+    // mitt事件机制
+    /**
+     * @property {mitt.Emitter} emitter - mitt事件总线实例
+     */
+    this.emitter = mitt();
     
     // DOM元素
     this.element = null;
@@ -339,43 +346,30 @@ class InputManager {
   }
   
   /**
-   * 添加事件监听器
-   * @param {string} event 事件名称
-   * @param {Function} callback 回调函数
+   * 注册事件监听器
+   * @param {string} event 事件名
+   * @param {Function} handler 事件处理函数
    */
-  on(event, callback) {
-    if (!this.eventListeners.has(event)) {
-      this.eventListeners.set(event, new Set());
-    }
-    this.eventListeners.get(event).add(callback);
+  on(event, handler) {
+    this.emitter.on(event, handler);
   }
-  
+
   /**
-   * 移除事件监听器
-   * @param {string} event 事件名称
-   * @param {Function} callback 回调函数
+   * 注销事件监听器
+   * @param {string} event 事件名
+   * @param {Function} handler 事件处理函数
    */
-  off(event, callback) {
-    if (this.eventListeners.has(event)) {
-      this.eventListeners.get(event).delete(callback);
-    }
+  off(event, handler) {
+    this.emitter.off(event, handler);
   }
-  
+
   /**
    * 触发事件
-   * @param {string} event 事件名称
-   * @param {object} data 事件数据
+   * @param {string} event 事件名
+   * @param {any} payload 事件参数
    */
-  emit(event, data) {
-    if (this.eventListeners.has(event)) {
-      this.eventListeners.get(event).forEach(callback => {
-        try {
-          callback(data);
-        } catch (error) {
-          console.error(`Error in ${event} event handler:`, error);
-        }
-      });
-    }
+  emit(event, payload) {
+    this.emitter.emit(event, payload);
   }
   
   /**
@@ -383,7 +377,6 @@ class InputManager {
    */
   dispose() {
     this.disable();
-    this.eventListeners.clear();
     this.element = null;
   }
 }

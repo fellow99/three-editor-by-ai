@@ -2,12 +2,16 @@
  * 对象管理器
  * 负责3D对象的创建、管理和操作
  * 
+ * 事件机制：集成mitt库，实现事件收发（on、off、emit），用于对象相关事件分发与监听。
+ * 新语法：通过this.emitter = mitt()创建事件总线，提供on、off、emit方法。
+ * 
  * 新增方法说明：
  * - getIntersectedFirstObject(raycaster)：高效获取射线第一个相交对象，仅返回第一个命中的顶级对象，适用于对象数量极大时的高性能选择。
  * - getUnlockedObjects()：获取所有未被锁定（userData.locked !== true）的对象，便于过滤交互对象。
  */
 
 import * as THREE from 'three';
+import mitt from 'mitt'; // 事件机制库
 import { reactive } from 'vue';
 /**
  * 简单的UUID生成器
@@ -27,6 +31,10 @@ import { createBoxGeometry, createSphereGeometry, createCylinderGeometry } from 
  * 统一的3D对象创建、管理、变换、选择与批量操作管理类
  */
 class ObjectManager {
+  /**
+   * 统一的3D对象创建、管理、变换、选择与批量操作管理类
+   * 新增：集成mitt事件机制，支持事件收发
+   */
   constructor() {
     // 响应式状态
     this.state = reactive({
@@ -34,6 +42,12 @@ class ObjectManager {
       selectedObjects: new Set(),
       clipboard: null
     });
+
+    // mitt事件机制
+    /**
+     * @property {mitt.Emitter} emitter - mitt事件总线实例
+     */
+    this.emitter = mitt();
     
     // 材质缓存
     this.materialCache = new Map();
@@ -46,6 +60,32 @@ class ObjectManager {
     });
   }
   
+  /**
+   * 注册事件监听器
+   * @param {string} event 事件名
+   * @param {Function} handler 事件处理函数
+   */
+  on(event, handler) {
+    this.emitter.on(event, handler);
+  }
+
+  /**
+   * 注销事件监听器
+   * @param {string} event 事件名
+   * @param {Function} handler 事件处理函数
+   */
+  off(event, handler) {
+    this.emitter.off(event, handler);
+  }
+
+  /**
+   * 触发事件
+   * @param {string} event 事件名
+   * @param {any} payload 事件参数
+   */
+  emit(event, payload) {
+    this.emitter.emit(event, payload);
+  }
   /**
    * 创建基础几何体对象
    * @param {string} type 几何体类型

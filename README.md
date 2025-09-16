@@ -39,6 +39,7 @@
   - Day.js - 轻量级日期时间库
   - three-viewport-gizmo - 立方体视角控件库
   - stats-gl - 性能监控
+  - mitt - 事件机制
 
 ## 📁 项目结构
 
@@ -175,6 +176,7 @@ three-editor-by-ai/
   - 资源加载函数（如 loadModel、loadTexture）已实现缓存机制：若 assetLibrary 中已存在同名且大小一致的资源，则直接返回缓存，避免重复加载和内存浪费。
 - 所有资源（基础几何体、模型、资源）添加方式已统一为拖拽，点击添加功能已移除。
 - 对象动画：GLTF等模型加载后自动挂载animations，属性面板支持动画下拉选择并记录到userData.animationIndex，SceneManager.js统一驱动所有对象动画，ObjectManager.js导出/导入时自动保存与恢复动画索引，支持动画状态完整序列化。
+- 本项目核心管理器（SceneManager、ObjectManager、InputManager、AssetLoader）均集成了 [mitt](https://github.com/developit/mitt) 事件机制，实现模块间的解耦通信。  
 
 ## 💯 AI
 
