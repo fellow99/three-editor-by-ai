@@ -49,7 +49,7 @@ three-editor-by-ai/
 │   ├── components/                           # Vue 组件
 │   │   ├── editor/                           # 编辑器 UI 组件
 │   │   │   ├── PropertyPanel.vue             # 属性面板
-│   │   │   ├── MultiSelectPanel.vue          # 多对象批量操作面板（多选时显示，支持位置对齐、分布、旋转、缩放等）
+│   │   │   ├── MultiSelectPanel.vue          # 多对象批量操作面板
 │   │   │   ├── Toolbar.vue                   # 工具栏
 │   │   │   ├── EditorFooter.vue              # 编辑器底部状态栏
 │   │   │   ├── AssetBrowser.vue              # 资源浏览器
@@ -152,6 +152,7 @@ three-editor-by-ai/
   - 如需加载Meshopt压缩的glTF模型，请将node_modules/three/examples/jsm/libs/meshopt_decoder.module.js文件放入 public/meshopt/ 目录下。
 - SceneManager.js中：
   - loadScene()方法加载场景时，灯光和对象会完整恢复userData到Three.js对象，包括自定义属性、动画索引等，确保序列化与反序列化一致。
+  - findObjectsByUserData(key, value) 方法：支持多层key（如xxx.yyy），递归读取对象userData的嵌套属性值，并与value对比，返回所有匹配对象数组。
   - 运行时创建的动画相关对象（如_mixer、_activeAction等）不再挂载到userData，而是直接挂在主对象上（如obj._mixer、obj._activeAction），所有运行时临时对象均采用此设计，避免序列化污染，提升运行时管理效率。
 - ObjectManager.js中：
   - 导出对象数据时，仅保留可序列化字段（如animationIndex），所有运行时对象（如_mixer、_activeAction等）均直接挂主对象，不再出现在userData中。

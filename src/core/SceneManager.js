@@ -2,11 +2,9 @@
  * 场景管理器
  * 负责Three.js场景的创建、管理和渲染，并统一驱动对象动画（如GLTF动画）。
  * 动画机制：遍历场景对象，若对象有mixer（AnimationMixer实例），则在渲染循环中调用mixer.update(delta)。
- * 新语法：为每个有动画的对象挂载mixer到object.userData._mixer，动画选择由userData.animationIndex控制。
- * 新增功能：支持镜头锁定（controlsLocked），锁定时controls.enabled=false，避免与TransformControls拖拽冲突。
+ * 为每个有动画的对象挂载mixer到object.userData._mixer，动画选择由userData.animationIndex控制。
  * 
  * 事件机制：集成mitt库，实现事件收发（on、off、emit），用于场景相关事件分发与监听。
- * 新语法：通过this.emitter = mitt()创建事件总线，提供on、off、emit方法。
  */
 
 import * as THREE from 'three';
@@ -34,6 +32,34 @@ import { axesLockState } from '../composables/useAxesLockState.js';
  * Three.js场景、渲染器、相机、控制器、后处理等统一管理类
  */
 class SceneManager {
+  /**
+   * 根据userData中的指定key（支持多层，如xxx.yyy）查找匹配value的对象
+   * @param {string} key 多层key，使用点号分隔，如"foo.bar.baz"
+   * @param {any} value 目标值
+   * @returns {THREE.Object3D[]} 匹配的对象数组
+   * 新语法：递归读取userData嵌套属性，支持多层key
+   */
+  findObjectsByUserData(key, value) {
+    // 解析多层key
+    const keys = key.split('.');
+    // 获取所有场景对象
+    const objects = this.getObjects();
+    // 递归读取嵌套userData属性
+    function getNested(obj, keysArr) {
+      let cur = obj;
+      for (let k of keysArr) {
+        if (cur == null || typeof cur !== 'object') return undefined;
+        cur = cur[k];
+      }
+      return cur;
+    }
+    // 筛选匹配对象
+    return objects.filter(obj => {
+      const userData = obj.userData || {};
+      const val = getNested(userData, keys);
+      return val === value;
+    });
+  }
   /**
    * Three.js场景管理器，支持OrbitControls和FlyControls切换
    * 新增：集成mitt事件机制，支持事件收发
