@@ -279,28 +279,37 @@ class SceneManager {
               position: objData.position,
               rotation: objData.rotation,
               scale: objData.scale,
-              userData: objData.userData
+              userData: objData.userData,
+              material: objData.material // 支持材质参数
             };
             await addModelToScene(modelInfo.id, addOptions);
           } catch (e) {
             console.error('加载模型文件失败', e);
           }
         } else if (objData.type === 'primitive' && objData.primitiveType) {
-          objectManager.createPrimitive?.(objData.primitiveType, {
+          const obj = objectManager.createPrimitive?.(objData.primitiveType, {
             name: objData.name,
             position: objData.position,
             rotation: objData.rotation,
             scale: objData.scale,
-            userData: objData.userData
+            userData: objData.userData,
+            material: objData.material // 支持材质参数
           });
+          if (obj) {
+            this.addObject(obj);
+          }
         } else {
-          objectManager.createPrimitive?.(objData.type, {
+          const obj = objectManager.createPrimitive?.(objData.type, {
             name: objData.name,
             position: objData.position,
             rotation: objData.rotation,
             scale: objData.scale,
-            userData: objData.userData
+            userData: objData.userData,
+            material: objData.material // 支持材质参数
           });
+          if (obj) {
+            this.addObject(obj);
+          }
         }
       }
     }

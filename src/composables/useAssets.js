@@ -366,7 +366,7 @@ export function useAssets() {
    * @param {string} modelId 模型ID
    * @param {object} options 选项
    */
-  function addModelToScene(modelId, options = {}) {
+  async function addModelToScene(modelId, options = {}) {
     const modelInfo = assetLibrary.models.get(modelId);
     if (!modelInfo) return;
     
@@ -389,6 +389,30 @@ export function useAssets() {
     }
     let userData = options?.userData || {};
     modelClone.userData = { ...modelClone.userData, ...userData };
+
+    // 应用材质参数
+    if (options.material) {
+      if (modelClone.isMesh) {
+        // 单一Mesh
+        if (typeof options.material === 'object' && options.material.type) {
+          modelClone.material = modelClone.material instanceof THREE.Material
+            ? modelClone.material
+            : null;
+          const { useObjectManager } = await import('../core/ObjectManager.js');
+          const objectManager = useObjectManager();
+          modelClone.material = objectManager.createMaterial(options.material);
+        }
+      } else if (modelClone.children && modelClone.children.length > 0) {
+        // 多Mesh模型，遍历所有Mesh
+        const { useObjectManager } = await import('../core/ObjectManager.js');
+        const objectManager = useObjectManager();
+        modelClone.traverse(child => {
+          if (child.isMesh) {
+            child.material = objectManager.createMaterial(options.material);
+          }
+        });
+      }
+    }
     
     addObjectToScene(modelClone);
     return modelClone;

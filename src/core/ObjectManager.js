@@ -198,11 +198,23 @@ class ObjectManager {
           geometry = createBoxGeometry();
       }
       
-      const material = options.material || this.defaultMaterial.clone();
+      // 支持材质参数对象
+      let material;
+      if (options.material) {
+        if (options.material instanceof THREE.Material) {
+          material = options.material;
+        } else if (typeof options.material === 'object' && options.material.type) {
+          material = this.createMaterial(options.material);
+        } else {
+          material = this.defaultMaterial.clone();
+        }
+      } else {
+        material = this.defaultMaterial.clone();
+      }
       object = new THREE.Mesh(geometry, material);
       object.castShadow = true;
       object.receiveShadow = true;
-    
+
       // 设置基本属性（只设置{}，不包含type/primitiveType字段）
       object.userData = {...userData};
       
@@ -316,7 +328,7 @@ class ObjectManager {
     if (options.scale) {
       object.scale.set(...options.scale);
     }
-    
+
     // 只创建对象，不自动添加到管理器
     return object;
   }
@@ -720,6 +732,22 @@ class ObjectManager {
         if (typeof obj.userData.animationIndex !== 'undefined') {
           userDataExport.animationIndex = obj.userData.animationIndex;
         }
+        // 导出材质配置
+        let materialConfig = undefined;
+        if (obj.material) {
+          // 支持单材质对象
+          const mat = Array.isArray(obj.material) ? obj.material[0] : obj.material;
+          materialConfig = {
+            type: mat.type,
+            color: mat.color && mat.color.isColor ? '#' + mat.color.getHexString() : undefined,
+            roughness: mat.roughness,
+            metalness: mat.metalness,
+            opacity: mat.opacity,
+            transparent: mat.transparent,
+            map: mat.map && mat.map.name ? mat.map.name : undefined,
+            // 可扩展更多参数
+          };
+        }
         return {
           id: obj.userData.id,
           name: obj.name,
@@ -728,7 +756,8 @@ class ObjectManager {
           position: obj.position.toArray(),
           rotation: obj.rotation.toArray(),
           scale: obj.scale.toArray(),
-          userData: userDataExport
+          userData: userDataExport,
+          material: materialConfig
         };
       }),
       timestamp: new Date().toISOString()
