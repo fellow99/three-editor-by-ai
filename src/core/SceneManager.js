@@ -70,7 +70,7 @@ class SceneManager {
     this.camera = null;
     this.controls = null; // 控制器实例（OrbitControls/MapControls/FlyControls）
     this.container = null;
-    this.animationId = null;
+    this.renderLoopObj = null;
 
     // 镜头锁定状态
     this.controlsLocked = false;
@@ -588,19 +588,27 @@ class SceneManager {
     if (this.state.isRendering) return;
     this.state.isRendering = true;
     this.lastTime = performance.now();
-    this.animate();
+    this.renderLoop();
   }
 
   stopRender() {
-    if (this.animationId) {
-      cancelAnimationFrame(this.animationId);
-      this.animationId = null;
+    if (this.renderLoopObj) {
+      cancelAnimationFrame(this.renderLoopObj);
+      this.renderLoopObj = null;
     }
     this.state.isRendering = false;
   }
 
-  animate() {
-    this.animationId = requestAnimationFrame(() => this.animate());
+  /**
+   * 渲染循环
+   * 1. 计算FPS并更新state.fps
+   * 2. 计算delta时间，更新所有AnimationMixer实例
+   */
+  renderLoop() {
+    // 循环调用自身
+    this.renderLoopObj = requestAnimationFrame(() => this.renderLoop());
+
+    // 计算FPS
     const currentTime = performance.now();
     this.frameCount++;
     if (currentTime - this.lastTime >= 1000) {
@@ -611,11 +619,46 @@ class SceneManager {
     const now = performance.now();
     const delta = (now - this.lastRenderTime) / 1000;
     this.lastRenderTime = now;
+
+    // 更新所有AnimationMixer实例
     this.updateAllMixers(delta);
-    this.render();
+
+    // 更新控制器
+    if (this.controls) {
+      this.controls.update();
+      if (this.axesHelper && this.controls && this.controls.target && this.camera) {
+        this.axesHelper.position.copy(this.controls.target);
+        const distance = this.camera.position.distanceTo(this.controls.target);
+        const scale = distance / 50;
+        this.axesHelper.scale.setScalar(scale > 0 ? scale : 0.01);
+      }
+    }
+
+    /**
+     * @event before-render 每次渲染前触发
+     * @param {object} param 渲染参数对象
+     * @param {number} param.delta 渲染帧间隔时间
+     * @param {number} param.now 当前时间戳
+     */
+    this.emit('before-render', { delta, now });
+
+    // 渲染场景
+    if (this.composer) {
+      this.composer.render();
+    } else if (this.renderer && this.scene && this.camera) {
+      this.renderer.render(this.scene, this.camera);
+    }
+
+    // 帧计数
     this.state.frameCount++;
   }
 
+  /**
+   * 更新所有AnimationMixer实例
+   * 遍历场景对象，若对象有animations数组且不为空，则为其创建或复用mixer，并根据userData.animationIndex播放对应动画。
+   * 最后调用每个mixer.update(delta)更新动画状态。
+   * @param {number} delta 渲染帧间隔时间
+   */
   updateAllMixers(delta) {
     this.mixers = [];
     this.scene.traverse(obj => {
@@ -642,23 +685,6 @@ class SceneManager {
       }
     });
     this.mixers.forEach(mixer => mixer.update(delta));
-  }
-
-  render() {
-    if (this.controls) {
-      this.controls.update();
-      if (this.axesHelper && this.controls && this.controls.target && this.camera) {
-        this.axesHelper.position.copy(this.controls.target);
-        const distance = this.camera.position.distanceTo(this.controls.target);
-        const scale = distance / 50;
-        this.axesHelper.scale.setScalar(scale > 0 ? scale : 0.01);
-      }
-    }
-    if (this.composer) {
-      this.composer.render();
-    } else if (this.renderer && this.scene && this.camera) {
-      this.renderer.render(this.scene, this.camera);
-    }
   }
 
   addObject(object) {
