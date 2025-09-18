@@ -402,6 +402,7 @@ export function useScene() {
     removeObjectFromScene,
     clearScene,
     createPrimitive,
+    add3DTiles: sceneManager.add3DTiles.bind(sceneManager), // 新增：创建3DTiles模型
     getSceneStats,
     exportScene,
     resetScene,

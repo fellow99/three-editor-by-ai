@@ -9,10 +9,7 @@
 
 import * as THREE from 'three';
 import mitt from 'mitt'; // 事件机制库
-/**
- * 新增功能：切换controls后自动同步TransformControls，确保拖拽时镜头不会跟随移动。
- * 新语法：在switchControls方法末尾调用useObjectSelection.js的initTransformControls，传入最新controls实例。
- */
+import { TilesRenderer } from '3d-tiles-renderer';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { MapControls } from 'three/examples/jsm/controls/MapControls.js';
 import { FlyControls } from '../controls/FlyControls.js';
@@ -686,6 +683,31 @@ class SceneManager {
     });
     this.mixers.forEach(mixer => mixer.update(delta));
   }
+
+  add3DTiles(tilesetUrl, userData = {}) {
+    let { camera, renderer } = this;
+
+    const tilesRenderer = new TilesRenderer(tilesetUrl);
+    tilesRenderer.setCamera( camera );
+    tilesRenderer.setResolutionFromRenderer( camera, renderer );
+    tilesRenderer.addEventListener( 'load-tile-set', () => {
+      // 自动缩放并居中
+      const sphere = new THREE.Sphere();
+      tilesRenderer.getBoundingSphere( sphere );
+      tilesRenderer.group.position.copy( sphere.center ).multiplyScalar( - 1 );
+    } );
+    
+    this.on('before-render', () => {
+      // 渲染循环中更新
+      tilesRenderer.update();
+    });
+
+    let object = tilesRenderer.group;
+
+    object.userData = {...(object.userData || {}), ...userData, locked: true}; // 3DTiles模型默认锁定，避免误操作
+    this.addObject(object);
+  }
+
 
   addObject(object) {
     /**

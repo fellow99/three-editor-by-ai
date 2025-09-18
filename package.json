@@ -10,6 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "3d-tiles-renderer": "^0.4.16",
     "dayjs": "^1.11.13",
     "element-plus": "^2.10.5",
     "lodash": "^4.17.21",

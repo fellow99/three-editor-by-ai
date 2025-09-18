@@ -13,6 +13,7 @@
 - 完整的对象变换系统（移动、旋转、缩放）、撤销重做历史记录
 - 对象变换支持Y轴锁定
 - 多格式3D模型和纹理加载与管理（GLTF、OBJ、FBX等）
+- 支持加载3DTiles，基于[3d-tiles-renderer](https://www.npmjs.com/package/3d-tiles-renderer)
 - 拖拽上传、资源管理与资源浏览（支持模型预览和几何体创建）
 - 相机控制与预设视角（OrbitControls、MapControls、FlyControls切换，FlyControls支持基于键盘、鼠标的三维飞行控制）
 - 材质编辑和属性调整（多种材质类型与参数动态配置）
@@ -37,9 +38,10 @@
   - Element Plus - 主流UI组件库
   - Lodash - 实用工具函数库
   - Day.js - 轻量级日期时间库
-  - three-viewport-gizmo - 立方体视角控件库
-  - stats-gl - 性能监控
   - mitt - 事件机制
+  - [three-viewport-gizmo](https://www.npmjs.com/package/three-viewport-gizmo) - 立方体视角控件库
+  - [3d-tiles-renderer](https://www.npmjs.com/package/3d-tiles-renderer) - 3dtiles加载库
+  - [stats-gl](https://www.npmjs.com/package/stats-gl) - 性能监控
 
 ## 📁 项目结构
 

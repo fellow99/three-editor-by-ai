@@ -145,5 +145,12 @@
         "name": "精灵",
         "icon": "🎭",
         "description": "创建一个精灵对象"
+    },
+    {
+        "category": "其他对象",
+        "type": "3dtiles",
+        "name": "3DTiles模型",
+        "icon": "🏙️",
+        "description": "从URL加载一个3DTiles模型"
     }
 ]

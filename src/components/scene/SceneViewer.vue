@@ -82,10 +82,21 @@ export default {
           // 这里假设有scene.addPrimitive(type)方法，实际需根据项目实现
           if (scene) {
             options.name = primitive.name || primitive.type;
-            // 创建对象后需手动添加到管理器
-            const obj = await scene.createPrimitive(primitive.type, options);
-            scene.sceneManager.addObject(obj);
-            ElMessage.success('已添加基础对象');
+            if(primitive.type === '3dtiles') {
+              // 3DTiles模型需额外的url参数
+              const url = prompt('请输入3DTiles模型URL:');
+              if(!url) {
+                ElMessage.warning('未输入URL，取消添加3DTiles模型');
+                return;
+              }
+              await scene.add3DTiles(url);
+              ElMessage.success('已添加3DTiles模型');
+            } else {
+              // 创建对象后需手动添加到管理器
+              const obj = await scene.createPrimitive(primitive.type, options);
+              scene.sceneManager.addObject(obj);
+              ElMessage.success('已添加基础对象');
+            }
           } else {
             ElMessage.warning('未实现基础对象添加');
           }
