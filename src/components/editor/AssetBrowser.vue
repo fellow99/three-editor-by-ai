@@ -364,6 +364,9 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+.asset-browser {
+  height: calc(100% - 45px);
+}
 .asset-tabs {
   display: flex;
   border-bottom: 1px solid #444;
@@ -371,13 +374,14 @@ export default {
 
 .asset-grid {
   padding: 8px;
+  overflow: auto;
+  height: 100%;
 }
 .models-grid,
 .textures-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   gap: 12px;
-  overflow: auto;
 }
 
 .asset-item {
