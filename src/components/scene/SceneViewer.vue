@@ -295,10 +295,10 @@ export default {
     onMounted(() => {
       initializeScene();
       // 初始化完成后自动尝试加载localStorage中的暂存场景
-      // key: three-editor-by-ai_editorScene
+      // key: three-editor-scene
       setTimeout(async () => {
         try {
-          const raw = localStorage.getItem('three-editor-by-ai_editorScene');
+          const raw = localStorage.getItem('three-editor-scene');
           if (raw) {
             const sceneData = JSON.parse(raw);
             // 尝试加载场景数据

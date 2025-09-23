@@ -24,7 +24,7 @@ export const CONTROLS_OPTIONS = [
  */
 function loadConfigFromLocalStorage() {
   try {
-    const raw = localStorage.getItem('three-editor-by-ai_editorConfig');
+    const raw = localStorage.getItem('three-editor-config');
     if (raw) {
       return JSON.parse(raw);
     }
@@ -37,7 +37,7 @@ function loadConfigFromLocalStorage() {
  */
 function saveConfigToLocalStorage() {
   try {
-    localStorage.setItem('three-editor-by-ai_editorConfig', JSON.stringify(editorConfig));
+    localStorage.setItem('three-editor-config', JSON.stringify(editorConfig));
   } catch (e) {}
 }
 

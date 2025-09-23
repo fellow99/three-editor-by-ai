@@ -342,7 +342,7 @@ export default {
     function saveLocal() {
       try {
         const sceneData = scene.exportScene();
-        localStorage.setItem('three-editor-by-ai_editorScene', JSON.stringify(sceneData));
+        localStorage.setItem('three-editor-scene', JSON.stringify(sceneData));
         ElMessage.success('场景已暂存到本地');
       } catch (error) {
         console.error('暂存失败:', error);
