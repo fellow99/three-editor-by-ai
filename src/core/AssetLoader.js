@@ -141,7 +141,11 @@ class AssetLoader {
         url = URL.createObjectURL(source);
         filename = source.name;
         fileInfo = source.fileInfo || { name: filename };
-      } else {
+      } else if (source && source.url &&  source.name){
+        url = source.url;
+        filename = source.name;
+        fileInfo = source;
+      } else if(typeof source === 'string'){
         url = source;
         filename = source.split('/').pop();
         fileInfo = { name: filename, url: source };

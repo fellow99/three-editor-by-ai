@@ -51,7 +51,7 @@ export class VfsServerApi {
         let root = this._root;
         root = (root === '/' ? '' : root);
         path = (path === '/' ? '' : path);
-        let url = `${root}/file/${drive}${path}`;
+        let url = `${this._baseURL}${root}/file/${drive}${path}`;
         return url;
     }
 

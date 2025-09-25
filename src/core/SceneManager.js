@@ -279,23 +279,30 @@ class SceneManager {
               // 如果模型已缓存，直接使用缓存
               modelInfo = cached;
             } else {
-              // 否则加载模型文件
-              let blob;
-              if (fileInfo.url) {
-                // 如果有url，直接fetch
-                const response = await fetch(fileInfo.url);
-                blob = await response.blob();
-              } else {
-                // 否则从vfs加载
+              // // 否则加载模型文件（使用blob）
+              // let blob;
+              // if (fileInfo.url) {
+              //   // 如果有url，直接fetch
+              //   const response = await fetch(fileInfo.url);
+              //   blob = await response.blob();
+              // } else {
+              //   // 否则从vfs加载
+              //   const vfs = vfsService.getVfs(fileInfo.drive); const vfs = vfsService.getVfs(fileInfo.drive);
+              //   blob = await vfs.blob(fileInfo.path + '/' + fileInfo.name);
+              // }
+              // // 构造File对象以兼容loadModel接口
+              // const file = new File([blob], fileInfo.name, { type: blob.type });
+              // file.fileInfo = fileInfo;
+
+              // 使用url加载模型
+              if(!fileInfo.url) {
                 const vfs = vfsService.getVfs(fileInfo.drive);
-                blob = await vfs.blob(fileInfo.path + '/' + fileInfo.name);
+                let url = vfs.url(fileInfo.path + '/' + fileInfo.name);
+                fileInfo.url = url;
               }
-              // 构造File对象以兼容loadModel接口
-              const file = new File([blob], fileInfo.name, { type: blob.type });
-              file.fileInfo = fileInfo;
 
               // 加载模型
-              modelInfo = await loadModel(file);
+              modelInfo = await loadModel(fileInfo);
             }
             const addOptions = {
               name: objData.name,
