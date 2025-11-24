@@ -55,32 +55,43 @@ TOUCH_DOLLY_ROTATE: 6
 const _EPS = 0.000001;
 
 /**
- * Orbit controls allow the camera to orbit around a target.
- *
- * FlyControls performs orbiting, dollying (zooming), and panning. Unlike {@link TrackballControls},
- * it maintains the "up" direction `object.up` (+Y by default).
- *
- * - Orbit: Left mouse / touch: one-finger move.
- * - Zoom: Middle mouse, or mousewheel / touch: two-finger spread or squish.
- * - Pan: Right mouse, or left mouse + ctrl/meta/shiftKey, or arrow keys / touch: two-finger move.
- *
- * ```js
- * const controls = new FlyControls( camera, renderer.domElement );
- *
- * // controls.update() must be called after any manual changes to the camera's transform
- * camera.position.set( 0, 20, 100 );
- * controls.update();
- *
- * function animate() {
- *
- * // required if controls.enableDamping or controls.autoRotate are set to true
- * controls.update();
- *
- * renderer.render( scene, camera );
- *
- * }
- * ```
- *
+ * FlyControls - 三维飞行控制器
+ * 
+ * 本文件实现了基于Three.js的飞行控制器，支持通过键盘WASD/QE和方向键进行三维空间自由移动和旋转，
+ * 鼠标左键拖动时，镜头视点位置围绕目标点（target）做弧形运动（保持y轴不变），实现类似环绕观察的效果。
+ * 主要功能：
+ * - 键盘飞行（WASD/QE/方向键，Q/E为左右旋转镜头，绕Y轴旋转）
+ * - 鼠标左键：镜头绕target点水平旋转（y轴不变，极坐标变换）
+ * - 鼠标中键：缩放
+ * - 鼠标右键：平移
+ * - 支持自定义旋转、缩放、平移速度
+ * - 支持target同步
+ * 
+ * 可配置参数（仅保留有效参数）：
+ * @param {number} targetDistance  相机与target的默认距离，默认10
+ * @param {number} movementSpeed   键盘移动速度，默认1.0
+ * @param {number} rollSpeed       键盘旋转速度，默认0.005
+ * @param {boolean} dragToLook     是否仅在拖拽时允许视角旋转，默认false
+ * @param {boolean} autoForward    是否自动向前移动，默认false
+ * @param {number} minDistance     透视相机最小推进距离，默认0
+ * @param {number} maxDistance     透视相机最大推进距离，默认Infinity
+ * @param {number} minZoom         正交相机最小缩放，默认0
+ * @param {number} maxZoom         正交相机最大缩放，默认Infinity
+ * @param {boolean} enableZoom     是否允许鼠标缩放，默认true
+ * @param {number} zoomSpeed       鼠标缩放速度，默认1.0
+ * @param {boolean} enableRotate   是否允许鼠标旋转，默认true
+ * @param {number} rotateSpeed     鼠标旋转速度，默认0.5
+ * @param {boolean} enablePan      是否允许鼠标平移，默认true
+ * @param {number} panSpeed        鼠标平移速度，默认1.0
+ * @param {boolean} enableKeyboard 是否允许键盘操作，默认true
+ * @param {Object} keys            键盘映射
+ * @param {Object} mouseButtons    鼠标按钮映射
+ * @param {Object} touches         触摸事件映射
+ * 
+ * 新语法/新方法说明：
+ * - 使用Spherical极坐标进行相机绕点旋转
+ * - 通过instanceof判断实例类型
+ * 
  * @augments Controls
  * @three_import import { FlyControls } from 'three/addons/controls/FlyControls.js';
  */
@@ -93,26 +104,40 @@ class FlyControls extends Controls {
      * 新增内部变量：_moveState、_moveVector、_rotationVector、_lastQuaternion、_lastPosition、_status，用于记录移动/旋转状态。
      * @param {Object3D} object - 被控制的对象。
      * @param {?HTMLDOMElement} domElement - 用于事件监听的HTML元素。
+     * @param {number} targetDistance - 相机与target的默认距离（右键平移/滚轮/W/S操作时保持该距离），默认10
      */
-    constructor( object, domElement = null ) {
-
+    constructor( object, domElement = null, targetDistance = 10 ) {
         super( object, domElement );
 
         this.state = _STATE.NONE;
 
         /**
-         * 移动速度
+         * 相机与target的默认距离（右键平移/滚轮/W/S操作时保持该距离）
          * @type {number}
-         * @default 1
+         * @default 10
          */
-        this.movementSpeed = 1.0;
+        this.targetDistance = targetDistance;
 
         /**
-         * 旋转速度
+         * 键盘移动速度
          * @type {number}
-         * @default 0.005
+         * @default 10
          */
-        this.rollSpeed = 0.005;
+        this.movementSpeed = 10.0;
+
+        /**
+         * 键盘旋转速度
+         * @type {number}
+         * @default 0.05
+         */
+        this.rollSpeed = 0.05;
+
+        /**
+         * 是否允许键盘操作
+         * @type {boolean}
+         * @default true
+         */
+        this.enableKeyboard = true;
 
         /**
          * 是否仅在拖拽时允许视角旋转
@@ -209,76 +234,10 @@ class FlyControls extends Controls {
          */
         this.maxZoom = Infinity;
 
-        /**
-         * How close you can get the target to the 3D `cursor`.
-         *
-         * @type {number}
-         * @default 0
-         */
-        this.minTargetRadius = 0;
-
-        /**
-         * How far you can move the target from the 3D `cursor`.
-         *
-         * @type {number}
-         * @default Infinity
-         */
-        this.maxTargetRadius = Infinity;
-
-        /**
-         * How far you can orbit vertically, lower limit. Range is `[0, Math.PI]` radians.
-         *
-         * @type {number}
-         * @default 0
-         */
-        this.minPolarAngle = 0;
-
-        /**
-         * How far you can orbit vertically, upper limit. Range is `[0, Math.PI]` radians.
-         *
-         * @type {number}
-         * @default Math.PI
-         */
-        this.maxPolarAngle = Math.PI;
-
-        /**
-         * How far you can orbit horizontally, lower limit. If set, the interval `[ min, max ]`
-         * must be a sub-interval of `[ - 2 PI, 2 PI ]`, with `( max - min < 2 PI )`.
-         *
-         * @type {number}
-         * @default -Infinity
-         */
-        this.minAzimuthAngle = - Infinity;
-
-        /**
-         * How far you can orbit horizontally, upper limit. If set, the interval `[ min, max ]`
-         * must be a sub-interval of `[ - 2 PI, 2 PI ]`, with `( max - min < 2 PI )`.
-         *
-         * @type {number}
-         * @default -Infinity
-         */
-        this.maxAzimuthAngle = Infinity;
-
-        /**
-         * Set to `true` to enable damping (inertia), which can be used to give a sense of weight
-         * to the controls. Note that if this is enabled, you must call `update()` in your animation
-         * loop.
-         *
-         * @type {boolean}
-         * @default false
-         */
-        this.enableDamping = false;
-
-        /**
-         * The damping inertia used if `enableDamping` is set to `true`.
-         *
-         * Note that for this to work, you must call `update()` in your animation loop.
-         *
-         * @type {number}
-         * @default 0.05
-         */
-        this.dampingFactor = 0.05;
-
+        
+        
+        
+        
         /**
          * Enable or disable zooming (dollying) of the camera.
          *
@@ -315,14 +274,7 @@ class FlyControls extends Controls {
          */
         this.rotateSpeed = 0.5;
 
-        /**
-         * How fast to rotate the camera when the keyboard is used.
-         *
-         * @type {number}
-         * @default 1
-         */
-        this.keyRotateSpeed = 1.0;
-
+        
         /**
          * Enable or disable camera panning.
          *
@@ -339,56 +291,10 @@ class FlyControls extends Controls {
          */
         this.panSpeed = 1.0;
 
-        /**
-         * Defines how the camera's position is translated when panning. If `true`, the camera pans
-         * in screen space. Otherwise, the camera pans in the plane orthogonal to the camera's up
-         * direction.
-         *
-         * @type {boolean}
-         * @default true
-         */
-        this.screenSpacePanning = true;
-
-        /**
-         * How fast to pan the camera when the keyboard is used in
-         * pixels per keypress.
-         *
-         * @type {number}
-         * @default 7
-         */
-        this.keyPanSpeed = 7.0;
-
-        /**
-         * Setting this property to `true` allows to zoom to the cursor's position.
-         *
-         * @type {boolean}
-         * @default false
-         */
-        this.zoomToCursor = false;
-
-        /**
-         * Set to true to automatically rotate around the target
-         *
-         * Note that if this is enabled, you must call `update()` in your animation loop.
-         * If you want the auto-rotate speed to be independent of the frame rate (the refresh
-         * rate of the display), you must pass the time `deltaTime`, in seconds, to `update()`.
-         *
-         * @type {boolean}
-         * @default false
-         */
-        this.autoRotate = false;
-
-        /**
-         * How fast to rotate around the target if `autoRotate` is `true`. The default  equates to 30 seconds
-         * per orbit at 60fps.
-         *
-         * Note that if `autoRotate` is enabled, you must call `update()` in your animation loop.
-         *
-         * @type {number}
-         * @default 2
-         */
-        this.autoRotateSpeed = 2.0;
-
+        
+        
+        
+        
         /**
          * This object contains references to the keycodes for controlling camera panning.
          *
@@ -445,16 +351,7 @@ class FlyControls extends Controls {
          */
         this.position0 = this.object.position.clone();
 
-        /**
-         * Used internally by `saveState()` and `reset()`.
-         *
-         * @type {number}
-         */
-        this.zoom0 = this.object.zoom;
-
-        // the target DOM element for key events
-        this._domElementKeyEvents = null;
-
+        
         // internals
 
         this._lastPosition = new Vector3();
@@ -593,7 +490,7 @@ this._interceptControlUp = this.interceptControlUp.bind( this );
      * @private
      */
     onKeyDown( event ) {
-        if ( event.altKey || this.enabled === false ) return;
+        if ( event.altKey || this.enabled === false || this.enableKeyboard === false ) return;
         switch ( event.code ) {
             case 'ShiftLeft':
             case 'ShiftRight': this.movementSpeedMultiplier = .1; break;
@@ -608,8 +505,9 @@ this._interceptControlUp = this.interceptControlUp.bind( this );
             case 'ArrowDown': this._moveState.pitchDown = 1; break;
             case 'ArrowLeft': this._moveState.yawLeft = 1; break;
             case 'ArrowRight': this._moveState.yawRight = 1; break;
-            case 'KeyQ': this._moveState.rollLeft = 1; break;
-            case 'KeyE': this._moveState.rollRight = 1; break;
+            case 'KeyQ': this._moveState.yawLeft = 1; break; // Q键：绕Y轴左旋（左转镜头）
+            case 'KeyE': this._moveState.yawRight = 1; break; // E键：绕Y轴右旋（右转镜头）
+            // Q/E 控制已移除
         }
         this._updateMovementVector();
         this._updateRotationVector();
@@ -621,7 +519,7 @@ this._interceptControlUp = this.interceptControlUp.bind( this );
      * @private
      */
     onKeyUp( event ) {
-        if ( this.enabled === false ) return;
+        if ( this.enabled === false || this.enableKeyboard === false ) return;
         switch ( event.code ) {
             case 'ShiftLeft':
             case 'ShiftRight': this.movementSpeedMultiplier = 1; break;
@@ -636,8 +534,9 @@ this._interceptControlUp = this.interceptControlUp.bind( this );
             case 'ArrowDown': this._moveState.pitchDown = 0; break;
             case 'ArrowLeft': this._moveState.yawLeft = 0; break;
             case 'ArrowRight': this._moveState.yawRight = 0; break;
-            case 'KeyQ': this._moveState.rollLeft = 0; break;
-            case 'KeyE': this._moveState.rollRight = 0; break;
+            case 'KeyQ': this._moveState.yawLeft = 0; break; // Q键：绕Y轴左旋（左转镜头）
+            case 'KeyE': this._moveState.yawRight = 0; break; // E键：绕Y轴右旋（右转镜头）
+            // Q/E 控制已移除
         }
         this._updateMovementVector();
         this._updateRotationVector();
@@ -650,19 +549,42 @@ this._interceptControlUp = this.interceptControlUp.bind( this );
      * @param {PointerEvent} event
      * @private
      */
+    /**
+     * 鼠标移动事件处理，分发旋转/缩放/平移。
+     * 鼠标左键拖动时，镜头视点位置围绕目标点做弧形运动（y轴不变）。
+     * @param {PointerEvent} event
+     * @private
+     */
     onPointerMove(event) {
         if (this.enabled === false) return;
         switch (this.state) {
-            case _STATE.ROTATE:
+            case _STATE.ROTATE: {
+                // 计算鼠标移动增量
                 this._rotateEnd.set(event.clientX, event.clientY);
                 this._rotateDelta.subVectors(this._rotateEnd, this._rotateStart).multiplyScalar(this.rotateSpeed);
-                this.object.rotateY(-2 * Math.PI * this._rotateDelta.x / this.domElement.clientHeight);
-                this.object.rotateX(-2 * Math.PI * this._rotateDelta.y / this.domElement.clientHeight);
+
+                // 计算相机到target的向量
+                const offset = new Vector3().subVectors(this.object.position, this.target);
+
+                // 转为极坐标
+                const spherical = new Spherical();
+                spherical.setFromVector3(offset);
+
+                // 水平环绕（phi为方位角，theta为极角，保持theta不变，调整phi）
+                spherical.theta -= 2 * Math.PI * this._rotateDelta.x / this.domElement.clientWidth;
+
+                // 保持镜头高度与target一致
+                const newOffset = new Vector3().setFromSpherical(spherical);
+                newOffset.y = 0; // y轴偏移为0，保证相机y=target.y
+                this.object.position.copy(this.target).add(newOffset);
+
+                // 始终朝向target
+                this.object.lookAt(this.target);
+
                 this._rotateStart.copy(this._rotateEnd);
                 this.update();
-                // 新增：旋转时实时同步target为相机前方一定距离
-                this._syncTargetAfterTransform();
                 break;
+            }
             case _STATE.DOLLY:
                 this._dollyEnd.set(event.clientX, event.clientY);
                 this._dollyDelta.subVectors(this._dollyEnd, this._dollyStart);
@@ -750,20 +672,26 @@ this._interceptControlUp = this.interceptControlUp.bind( this );
      * @param {WheelEvent} event
      * @private
      */
-    onMouseWheel(event) {
-        if (this.enabled === false || this.enableZoom === false) return;
-        event.preventDefault();
-        // 兼容不同浏览器的滚轮方向
-        let delta = (event.deltaY < 0) ? -1 : 1;
-        // 透视相机推进，正交相机缩放
-        if (this.object.isPerspectiveCamera) {
-            this.object.translateZ(delta * this.zoomSpeed);
-        } else if (this.object.isOrthographicCamera) {
-            this.object.zoom = Math.max(this.minZoom, Math.min(this.maxZoom, this.object.zoom - delta * 0.05 * this.zoomSpeed));
-            this.object.updateProjectionMatrix();
-        }
-        this.dispatchEvent(_changeEvent);
+onMouseWheel(event) {
+    if (this.enabled === false || this.enableZoom === false) return;
+    event.preventDefault();
+    // 兼容不同浏览器的滚轮方向
+    let delta = (event.deltaY < 0) ? -1 : 1;
+    // 透视相机推进，正交相机缩放
+    if (this.object.isPerspectiveCamera) {
+        // 计算相机前方方向
+        const dir = new Vector3();
+        this.object.getWorldDirection(dir);
+        // 推进相机
+        this.object.translateZ(delta * this.zoomSpeed);
+        // target同步移动，保持距离为targetDistance
+        this.target.copy(this.object.position).add(dir.multiplyScalar(this.targetDistance));
+    } else if (this.object.isOrthographicCamera) {
+        this.object.zoom = Math.max(this.minZoom, Math.min(this.maxZoom, this.object.zoom - delta * 0.05 * this.zoomSpeed));
+        this.object.updateProjectionMatrix();
     }
+    this.dispatchEvent(_changeEvent);
+}
 
     /**
      * 触摸开始事件处理（占位，防止初始化报错）。
@@ -819,9 +747,46 @@ this._interceptControlUp = this.interceptControlUp.bind( this );
         const moveMult = delta * this.movementSpeed;
         const rotMult = delta * this.rollSpeed;
 
-        object.translateX( this._moveVector.x * moveMult );
-        object.translateY( this._moveVector.y * moveMult );
-        object.translateZ( this._moveVector.z * moveMult );
+object.translateX( this._moveVector.x * moveMult );
+object.translateY( this._moveVector.y * moveMult );
+object.translateZ( this._moveVector.z * moveMult );
+// W/S前后移动时，target同步移动，保持距离为targetDistance
+if (this._moveVector.z !== 0) {
+    const dir = new Vector3();
+    object.getWorldDirection(dir);
+    this.target.copy(object.position).add(dir.multiplyScalar(this.targetDistance));
+}
+
+        // Q/E键：绕相机Y轴旋转target（视点），镜头始终朝向target
+        if (this._moveState.yawLeft || this._moveState.yawRight) {
+            const offset = new Vector3().subVectors(this.target, object.position);
+            const radius = offset.length();
+            let theta = Math.atan2(offset.z, offset.x);
+            const angleDelta = (this._moveState.yawRight - this._moveState.yawLeft) * rotMult * 10;
+            theta += angleDelta;
+            const newOffset = new Vector3(
+                Math.cos(theta) * radius,
+                offset.y,
+                Math.sin(theta) * radius
+            );
+            this.target.copy(object.position).add(newOffset);
+            object.lookAt(this.target);
+        }
+
+        // A/D键：target沿相机右向左右平移，镜头始终朝向target
+        if (this._moveState.left || this._moveState.right) {
+            const right = new Vector3();
+            object.getWorldDirection(right);
+            right.cross(object.up).normalize(); // 相机右向
+            const delta = (this._moveState.right - this._moveState.left) * moveMult;
+            this.target.addScaledVector(right, delta);
+            object.lookAt(this.target);
+        }
+
+        // 保证镜头和target的Y值同步（空格/R/F）
+        if (this._moveVector.y !== 0) {
+            this.target.y += this._moveVector.y * moveMult;
+        }
 
         const _tmpQuaternion = new Quaternion();
         _tmpQuaternion.set(
@@ -845,13 +810,13 @@ this._interceptControlUp = this.interceptControlUp.bind( this );
 
     /**
      * 拖拽变换后同步target为相机前方一定距离
-     * 旋转时target为相机前方10单位点，平移时target随相机平移
+     * 旋转/平移后target为相机前方targetDistance单位点
      */
     _syncTargetAfterTransform() {
-        // 取相机前方10单位点
+        // 取相机前方targetDistance单位点
         const dir = new Vector3();
         this.object.getWorldDirection(dir);
-        this.target.copy(this.object.position).add(dir.multiplyScalar(10));
+        this.target.copy(this.object.position).add(dir.multiplyScalar(this.targetDistance));
     }
 
     // ... 其余原有方法保持不变
