@@ -135,29 +135,14 @@ export default {
             addModelToScene(cached.id, options);
             ElMessage.success('已从缓存加载');
           } else {
-            /**
-             * 从VfsFileBrowser中拖拽模型，支持url字段
-             * - 若有url字段，则fetch该url获取blob
-             * - 否则按原有方式通过vfs获取blob
-             * 新增用法：fetch(url)获取blob并转为File对象
-             */
-            let { drive, path, name, url } = fileInfo;
-            let blob;
-            if (url) {
-              // 有url字段，直接fetch获取blob
-              const resp = await fetch(url);
-              blob = await resp.blob();
-            } else {
-              // 无url字段，按原有方式
-              const vfs = vfsService.getVfs(drive);
-              blob = await vfs.blob(path + '/' + name);
+            // 使用url加载模型
+            if(!fileInfo.url) {
+              const vfs = vfsService.getVfs(fileInfo.drive);
+              let url = vfs.url(fileInfo.path + '/' + fileInfo.name);
+              fileInfo.url = url;
             }
-            // Blob转File对象
-            const file = new File([blob], name, { type: blob.type });
-            file.fileInfo = fileInfo; // 保留原始文件信息
-
             // 通过useAssets加载模型并纳入资源库
-            const loaded = await loadModel(file);
+            const loaded = await loadModel(fileInfo);
             addModelToScene(loaded.id, options);
             ElMessage.success('文件加载成功');
           }
