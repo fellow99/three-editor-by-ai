@@ -254,6 +254,70 @@ app.post('/save/:drive/*', function (req, res, next) {
 
 
 /**
+ * base64数据保存为文件
+ */
+app.post('/save-base64/:drive/*', function (req, res, next) {
+    try {
+        var drive = req.params.drive;
+        var drivepath = req.params[0];
+        const root = driveRoots[drive];
+        if (!root) {
+            res.status(404).send("Invalid drive");
+            return;
+        }
+        
+        if (!drivepath) {
+            drivepath = './';
+        } else if (drivepath[0] === '/') {
+            drivepath = '.' + drivepath;
+        } else {
+            drivepath = './' + drivepath;
+        }
+        const absPath = path.join(root, drivepath);
+
+        var raw = '';
+        req.setEncoding('utf8');
+        req.on('data', function (chunk) {
+            raw += chunk;
+        });
+
+        req.on('end', function () {
+            try {
+                let buf = Buffer.from(raw, 'base64'); // base64转Buffer
+                fs.writeFileSync(absPath, buf);
+                
+                let type = 'FILE';
+                let filename = path.basename(drivepath);
+                let parentpath = path.dirname(drivepath);
+                let ext = filename.substring(filename.lastIndexOf('.') + 1); // 文件扩展名
+                if(drivepath.indexOf('./') === 0) drivepath = drivepath.substring(1); // 去掉路径前面的.
+                // 文件信息
+                var fileinfo = { 'name': filename, 'path': parentpath, type, ext };
+
+                var ret = {
+                    code: 0,
+                    data: {
+                        config: { drive: drive, path: drivepath },
+                        file: fileinfo
+                    },
+                    msg: '操作成功'
+                };
+                res.send(JSON.stringify(ret));
+            } catch (e) {
+                console.error(e);
+                res.status(500).send(e.message);
+                res.end();
+            }
+        });
+    } catch (e) {
+        console.error(e);
+        res.status(500).send(e.message);
+        res.end();
+    }
+});
+
+
+/**
  * 文件上传
  */
 app.post('/upload/:drive/*', upload.any(), async function (req, res, next) {
