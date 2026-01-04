@@ -215,14 +215,14 @@
 import { ref, computed } from 'vue';
 import { ElMessage } from 'element-plus';
 import 'element-plus/es/components/message/style/css';
-import { useAssets } from '../../composables/useAssets.js';
+import { useAssetsManager } from '../../composables/useAssetsManager.js';
 import { useObjectSelection } from '../../composables/useObjectSelection.js';
 import { useScene } from '../../composables/useScene.js';
 import { useObjectManager } from '../../composables/useObjectManager.js';
 export default {
   name: 'AssetBrowser',
   setup() {
-    const assets = useAssets();
+    const assets = useAssetsManager();
     const objectSelection = useObjectSelection();
     const scene = useScene();
     
@@ -239,7 +239,7 @@ export default {
       filteredTextures,
       
       // 方法
-      addModelToScene,
+      getModelClone,
       deleteAsset,
       toggleFavorite,
       handleDragEnter,

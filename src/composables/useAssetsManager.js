@@ -6,7 +6,6 @@
 import { ref, reactive, computed } from 'vue';
 import * as THREE from 'three';
 import AssetLoader from '../core/AssetLoader.js';
-import { useScene } from './useScene.js';
 import { 
   isSupported3DFormat, 
   isTextureFormat, 
@@ -22,9 +21,8 @@ import {
 let _assetsInstance = null;
 const assetLoader = new AssetLoader();
 
-export function useAssets() {
+export function useAssetsManager() {
   if (_assetsInstance) return _assetsInstance;
-  const { addObjectToScene } = useScene();
   
   // 资源库状态
   const assetLibrary = reactive({
@@ -366,7 +364,7 @@ export function useAssets() {
    * @param {string} modelId 模型ID
    * @param {object} options 选项
    */
-  async function addModelToScene(modelId, options = {}) {
+  async function getModelClone(modelId, options = {}) {
     const modelInfo = assetLibrary.models.get(modelId);
     if (!modelInfo) return;
     
@@ -414,7 +412,6 @@ export function useAssets() {
       }
     }
     
-    addObjectToScene(modelClone);
     return modelClone;
   }
   
@@ -628,7 +625,7 @@ export function useAssets() {
     loadTexture,
     getCachedModel,
     getCachedTexture,
-    addModelToScene,
+    getModelClone,
     deleteAsset,
     toggleFavorite,
     setModelCategory,

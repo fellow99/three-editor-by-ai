@@ -31,7 +31,7 @@ import { useObjectSelection } from '../../composables/useObjectSelection.js';
 import { useInputManager } from '../../composables/useInputManager.js';
 import useTransform from '../../composables/useTransform.js';
 import vfsService from '../../services/vfs-service.js';
-import { useAssets } from '../../composables/useAssets.js';
+import { useAssetsManager } from '../../composables/useAssetsManager.js';
 import { ElMessage } from 'element-plus';
 import 'element-plus/es/components/message/style/css';
 
@@ -45,7 +45,7 @@ export default {
     // 注入全局appState
     const appState = inject('appState');
     // 资源管理器
-    const { loadModel, addModelToScene, getCachedModel } = useAssets();
+    const { loadModel, getModelClone, getCachedModel } = useAssetsManager();
 
     /**
      * 拖拽进入时阻止默认，允许放置
@@ -110,7 +110,7 @@ export default {
             const fileName = modelInfo.name || modelInfo.id;
             const cached = getCachedModel( modelInfo.id);
             if (cached) {
-              addModelToScene(cached.id, options);
+              getModelClone(cached.id, options);
               ElMessage.success('已从缓存加载');
             } else {
               ElMessage.error('未找到模型资源：' + fileName);
@@ -130,7 +130,7 @@ export default {
           // 优先判断资源是否已存在
           const cached = getCachedModel(name);
           if (cached) {
-            addModelToScene(cached.id, options);
+            getModelClone(cached.id, options);
             ElMessage.success('已从缓存加载');
           } else {
             // 使用url加载模型
@@ -139,9 +139,9 @@ export default {
               let url = vfs.url(fileInfo.path + '/' + fileInfo.name);
               fileInfo.url = url;
             }
-            // 通过useAssets加载模型并纳入资源库
+            // 通过useAssetsManager加载模型并纳入资源库
             const loaded = await loadModel(fileInfo);
-            addModelToScene(loaded.id, options);
+            getModelClone(loaded.id, options);
             ElMessage.success('文件加载成功');
           }
           return;

@@ -4,7 +4,7 @@
 -->
 <script setup>
 import { ref, computed } from 'vue';
-import { useAssets } from '../../composables/useAssets.js';
+import { useAssetsManager } from '../../composables/useAssetsManager.js';
 
 /**
  * 对话框显示状态，由父组件通过 v-model:visible 控制
@@ -14,7 +14,7 @@ const props = defineProps({
 });
 const emits = defineEmits(['update:modelValue', 'select']);
 
-const { filteredTextures } = useAssets();
+const { filteredTextures } = useAssetsManager();
 
 const textures = computed(() => filteredTextures.value);
 

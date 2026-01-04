@@ -7,6 +7,7 @@
  * 事件机制：集成mitt库，实现事件收发（on、off、emit），用于场景相关事件分发与监听。
  */
 
+import { reactive, watch } from 'vue';
 import * as THREE from 'three';
 import mitt from 'mitt'; // 事件机制库
 import { TilesRenderer } from '3d-tiles-renderer';
@@ -16,13 +17,8 @@ import { FlyControls } from '../controls/FlyControls.js';
 import { useEditorConfig } from '../composables/useEditorConfig.js';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
-import { reactive, watch } from 'vue';
 
-import { useObjectManager } from '../composables/useObjectManager.js';
-import { useObjectSelection } from '../composables/useObjectSelection.js';
 import vfsService from '../services/vfs-service.js';
-import { useAssets } from '../composables/useAssets.js';
-import { axesLockState } from '../composables/useAxesLockState.js';
 
 /**
  * @class ThreeViewer
@@ -61,7 +57,11 @@ class ThreeViewer {
    * Three.js场景管理器，支持OrbitControls和FlyControls切换
    * 新增：集成mitt事件机制，支持事件收发
    */
-  constructor() {
+  constructor(options) {
+    this.objectManager = options.objectManager;
+    this.objectSelection = options.objectSelection;
+    this.assetsManager = options.assetsManager;
+
     this.scene = null;
     this.renderer = null;
     this.camera = null;
@@ -154,35 +154,6 @@ class ThreeViewer {
       },
       { deep: true }
     );
-
-    // 新增：监听Y轴锁定状态，动态调整gridHelper位置和颜色
-    watch(
-      axesLockState,
-      (state) => {
-        if (!this.gridHelper) return;
-        if (state.locked) {
-          // 锁定时，设置y轴位置和颜色为黄色
-          this.gridHelper.position.y = state.yValue;
-          // 线条全部变为黄色
-          const yellow = new THREE.Color(0xffff00);
-          if (this.gridHelper.material) {
-            this.gridHelper.material._originalColor = this.gridHelper.material.color ? this.gridHelper.material.color.clone() : null;
-            this.gridHelper.material.color && this.gridHelper.material.color.copy(yellow);
-          }
-        } else {
-          // 解锁时，恢复y=0和原色
-          this.gridHelper.position.y = 0;
-          const { editorConfig } = useEditorConfig();
-          const centerColor = new THREE.Color(editorConfig.gridColorCenterLine);
-          const gridColor = new THREE.Color(editorConfig.gridColorGrid);
-          if (this.gridHelper.material && this.gridHelper.material._originalColor) {
-            this.gridHelper.material.color.copy(this.gridHelper.material._originalColor);
-            delete this.gridHelper.material._originalColor;
-          }
-        }
-      },
-      { deep: true, immediate: true }
-    );
   }
 
   /**
@@ -219,10 +190,8 @@ class ThreeViewer {
    * 这样可确保场景序列化与反序列化时所有对象的自定义数据都能正确还原。
    */
   async loadScene(json) {
-    const { loadModel, addModelToScene, getCachedModel } = useAssets();
+    let { objectManager, assetsManager } = this;
     await this.clearScene();
-
-    const objectManager = useObjectManager();
 
     if (json.camera && this.camera) {
       if (json.camera.position && typeof json.camera.position.x === 'number') {
@@ -273,27 +242,12 @@ class ThreeViewer {
         if (objData.userData && objData.userData.fileInfo) {
           try {
             const fileInfo = objData.userData.fileInfo;
-            const cached = getCachedModel(fileInfo.name);
+            const cached = assetsManager.getCachedModel(fileInfo.name);
             let modelInfo;
             if (cached) {
               // 如果模型已缓存，直接使用缓存
               modelInfo = cached;
             } else {
-              // // 否则加载模型文件（使用blob）
-              // let blob;
-              // if (fileInfo.url) {
-              //   // 如果有url，直接fetch
-              //   const response = await fetch(fileInfo.url);
-              //   blob = await response.blob();
-              // } else {
-              //   // 否则从vfs加载
-              //   const vfs = vfsService.getVfs(fileInfo.drive); const vfs = vfsService.getVfs(fileInfo.drive);
-              //   blob = await vfs.blob(fileInfo.path + '/' + fileInfo.name);
-              // }
-              // // 构造File对象以兼容loadModel接口
-              // const file = new File([blob], fileInfo.name, { type: blob.type });
-              // file.fileInfo = fileInfo;
-
               // 使用url加载模型
               if(!fileInfo.url) {
                 const vfs = vfsService.getVfs(fileInfo.drive);
@@ -302,7 +256,7 @@ class ThreeViewer {
               }
 
               // 加载模型
-              modelInfo = await loadModel(fileInfo);
+              modelInfo = await assetsManager.loadModel(fileInfo);
             }
             const addOptions = {
               name: objData.name,
@@ -312,7 +266,8 @@ class ThreeViewer {
               userData: objData.userData,
               material: objData.material // 支持材质参数
             };
-            await addModelToScene(modelInfo.id, addOptions);
+            let model = await assetsManager.getModelClone(modelInfo.id, addOptions);
+            this.scene.add(model);
           } catch (e) {
             console.error('加载模型文件失败', e);
           }
@@ -428,7 +383,7 @@ class ThreeViewer {
   }
 
   async setupLights() {
-    const objectManager = useObjectManager();
+    const { objectManager } = this;
     const ambient = objectManager.createPrimitive?.('AmbientLight', {
       color: 0x404040,
       intensity: 10
@@ -490,6 +445,7 @@ class ThreeViewer {
   }
 
   switchControls(type) {
+    let { objectSelection } = this;
     let lastTarget = null;
     if (this.controls && this.controls.target) {
       lastTarget = this.controls.target.clone();
@@ -538,8 +494,7 @@ class ThreeViewer {
         this.controls.target.set(0, 0, 0);
       }
       this.controls.update && this.controls.update();
-      const { initTransformControls } = useObjectSelection();
-      initTransformControls({
+      objectSelection.initTransformControls({
         scene: this.scene,
         camera: this.camera,
         renderer: this.renderer,
@@ -722,6 +677,7 @@ class ThreeViewer {
 
 
   addObject(object) {
+    const { objectManager } = this;
     /**
      * @event before-add-object 场景中添加对象前触发
      * @param {THREE.Object3D} object 即将添加的对象
@@ -729,7 +685,6 @@ class ThreeViewer {
     this.emit('before-add-object', object);
     
     this.scene.add(object);
-    let objectManager = useObjectManager();
     objectManager.addObject(object);
 
     /**

@@ -83,7 +83,7 @@
 │   │   ├── useScene.js        # 场景管理
 │   │   ├── useObjectSelection.js  # 对象选择、TransformControls与选中对象辅助功能
 │   │   ├── useTransform.js    # 变换操作
-│   │   ├── useAssets.js       # 资源管理，包含模型/纹理等资源的加载、缓存与去重机制
+│   │   ├── useAssetsManager.js       # 资源管理，包含模型/纹理等资源的加载、缓存与去重机制
 │   │   ├── useEditorConfig.js # 编辑器配置响应式状态与操作方法
 │   ├── core/                  # 核心 Three.js 逻辑
 │   │   ├── ThreeViewer.js    # 场景管理器
@@ -175,7 +175,7 @@
   - TransformControls与选中对象辅助功能已迁移至useObjectSelection.js统一管理，ThreeViewer.js仅负责场景本身，SceneViewer.vue仅负责初始化调用。
   - TransformControls拖拽时会自动禁用OrbitControls，避免拖拽时镜头跟随问题，并在拖拽开始/结束时自动调用 useTransform 的 startTransform/endTransform，支持撤销/重做历史记录。
 - FlyControls.js中，已支持基于键盘的三维飞行控制（WASD/QE/方向键等），核心逻辑参考 three/examples/jsm/controls/OrbitControls.js、three/examples/jsm/controls/FlyControls.js 实现，支持速度、旋转、拖拽等多种操作。空格键与R键逻辑一致，均可向上飞行。
-- useAssets.js 中：
+- useAssetsManager.js 中：
   - 资源加载函数（如 loadModel、loadTexture）已实现缓存机制：若 assetLibrary 中已存在同名且大小一致的资源，则直接返回缓存，避免重复加载和内存浪费。
 - 所有资源（基础几何体、模型、资源）添加方式已统一为拖拽，点击添加功能已移除。
 - 对象动画：GLTF等模型加载后自动挂载animations，属性面板支持动画下拉选择并记录到userData.animationIndex，ThreeViewer.js统一驱动所有对象动画，ObjectManager.js导出/导入时自动保存与恢复动画索引，支持动画状态完整序列化。

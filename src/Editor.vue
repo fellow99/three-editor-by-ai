@@ -153,7 +153,7 @@ import { useScene } from './composables/useScene.js';
 import { Setting, Loading } from '@element-plus/icons-vue';
 import { useObjectSelection } from './composables/useObjectSelection.js';
 import { useTransform } from './composables/useTransform.js';
-import { useAssets } from './composables/useAssets.js';
+import { useAssetsManager } from './composables/useAssetsManager.js';
 import { useThreeViewer } from './composables/useThreeViewer.js';
 
 // 导入组件
@@ -196,7 +196,7 @@ const scene = useScene();
 const threeViewer = useThreeViewer();
 const objectSelection = useObjectSelection();
 const transform = useTransform();
-const assets = useAssets();
+const assets = useAssetsManager();
 
 /** 是否显示多选面板（选中对象数大于1） */
 const showMultiSelectPanel = computed(() => objectSelection.selectedObjects.value.length > 1);
