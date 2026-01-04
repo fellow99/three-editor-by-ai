@@ -460,14 +460,4 @@ class AssetLoader {
   }
 }
 
-// 单例模式
-let instance = null;
-
-export function useAssetLoader() {
-  if (!instance) {
-    instance = new AssetLoader();
-  }
-  return instance;
-}
-
 export default AssetLoader;

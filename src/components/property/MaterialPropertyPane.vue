@@ -7,7 +7,7 @@
 import { ref, watch } from 'vue';
 import TextureSelectDialog from '../dialog/TextureSelectDialog.vue';
 import { useObjectSelection } from '../../composables/useObjectSelection.js';
-import { useObjectManager } from '../../core/ObjectManager.js';
+import { useObjectManager } from '../../composables/useObjectManager.js';
 // 引入element-plus组件
 import { ElSelect, ElOption, ElColorPicker, ElSlider, ElButton } from 'element-plus';
 

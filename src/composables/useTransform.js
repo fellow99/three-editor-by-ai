@@ -5,8 +5,8 @@
 
 import { ref, reactive, computed, watch } from 'vue';
 import * as THREE from 'three';
-import { useObjectManager } from '../core/ObjectManager.js';
 import { degToRad, radToDeg, clamp } from '../utils/mathUtils.js';
+import { useObjectManager } from './useObjectManager.js';
 import { useObjectSelection } from './useObjectSelection.js';
 
 let _instance = null;

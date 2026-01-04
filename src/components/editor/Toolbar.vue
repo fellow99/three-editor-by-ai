@@ -173,7 +173,7 @@ import { useScene } from '../../composables/useScene.js';
 import { useObjectSelection } from '../../composables/useObjectSelection.js';
 import { useThreeViewer } from '../../composables/useThreeViewer.js';
 import useTransform from '../../composables/useTransform.js';
-import { useObjectManager } from '../../core/ObjectManager.js';
+import { useObjectManager } from '../../composables/useObjectManager.js';
 import { exportJSON } from '../../utils/fileUtils.js';
 import EditorConfigDialog from '../dialog/EditorConfigDialog.vue';
 import VfsFileChooserDialog from '../dialog/VfsFileChooserDialog.vue';

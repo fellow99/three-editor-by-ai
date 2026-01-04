@@ -5,7 +5,7 @@
 
 import { ref, reactive, computed } from 'vue';
 import * as THREE from 'three';
-import { useAssetLoader } from '../core/AssetLoader.js';
+import AssetLoader from '../core/AssetLoader.js';
 import { useScene } from './useScene.js';
 import { 
   isSupported3DFormat, 
@@ -20,10 +20,10 @@ import {
  * 单例模式，确保所有组件共享同一个资源库
  */
 let _assetsInstance = null;
+const assetLoader = new AssetLoader();
 
 export function useAssets() {
   if (_assetsInstance) return _assetsInstance;
-  const assetLoader = useAssetLoader();
   const { addObjectToScene } = useScene();
   
   // 资源库状态

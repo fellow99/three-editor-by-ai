@@ -106,7 +106,7 @@
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue';
 import { useScene } from '../../composables/useScene.js';
 import { useObjectSelection } from '../../composables/useObjectSelection.js';
-import { useObjectManager } from '../../core/ObjectManager.js';
+import { useObjectManager } from '../../composables/useObjectManager.js';
 import ObjectItem from './ObjectItem.vue';
 
 export default {

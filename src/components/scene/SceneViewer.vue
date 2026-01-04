@@ -28,7 +28,7 @@ import { ref, reactive, computed, onMounted, onUnmounted, watch, inject } from '
 import { useThreeViewer } from '../../composables/useThreeViewer.js';
 import { useScene } from '../../composables/useScene.js';
 import { useObjectSelection } from '../../composables/useObjectSelection.js';
-import { useInputManager } from '../../core/InputManager.js';
+import { useInputManager } from '../../composables/useInputManager.js';
 import useTransform from '../../composables/useTransform.js';
 import vfsService from '../../services/vfs-service.js';
 import { useAssets } from '../../composables/useAssets.js';

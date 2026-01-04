@@ -12,8 +12,8 @@
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue';
 import * as THREE from 'three';
 import { useThreeViewer } from './useThreeViewer.js';
-import { useObjectManager } from '../core/ObjectManager.js';
-import { useInputManager } from '../core/InputManager.js';
+import { useObjectManager } from './useObjectManager.js';
+import { useInputManager } from './useInputManager.js';
 
 const threeViewer = useThreeViewer();
 const objectManager = useObjectManager();

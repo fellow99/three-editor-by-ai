@@ -381,14 +381,4 @@ class InputManager {
   }
 }
 
-// 单例模式
-let instance = null;
-
-export function useInputManager() {
-  if (!instance) {
-    instance = new InputManager();
-  }
-  return instance;
-}
-
 export default InputManager;

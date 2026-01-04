@@ -6,20 +6,20 @@
 
 import { ref, reactive, computed, watch } from 'vue';
 import * as THREE from 'three';
+import { DirectionalLightHelper, PointLightHelper, SpotLightHelper, HemisphereLightHelper, CameraHelper, BoxHelper } from 'three';
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { MapControls } from 'three/examples/jsm/controls/MapControls.js';
 import { FlyControls } from '../controls/FlyControls.js';
-import { DirectionalLightHelper, PointLightHelper, SpotLightHelper, HemisphereLightHelper, CameraHelper, BoxHelper } from 'three';
 import { axesLockState } from './useAxesLockState.js';
+import { useObjectManager } from './useObjectManager.js';
+import { useInputManager } from './useInputManager.js';
 
 /**
  * selectionStore
  * 用于存储选中对象的临时材质信息，key为对象id
  */
 const selectionStore = reactive({});
-import { useObjectManager } from '../core/ObjectManager.js';
-import { useInputManager } from '../core/InputManager.js';
 
 const objectManager = useObjectManager();
 const inputManager = useInputManager();

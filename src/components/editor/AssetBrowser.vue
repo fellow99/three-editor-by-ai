@@ -218,7 +218,7 @@ import 'element-plus/es/components/message/style/css';
 import { useAssets } from '../../composables/useAssets.js';
 import { useObjectSelection } from '../../composables/useObjectSelection.js';
 import { useScene } from '../../composables/useScene.js';
-import { useObjectManager } from '../../core/ObjectManager.js';
+import { useObjectManager } from '../../composables/useObjectManager.js';
 export default {
   name: 'AssetBrowser',
   setup() {

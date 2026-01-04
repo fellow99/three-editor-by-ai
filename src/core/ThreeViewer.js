@@ -18,7 +18,7 @@ import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { reactive, watch } from 'vue';
 
-import { useObjectManager } from './ObjectManager.js';
+import { useObjectManager } from '../composables/useObjectManager.js';
 import { useObjectSelection } from '../composables/useObjectSelection.js';
 import vfsService from '../services/vfs-service.js';
 import { useAssets } from '../composables/useAssets.js';
@@ -428,7 +428,6 @@ class ThreeViewer {
   }
 
   async setupLights() {
-    const { useObjectManager } = await import('./ObjectManager.js');
     const objectManager = useObjectManager();
     const ambient = objectManager.createPrimitive?.('AmbientLight', {
       color: 0x404040,
