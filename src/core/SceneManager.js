@@ -518,10 +518,16 @@ class SceneManager {
       this.controls.maxPolarAngle = Math.PI;
     } else if (type === 'FlyControls') {
       this.controls = new FlyControls(this.camera, this.renderer.domElement);
-      this.controls.movementSpeed = 2;
-      this.controls.rollSpeed = Math.PI / 36;
-      this.controls.autoForward = false;
-      this.controls.dragToLook = true;
+      // this.controls = new FlyControls(this.camera, this.renderer.domElement, editorConfig.targetDistance);
+      // this.controls.lockY = editorConfig.lockY;
+      // this.controls.movementSpeed = editorConfig.movementSpeed;
+      // this.controls.rollSpeed = editorConfig.rollSpeed;
+      // this.controls.panSpeed = editorConfig.panSpeed;
+      // this.controls.rotateSpeed = editorConfig.rotateSpeed;
+      // this.controls.zoomSpeed = editorConfig.zoomSpeed;
+      // this.controls.enableKeyboard = editorConfig.enableKeyboard;
+      // this.controls.autoForward = false;
+      // this.controls.dragToLook = true;
     }
     if (this.controls) {
       this.controls.rotateSpeed = 1.0;

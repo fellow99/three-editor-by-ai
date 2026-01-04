@@ -87,10 +87,7 @@ const _EPS = 0.000001;
  * @param {Object} keys            键盘映射
  * @param {Object} mouseButtons    鼠标按钮映射
  * @param {Object} touches         触摸事件映射
- * 
- * 新语法/新方法说明：
- * - 使用Spherical极坐标进行相机绕点旋转
- * - 通过instanceof判断实例类型
+ * @param {boolean} lockY          是否锁定Y轴（鼠标左键旋转时），默认true
  * 
  * @augments Controls
  * @three_import import { FlyControls } from 'three/addons/controls/FlyControls.js';
@@ -110,6 +107,13 @@ class FlyControls extends Controls {
         super( object, domElement );
 
         this.state = _STATE.NONE;
+
+        /**
+         * 镜头是否锁定Y轴（鼠标左键旋转时）
+         * @type {boolean}
+         * @default true
+         */
+        this.lockY = false;
 
         /**
          * 相机与target的默认距离（右键平移/滚轮/W/S操作时保持该距离）
@@ -570,12 +574,22 @@ this._interceptControlUp = this.interceptControlUp.bind( this );
                 const spherical = new Spherical();
                 spherical.setFromVector3(offset);
 
-                // 水平环绕（phi为方位角，theta为极角，保持theta不变，调整phi）
-                spherical.theta -= 2 * Math.PI * this._rotateDelta.x / this.domElement.clientWidth;
+                if (this.lockY) {
+                    // 水平环绕（phi为方位角，theta为极角，保持theta不变，调整phi）
+                    spherical.theta -= 2 * Math.PI * this._rotateDelta.x / this.domElement.clientWidth;
+                } else {
+                    // 自由环绕（调整phi和theta）
+                    spherical.theta -= 2 * Math.PI * this._rotateDelta.x / this.domElement.clientWidth;
+                    spherical.phi -= 2 * Math.PI * this._rotateDelta.y / this.domElement.clientHeight;
+                }
 
-                // 保持镜头高度与target一致
-                const newOffset = new Vector3().setFromSpherical(spherical);
-                newOffset.y = 0; // y轴偏移为0，保证相机y=target.y
+                let newOffset = new Vector3().setFromSpherical(spherical);
+
+                if(this.lockY) {
+                    // 强制平视
+                    newOffset.y = 0;
+                }
+
                 this.object.position.copy(this.target).add(newOffset);
 
                 // 始终朝向target
