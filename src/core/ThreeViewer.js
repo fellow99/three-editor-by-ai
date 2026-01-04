@@ -25,10 +25,10 @@ import { useAssets } from '../composables/useAssets.js';
 import { axesLockState } from '../composables/useAxesLockState.js';
 
 /**
- * @class SceneManager
+ * @class ThreeViewer
  * Three.js场景、渲染器、相机、控制器、后处理等统一管理类
  */
-class SceneManager {
+class ThreeViewer {
   /**
    * 根据userData中的指定key（支持多层，如xxx.yyy）查找匹配value的对象
    * @param {string} key 多层key，使用点号分隔，如"foo.bar.baz"
@@ -844,13 +844,5 @@ class SceneManager {
   }
 }
 
-let instance = null;
 
-export function useSceneManager() {
-  if (!instance) {
-    instance = new SceneManager();
-  }
-  return instance;
-}
-
-export default SceneManager;
+export default ThreeViewer;

@@ -1,7 +1,7 @@
 /**
  * Y轴锁定状态管理
  * 提供axesLockState响应式变量及setAxesLockState方法
- * 可被useScene、SceneManager、useObjectSelection等模块安全引用，避免循环依赖
+ * 可被useScene、ThreeViewer、useObjectSelection等模块安全引用，避免循环依赖
  */
 import { reactive } from 'vue';
 

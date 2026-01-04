@@ -86,7 +86,7 @@
 │   │   ├── useAssets.js       # 资源管理，包含模型/纹理等资源的加载、缓存与去重机制
 │   │   ├── useEditorConfig.js # 编辑器配置响应式状态与操作方法
 │   ├── core/                  # 核心 Three.js 逻辑
-│   │   ├── SceneManager.js    # 场景管理器
+│   │   ├── ThreeViewer.js    # 场景管理器
 │   │   ├── ObjectManager.js   # 对象管理器
 │   │   ├── InputManager.js    # 输入处理
 │   │   ├── AssetLoader.js     # 资源加载器
@@ -152,7 +152,7 @@
   - 如需加载Draco压缩的glTF模型，请将node_modules/three/examples/jsm/libs/draco/目录中的文件复制到 /draco/ 目录下。
   - 如需加载KTX2纹理，请将node_modules/three/examples/jsm/libs/basis目录中的文件放入 /basis/ 目录下。
   - 如需加载Meshopt压缩的glTF模型，请将node_modules/three/examples/jsm/libs/meshopt_decoder.module.js文件放入 public/meshopt/ 目录下。
-- SceneManager.js中：
+- ThreeViewer.js中：
   - loadScene()方法加载场景时，灯光和对象会完整恢复userData到Three.js对象，包括自定义属性、动画索引等，确保序列化与反序列化一致。
   - findObjectsByUserData(key, value) 方法：支持多层key（如xxx.yyy），递归读取对象userData的嵌套属性值，并与value对比，返回所有匹配对象数组。
   - 运行时创建的动画相关对象（如_mixer、_activeAction等）不再挂载到userData，而是直接挂在主对象上（如obj._mixer、obj._activeAction），所有运行时临时对象均采用此设计，避免序列化污染，提升运行时管理效率。
@@ -164,7 +164,7 @@
   - getIntersectedObjects() 和 getIntersectedFirstObject() 仅返回未锁定对象；
   - 变换后分发object-transform-updated事件。
 - useScene.js中：
-  - 新增axesLockState变量，支持Y轴锁定与解锁，供Toolbar、SceneManager、TransformControls等模块联动。
+  - 新增axesLockState变量，支持Y轴锁定与解锁，供Toolbar、ThreeViewer、TransformControls等模块联动。
   - 聚焦对象时计算中心点并设置OrbitControls target。
 - useObjectSelection.js中：
   - 支持多选，selectedObjects 中每个对象对应一个辅助对象 helper，统一由 currentHelpers 管理。
@@ -172,14 +172,14 @@
   - 内部定义了 `selectionStore`（响应式对象）：
     - 用于存储选中对象的临时材质信息，key 为对象 id。
     - selectionStore 生命周期与 useObjectSelection 组合式函数一致，自动随页面刷新或状态重置而清空。
-  - TransformControls与选中对象辅助功能已迁移至useObjectSelection.js统一管理，SceneManager.js仅负责场景本身，SceneViewer.vue仅负责初始化调用。
+  - TransformControls与选中对象辅助功能已迁移至useObjectSelection.js统一管理，ThreeViewer.js仅负责场景本身，SceneViewer.vue仅负责初始化调用。
   - TransformControls拖拽时会自动禁用OrbitControls，避免拖拽时镜头跟随问题，并在拖拽开始/结束时自动调用 useTransform 的 startTransform/endTransform，支持撤销/重做历史记录。
 - FlyControls.js中，已支持基于键盘的三维飞行控制（WASD/QE/方向键等），核心逻辑参考 three/examples/jsm/controls/OrbitControls.js、three/examples/jsm/controls/FlyControls.js 实现，支持速度、旋转、拖拽等多种操作。空格键与R键逻辑一致，均可向上飞行。
 - useAssets.js 中：
   - 资源加载函数（如 loadModel、loadTexture）已实现缓存机制：若 assetLibrary 中已存在同名且大小一致的资源，则直接返回缓存，避免重复加载和内存浪费。
 - 所有资源（基础几何体、模型、资源）添加方式已统一为拖拽，点击添加功能已移除。
-- 对象动画：GLTF等模型加载后自动挂载animations，属性面板支持动画下拉选择并记录到userData.animationIndex，SceneManager.js统一驱动所有对象动画，ObjectManager.js导出/导入时自动保存与恢复动画索引，支持动画状态完整序列化。
-- 本项目核心管理器（SceneManager、ObjectManager、InputManager、AssetLoader）均集成了 [mitt](https://github.com/developit/mitt) 事件机制，实现模块间的解耦通信。  
+- 对象动画：GLTF等模型加载后自动挂载animations，属性面板支持动画下拉选择并记录到userData.animationIndex，ThreeViewer.js统一驱动所有对象动画，ObjectManager.js导出/导入时自动保存与恢复动画索引，支持动画状态完整序列化。
+- 本项目核心管理器（ThreeViewer、ObjectManager、InputManager、AssetLoader）均集成了 [mitt](https://github.com/developit/mitt) 事件机制，实现模块间的解耦通信。  
 
 ## 💯 AI
 

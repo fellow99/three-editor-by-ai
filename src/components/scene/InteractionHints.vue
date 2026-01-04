@@ -8,7 +8,7 @@ import { ElTag, ElIcon } from 'element-plus';
 import { InfoFilled } from '@element-plus/icons-vue';
 import { ref, computed } from 'vue';
 import { useEditorConfig } from '../../composables/useEditorConfig.js';
-import { useSceneManager } from '../../core/SceneManager.js';
+import { useThreeViewer } from '../../composables/useThreeViewer.js';
 
 // 控制悬停展开
 const isHovered = ref(false);
@@ -21,9 +21,9 @@ const controlsType = computed({
   get: () => editorConfig.controlsType,
   set: (val) => {
     setControlsType(val);
-    // 通知SceneManager切换控制器
-    const sceneManager = useSceneManager();
-    // sceneManager会自动响应controlsType变化，无需手动调用
+    // 通知ThreeViewer切换控制器
+    const threeViewer = useThreeViewer();
+    // threeViewer会自动响应controlsType变化，无需手动调用
   }
 });
 </script>

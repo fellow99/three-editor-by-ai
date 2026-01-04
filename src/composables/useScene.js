@@ -11,11 +11,11 @@
 
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue';
 import * as THREE from 'three';
-import { useSceneManager } from '../core/SceneManager.js';
+import { useThreeViewer } from './useThreeViewer.js';
 import { useObjectManager } from '../core/ObjectManager.js';
 import { useInputManager } from '../core/InputManager.js';
 
-const sceneManager = useSceneManager();
+const threeViewer = useThreeViewer();
 const objectManager = useObjectManager();
 const inputManager = useInputManager();
 
@@ -23,9 +23,9 @@ import { axesLockState, setAxesLockState } from './useAxesLockState.js';
 
 // 响应式状态
 const isInitialized = ref(false);
-const isRendering = computed(() => sceneManager.state.isRendering);
-const fps = computed(() => sceneManager.state.fps);
-const frameCount = computed(() => sceneManager.state.frameCount);
+const isRendering = computed(() => threeViewer.state.isRendering);
+const fps = computed(() => threeViewer.state.fps);
+const frameCount = computed(() => threeViewer.state.frameCount);
 
 // 场景配置
 const sceneConfig = reactive({
@@ -56,8 +56,8 @@ function initScene(container) {
   if (!container) return;
   
   try {
-    sceneManager.setContainer(container);
-    inputManager.setElement(sceneManager.renderer.domElement);
+    threeViewer.setContainer(container);
+    inputManager.setElement(threeViewer.renderer.domElement);
     
     // 应用初始配置
     applySceneConfig();
@@ -73,40 +73,40 @@ function initScene(container) {
  * 开始渲染
  */
 function startRender() {
-  sceneManager.startRender();
+  threeViewer.startRender();
 }
 
 /**
  * 停止渲染
  */
 function stopRender() {
-  sceneManager.stopRender();
+  threeViewer.stopRender();
 }
 
 /**
  * 应用场景配置
  */
 function applySceneConfig() {
-  if (!sceneManager.scene) return;
+  if (!threeViewer.scene) return;
   
   // 设置背景色
-  sceneManager.setBackground(new THREE.Color(sceneConfig.backgroundColor));
+  threeViewer.setBackground(new THREE.Color(sceneConfig.backgroundColor));
   
   // 设置雾效
   if (sceneConfig.fogEnabled) {
-    sceneManager.scene.fog = new THREE.Fog(
+    threeViewer.scene.fog = new THREE.Fog(
       sceneConfig.fogColor,
       sceneConfig.fogNear,
       sceneConfig.fogFar
     );
   } else {
-    sceneManager.scene.fog = null;
+    threeViewer.scene.fog = null;
   }
   
   // 设置渲染器属性
-  if (sceneManager.renderer) {
-    sceneManager.renderer.shadowMap.enabled = sceneConfig.shadowsEnabled;
-    sceneManager.renderer.toneMappingExposure = sceneConfig.exposure;
+  if (threeViewer.renderer) {
+    threeViewer.renderer.shadowMap.enabled = sceneConfig.shadowsEnabled;
+    threeViewer.renderer.toneMappingExposure = sceneConfig.exposure;
   }
 }
 
@@ -115,38 +115,38 @@ function applySceneConfig() {
  * 设置相机位置和目标点，并同步OrbitControls的target
  */
 function applyCameraConfig() {
-  if (!sceneManager.camera) return;
+  if (!threeViewer.camera) return;
   
   // 设置相机位置
-  sceneManager.camera.position.set(
+  threeViewer.camera.position.set(
     cameraState.position.x,
     cameraState.position.y,
     cameraState.position.z
   );
   
   // 设置相机目标
-  sceneManager.camera.lookAt(
+  threeViewer.camera.lookAt(
     cameraState.target.x,
     cameraState.target.y,
     cameraState.target.z
   );
 
   // 设置OrbitControls的target为新的位置对象
-  if (sceneManager.controls) {
+  if (threeViewer.controls) {
     const newTarget = new THREE.Vector3(
       cameraState.target.x,
       cameraState.target.y,
       cameraState.target.z
     );
-    sceneManager.controls.target.copy(newTarget);
-    sceneManager.controls.update();
+    threeViewer.controls.target.copy(newTarget);
+    threeViewer.controls.update();
   }
   
   // 设置相机参数
-  sceneManager.camera.fov = cameraState.fov;
-  sceneManager.camera.near = cameraState.near;
-  sceneManager.camera.far = cameraState.far;
-  sceneManager.camera.updateProjectionMatrix();
+  threeViewer.camera.fov = cameraState.fov;
+  threeViewer.camera.near = cameraState.near;
+  threeViewer.camera.far = cameraState.far;
+  threeViewer.camera.updateProjectionMatrix();
 }
 
 /**
@@ -167,13 +167,13 @@ function updateCameraConfig(config) {
   applyCameraConfig();
   
   // 如果有控制器，同时更新目标位置
-  if (sceneManager.controls && config.target) {
-    sceneManager.controls.target.set(
+  if (threeViewer.controls && config.target) {
+    threeViewer.controls.target.set(
       config.target.x,
       config.target.y,
       config.target.z
     );
-    sceneManager.controls.update();
+    threeViewer.controls.update();
   }
 }
 
@@ -182,7 +182,7 @@ function updateCameraConfig(config) {
  * @param {THREE.Object3D} object 3D对象
  */
 function addObjectToScene(object) {
-  sceneManager.addObject(object);
+  threeViewer.addObject(object);
 }
 
 /**
@@ -200,7 +200,7 @@ function removeObjectFromScene(objectOrId) {
   
   if (object) {
     // 先从Three.js场景中移除对象
-    sceneManager.removeObject(object);
+    threeViewer.removeObject(object);
     
     // 再从对象管理器中移除
     objectManager.removeObject(objectOrId);
@@ -212,7 +212,7 @@ function removeObjectFromScene(objectOrId) {
  */
 function clearScene() {
   objectManager.clear();
-  sceneManager.clearScene();
+  threeViewer.clearScene();
 }
 
 /**
@@ -223,7 +223,7 @@ function clearScene() {
  */
 function createPrimitive(type, options = {}) {
   const mesh = objectManager.createPrimitive(type, options);
-  sceneManager.addObject(mesh);
+  threeViewer.addObject(mesh);
   return mesh;
 }
 
@@ -290,7 +290,7 @@ function getSceneStats() {
  * @returns {object} 场景数据
  */
 function exportScene() {
-  const sceneData = sceneManager.exportScene();
+  const sceneData = threeViewer.exportScene();
   const objectData = objectManager.exportObjects();
   
   return {
@@ -329,15 +329,15 @@ function resetScene() {
   });
 
   // 新增：重置相机对象
-  if (sceneManager.createCamera) {
-    sceneManager.createCamera();
+  if (threeViewer.createCamera) {
+    threeViewer.createCamera();
   }  
   
   applySceneConfig();
   applyCameraConfig();
 
   // 设置默认灯光
-  sceneManager.setupLights();
+  threeViewer.setupLights();
 }
 
 /**
@@ -354,7 +354,7 @@ function focusOnObject(objectOrId) {
     object = objectOrId;
   }
   
-  if (!object || !sceneManager.camera) return;
+  if (!object || !threeViewer.camera) return;
   
   // 计算对象包围盒
   const box = new THREE.Box3().setFromObject(object);
@@ -402,7 +402,7 @@ export function useScene() {
     removeObjectFromScene,
     clearScene,
     createPrimitive,
-    add3DTiles: sceneManager.add3DTiles.bind(sceneManager), // 新增：创建3DTiles模型
+    add3DTiles: threeViewer.add3DTiles.bind(threeViewer), // 新增：创建3DTiles模型
     getSceneStats,
     exportScene,
     resetScene,
@@ -410,7 +410,7 @@ export function useScene() {
     setAxesLockState, // 新增：设置Y轴锁定状态
 
     // 管理器实例
-    sceneManager,
+    threeViewer,
     objectManager,
     inputManager
   };

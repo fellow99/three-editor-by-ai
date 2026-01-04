@@ -4,7 +4,7 @@
   文件按钮区包含：新建、导出、导入、暂存、加载、保存
   其中“导出”/“导入”使用新命名及新图标，“暂存”保存到localStorage
   “加载”“保存”按钮为预留，暂未实现
-  新增功能：视图分组增加“锁定相机”按钮，控制SceneManager的controlsLocked状态，锁定时controls.enabled=false。
+  新增功能：视图分组增加“锁定相机”按钮，控制ThreeViewer的controlsLocked状态，锁定时controls.enabled=false。
 -->
 <template>
   <div class="ribbon-toolbar dark">
@@ -171,10 +171,10 @@ import 'element-plus/es/components/message/style/css';
 import 'element-plus/es/components/message-box/style/css';
 import { useScene } from '../../composables/useScene.js';
 import { useObjectSelection } from '../../composables/useObjectSelection.js';
+import { useThreeViewer } from '../../composables/useThreeViewer.js';
 import useTransform from '../../composables/useTransform.js';
 import { useObjectManager } from '../../core/ObjectManager.js';
 import { exportJSON } from '../../utils/fileUtils.js';
-import { useSceneManager } from '../../core/SceneManager.js';
 import EditorConfigDialog from '../dialog/EditorConfigDialog.vue';
 import VfsFileChooserDialog from '../dialog/VfsFileChooserDialog.vue';
 import VfsFileSaverDialog from '../dialog/VfsFileSaverDialog.vue';
@@ -226,17 +226,17 @@ export default {
       const selected = objectSelection.selectedObjects.value;
       if (selected && selected.length > 0 && selected[0] && selected[0].position) {
         y = selected[0].position.y;
-      } else if (scene.sceneManager && scene.sceneManager.controls && scene.sceneManager.controls.target) {
-        y = scene.sceneManager.controls.target.y;
+      } else if (threeViewer && threeViewer.controls && threeViewer.controls.target) {
+        y = threeViewer.controls.target.y;
       }
       setAxesLockState(true, y);
     }
     // 相机锁定相关
-    const sceneManager = useSceneManager();
-    const controlsLocked = ref(sceneManager.getControlsLocked());
+    const threeViewer = useThreeViewer();
+    const controlsLocked = ref(threeViewer.getControlsLocked());
     function toggleLockCamera() {
       const next = !controlsLocked.value;
-      sceneManager.setControlsLocked(next);
+      threeViewer.setControlsLocked(next);
       controlsLocked.value = next;
     }
     
@@ -252,7 +252,7 @@ export default {
 
     // 监听选择变化，重新触发锁定相机逻辑
     watch(hasSelection, () => {
-      sceneManager.setControlsLocked(controlsLocked.value);
+      threeViewer.setControlsLocked(controlsLocked.value);
     });
     
     // 方法
@@ -296,7 +296,7 @@ export default {
 
     /**
      * 导入场景文件
-     * 选择JSON文件并调用SceneManager.loadScene(json)
+     * 选择JSON文件并调用ThreeViewer.loadScene(json)
      */
     async function importScene() {
       const input = document.createElement('input');
@@ -315,10 +315,10 @@ export default {
             }).then(async () => {
               if (appState) appState.isLoading = true;
               try {
-                const sceneManager = useSceneManager();
+                const threeViewer = useThreeViewer();
                 objectSelection.clearSelection();
                 transform.clearHistory();
-                await sceneManager.loadScene(sceneData);
+                await threeViewer.loadScene(sceneData);
                 ElMessage.success('场景导入成功');
               } catch (e) {
                 console.error('导入场景失败:', e);
@@ -378,11 +378,11 @@ export default {
           return;
         }
         // 加载场景
-        const sceneManager = useSceneManager();
+        const threeViewer = useThreeViewer();
         objectSelection.clearSelection();
         transform.clearHistory();
         const sceneData = JSON.parse(contentRes);
-        await sceneManager.loadScene(sceneData);
+        await threeViewer.loadScene(sceneData);
         ElMessage.success('场景加载成功');
       } catch (e) {
         console.error('加载场景失败:', e);

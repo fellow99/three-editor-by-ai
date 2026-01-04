@@ -2,13 +2,13 @@
   文件功能：性能监控面板，仅显示FPS，hover显示完整state，单击切换常驻显示。
   使用 stats-gl 监控 threejs 渲染性能。
   新语法：<script setup>、defineProps、defineEmits、shallowRef、watchEffect。
-  注意：通过 useScene 获取 sceneManager.renderer，renderer 存在时初始化 stats-gl。
+  注意：通过 useScene 获取 threeViewer.renderer，renderer 存在时初始化 stats-gl。
 -->
 
 <script setup>
 import { ref, shallowRef, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import Stats from "stats-gl"
-import { useScene } from '../../composables/useScene.js'
+import { useThreeViewer } from '../../composables/useThreeViewer.js';
 
 /**
  * stateRef：保存 stats-gl 的 state 对象，用于显示详细性能信息
@@ -32,7 +32,7 @@ const fps = ref(0) // 当前FPS
 let stats = null
 let requestAnimationFrameObj = null
 
-const scene = useScene()
+const threeViewer = useThreeViewer();
 
 const statsRef = shallowRef(null);
 statsRef.value = new Stats({ trackGPU: true, horizontal: false })
@@ -53,7 +53,7 @@ function updateTimer() {
  * 监听 renderer 初始化，动态挂载 stats-gl
  */
 function init() {
-  const renderer = scene.sceneManager?.renderer
+  const renderer = threeViewer?.renderer
   const stats = statsRef.value
   if (renderer) {
     stats.dom.style.position = 'relative'

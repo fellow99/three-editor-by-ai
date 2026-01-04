@@ -25,12 +25,12 @@
  * - 支持拖拽VFS模型文件到场景
  */
 import { ref, reactive, computed, onMounted, onUnmounted, watch, inject } from 'vue';
+import { useThreeViewer } from '../../composables/useThreeViewer.js';
 import { useScene } from '../../composables/useScene.js';
 import { useObjectSelection } from '../../composables/useObjectSelection.js';
 import { useInputManager } from '../../core/InputManager.js';
 import useTransform from '../../composables/useTransform.js';
 import vfsService from '../../services/vfs-service.js';
-import { useAssetLoader } from '../../core/AssetLoader.js';
 import { useAssets } from '../../composables/useAssets.js';
 import { ElMessage } from 'element-plus';
 import 'element-plus/es/components/message/style/css';
@@ -44,8 +44,6 @@ export default {
   setup(props) {
     // 注入全局appState
     const appState = inject('appState');
-    // 模型加载器单例
-    const assetLoader = useAssetLoader();
     // 资源管理器
     const { loadModel, addModelToScene, getCachedModel } = useAssets();
 
@@ -67,8 +65,8 @@ export default {
       if (appState) appState.isLoading = true;
       // 获取当前相机位置，作为新对象的position
       let options = {};
-      if (scene && scene.sceneManager && scene.sceneManager.controls && scene.sceneManager.controls.target) {
-        const target = scene.sceneManager.controls.target;
+      if (scene && threeViewer && threeViewer.controls && threeViewer.controls.target) {
+        const target = threeViewer.controls.target;
         options.position = [target.x, target.y, target.z];
       }
 
@@ -94,7 +92,7 @@ export default {
             } else {
               // 创建对象后需手动添加到管理器
               const obj = await scene.createPrimitive(primitive.type, options);
-              scene.sceneManager.addObject(obj);
+              threeViewer.addObject(obj);
               ElMessage.success('已添加基础对象');
             }
           } else {
@@ -164,8 +162,8 @@ export default {
             json = await vfs.json(path + '/' + name);
           }
           if(json && json.objects) {
-            // 通过SceneManager加载场景数据
-            await scene.sceneManager.loadScene(json);
+            // 通过ThreeViewer加载场景数据
+            await threeViewer.loadScene(json);
             ElMessage.success('场景文件加载成功');
           } else {
             ElMessage.error('无效的场景文件');
@@ -180,6 +178,7 @@ export default {
     }
 
     const containerRef = ref(null);
+    const threeViewer = useThreeViewer();
     const scene = useScene();
     const objectSelection = useObjectSelection();
     const inputManager = useInputManager();
@@ -211,17 +210,17 @@ export default {
         scene.initScene(containerRef.value);
         scene.startRender();
 
-        // 监听showGrid变化，动态切换SceneManager中的网格显示
+        // 监听showGrid变化，动态切换ThreeViewer中的网格显示
         watch(showGrid, (val) => {
-          scene.sceneManager.setGridVisible?.(val);
+          threeViewer.setGridVisible?.(val);
         }, { immediate: true });
 
         // 初始化TransformControls
         objectSelection.initTransformControls({
-          scene: scene.sceneManager.scene,
-          camera: scene.sceneManager.camera,
-          renderer: scene.sceneManager.renderer,
-          controls: scene.sceneManager.controls,
+          scene: threeViewer.scene,
+          camera: threeViewer.camera,
+          renderer: threeViewer.renderer,
+          controls: threeViewer.controls,
           transform
         });
 
@@ -237,16 +236,16 @@ export default {
     function setupInputHandlers() {
       // 鼠标点击选择
       inputManager.on('click', (event) => {
-        if (scene.sceneManager.camera) {
-          objectSelection.handleClickSelection(event, scene.sceneManager.camera);
+        if (threeViewer.camera) {
+          objectSelection.handleClickSelection(event, threeViewer.camera);
         }
       });
       
       /*
       // 鼠标悬停（性能太差，已禁用）
       // inputManager.on('mousemove', (event) => {
-      //   if (scene.sceneManager.camera) {
-      //     objectSelection.handleHover(event, scene.sceneManager.camera);
+      //   if (threeViewer.camera) {
+      //     objectSelection.handleHover(event, threeViewer.camera);
       //   }
       // });
       */
@@ -255,13 +254,13 @@ export default {
     
     function startCameraPositionUpdate() {
       function updateCameraPosition() {
-        if (scene.sceneManager.camera) {
-          const pos = scene.sceneManager.camera.position;
+        if (threeViewer.camera) {
+          const pos = threeViewer.camera.position;
           cameraPosition.x = pos.x;
           cameraPosition.y = pos.y;
           cameraPosition.z = pos.z;
           // 同步相机四元数
-          const q = scene.sceneManager.camera.quaternion;
+          const q = threeViewer.camera.quaternion;
           if (q) {
             cameraQuaternionRef.value = {
               x: q.x,
@@ -287,8 +286,8 @@ export default {
           if (raw) {
             const sceneData = JSON.parse(raw);
             // 尝试加载场景数据
-            if (scene && scene.sceneManager && typeof scene.sceneManager.loadScene === 'function') {
-              await scene.sceneManager.loadScene(sceneData);
+            if (scene && threeViewer && typeof threeViewer.loadScene === 'function') {
+              await threeViewer.loadScene(sceneData);
               ElMessage.success('已自动加载本地暂存场景');
             }
           }
@@ -320,10 +319,10 @@ export default {
       inputManager.dispose();
       // 只保留网格辅助线清理
       if (gridHelper) {
-        scene.sceneManager.scene.remove(gridHelper);
+        threeViewer.scene.remove(gridHelper);
         gridHelper = null;
       }
-      // TransformControls及helper由SceneManager统一清理
+      // TransformControls及helper由ThreeViewer统一清理
     });
     
     return {

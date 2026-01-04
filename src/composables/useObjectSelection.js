@@ -1,7 +1,7 @@
 /**
  * 对象选择与变换控制管理 Composable
  * 提供对象选择、TransformControls、选中对象辅助显示等功能
- * 新增功能：拖拽结束时根据SceneManager的controlsLocked状态决定是否恢复controls.enabled，避免与镜头锁定冲突。
+ * 新增功能：拖拽结束时根据ThreeViewer的controlsLocked状态决定是否恢复controls.enabled，避免与镜头锁定冲突。
  */
 
 import { ref, reactive, computed, watch } from 'vue';
@@ -178,9 +178,9 @@ transformControls.addEventListener('dragging-changed', (event) => {
         }
         // 拖拽结束时，若镜头锁定则保持controls.enabled=false
         if (!event.value) {
-          import('../core/SceneManager.js').then(mod => {
-            const sceneManager = mod.useSceneManager();
-            if (sceneManager.getControlsLocked && sceneManager.getControlsLocked()) {
+          import('../core/ThreeViewer.js').then(mod => {
+            const threeViewer = mod.useThreeViewer();
+            if (threeViewer.getControlsLocked && threeViewer.getControlsLocked()) {
               controls.enabled = false;
             }
           });
@@ -335,15 +335,15 @@ function selectObjects(objects, addToSelection = false) {
 
 /**
  * 清空选择
- * 保证镜头锁定状态优先，主动同步SceneManager的controlsLocked到controls.enabled
+ * 保证镜头锁定状态优先，主动同步ThreeViewer的controlsLocked到controls.enabled
  */
 function clearSelection() {
   objectManager.clearSelection();
   try {
-    const { useSceneManager } = require('../core/SceneManager.js');
-    const sceneManager = useSceneManager();
-    if (sceneManager.controls && sceneManager.getControlsLocked) {
-      sceneManager.controls.enabled = !sceneManager.getControlsLocked();
+    const { useThreeViewer } = require('../composables/useThreeViewer.js');
+    const threeViewer = useThreeViewer();
+    if (threeViewer.controls && threeViewer.getControlsLocked) {
+      threeViewer.controls.enabled = !threeViewer.getControlsLocked();
     }
   } catch (e) {
     // ignore
@@ -446,7 +446,7 @@ function selectByName(name, exactMatch = false) {
 
 /**
  * 取消选择对象
- * 保证镜头锁定状态优先，主动同步SceneManager的controlsLocked到controls.enabled
+ * 保证镜头锁定状态优先，主动同步ThreeViewer的controlsLocked到controls.enabled
  * @param {string|THREE.Object3D} objectOrId 对象或ID
  */
 function deselectObject(objectOrId) {
@@ -462,10 +462,10 @@ function deselectObject(objectOrId) {
   
   objectManager.deselectObjects(id);
   try {
-    const { useSceneManager } = require('../core/SceneManager.js');
-    const sceneManager = useSceneManager();
-    if (sceneManager.controls && sceneManager.getControlsLocked) {
-      sceneManager.controls.enabled = !sceneManager.getControlsLocked();
+    const { useThreeViewer } = require('../composables/useThreeViewer.js');
+    const threeViewer = useThreeViewer();
+    if (threeViewer.controls && threeViewer.getControlsLocked) {
+      threeViewer.controls.enabled = !threeViewer.getControlsLocked();
     }
   } catch (e) {
     // ignore

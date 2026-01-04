@@ -8,7 +8,7 @@ import { ref, computed, watch } from 'vue'
 import { useScene } from '../../composables/useScene'
 
 /** 获取场景管理器和配置 */
-const { sceneConfig, updateSceneConfig, getSceneStats, sceneManager } = useScene()
+const { sceneConfig, updateSceneConfig, getSceneStats, threeViewer } = useScene()
 
 /** 场景统计信息 */
 const sceneStats = computed(() => getSceneStats())
@@ -28,7 +28,7 @@ function formatNumber(num) {
 }
 
 /** 当前场景ID（唯一标识，来源于THREE.Scene.uuid） */
-const sceneId = ref(sceneManager.scene?.uuid ?? '')
+const sceneId = ref(threeViewer.scene?.uuid ?? '')
 
 /** 当前场景名称（如需支持可扩展） */
 const sceneName = ref('')

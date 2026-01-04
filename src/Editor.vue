@@ -39,14 +39,14 @@
         />
         <!-- 浮动面板：右下 -->
         <CubeViewportControls
-          v-if="scene.sceneManager && scene.sceneManager.controls"
+          v-if="threeViewer && threeViewer.controls"
           :class="[
             'cube-controls-bottomright',
             { 'with-right': !appState.rightPanelCollapsed }
           ]"
-          :camera="scene.sceneManager?.camera"
-          :renderer="scene.sceneManager?.renderer"
-          :controls="scene.sceneManager?.controls"
+          :camera="threeViewer?.camera"
+          :renderer="threeViewer?.renderer"
+          :controls="threeViewer?.controls"
           :cameraQuaternion="cameraQuaternion"
           @viewChange="setViewAngle"
         />
@@ -129,8 +129,8 @@ import { ref, reactive, provide, onMounted, onUnmounted } from 'vue';
  * @param {Object} pos 新的相机位置
  */
 function onCameraPositionUpdate(pos) {
-  if (scene.sceneManager?.camera) {
-    scene.sceneManager.camera.position.set(pos.x, pos.y, pos.z);
+  if (threeViewer?.camera) {
+    threeViewer.camera.position.set(pos.x, pos.y, pos.z);
   }
 }
 /**
@@ -138,11 +138,11 @@ function onCameraPositionUpdate(pos) {
  * @param {Object} target 新的controls target
  */
 function onCameraTargetUpdate(target) {
-  if (scene.sceneManager?.controls && scene.sceneManager.controls.target) {
-    scene.sceneManager.controls.target.set(target.x, target.y, target.z);
+  if (threeViewer?.controls && threeViewer.controls.target) {
+    threeViewer.controls.target.set(target.x, target.y, target.z);
     // 同步相机朝向
-    if (scene.sceneManager.camera && typeof scene.sceneManager.camera.lookAt === 'function') {
-      scene.sceneManager.camera.lookAt(target.x, target.y, target.z);
+    if (threeViewer.camera && typeof threeViewer.camera.lookAt === 'function') {
+      threeViewer.camera.lookAt(target.x, target.y, target.z);
     }
   }
 }
@@ -154,6 +154,7 @@ import { Setting, Loading } from '@element-plus/icons-vue';
 import { useObjectSelection } from './composables/useObjectSelection.js';
 import { useTransform } from './composables/useTransform.js';
 import { useAssets } from './composables/useAssets.js';
+import { useThreeViewer } from './composables/useThreeViewer.js';
 
 // 导入组件
 import Toolbar from './components/editor/Toolbar.vue';
@@ -192,6 +193,7 @@ import { computed } from 'vue';
 
  // 使用各种 composables
 const scene = useScene();
+const threeViewer = useThreeViewer();
 const objectSelection = useObjectSelection();
 const transform = useTransform();
 const assets = useAssets();
@@ -231,13 +233,13 @@ const sceneStats = computed(() => scene.getSceneStats());
 // 定时更新相机状态
 let animationId = null;
 function updateCameraState() {
-  if (scene.sceneManager?.camera) {
-    const pos = scene.sceneManager.camera.position;
+  if (threeViewer?.camera) {
+    const pos = threeViewer.camera.position;
     cameraPosition.x = pos.x;
     cameraPosition.y = pos.y;
     cameraPosition.z = pos.z;
     // 获取 OrbitControls target
-    const controls = scene.sceneManager.controls;
+    const controls = threeViewer.controls;
     if (controls && controls.target) {
       cameraTarget.x = controls.target.x;
       cameraTarget.y = controls.target.y;
