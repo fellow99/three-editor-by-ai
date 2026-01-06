@@ -102,279 +102,216 @@
   </div>
 </template>
 
-<script>
+<script setup>
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue';
-import { useScene } from '../../composables/useScene.js';
 import { useObjectSelection } from '../../composables/useObjectSelection.js';
-import { useObjectManager } from '../../composables/useObjectManager.js';
+import { useObjectManager, focusOnObject } from '../../composables/useObjectManager.js';
 import ObjectItem from './ObjectItem.vue';
 
-export default {
-  name: 'Inspector',
-  components: {
-    ObjectItem
-  },
-  emits: ['delete-selected'],
-  /**
-   * 对象检查器组件
-   * 展示场景对象层级、属性统计及对象操作
-   */
-  setup(props, { emit }) {
-    const scene = useScene();
-    const objectSelection = useObjectSelection();
-    const objectManager = useObjectManager();
-    
-    // 响应式状态
-    const searchQuery = ref('');
-    const showOnlyVisible = ref(false);
-    const showOnlySelected = ref(false);
-    const expandedIds = reactive(new Set());
-    const contextMenu = reactive({
-      visible: false,
-      x: 0,
-      y: 0,
-      object: null
-    });
-    
-    // 计算属性
-    const allObjects = computed(() => objectManager.getAllObjects());
-    const selectedObjectIds = computed(() => objectSelection.selectedObjectIds.value);
+const objectSelection = useObjectSelection();
+const objectManager = useObjectManager();
 
-    const filteredObjects = computed(() => {
-      let objects = allObjects.value;
-      
-      // 搜索过滤
-      if (searchQuery.value) {
-        const query = searchQuery.value.toLowerCase();
-        objects = objects.filter(obj => 
-          obj.name.toLowerCase().includes(query) ||
-          (obj.userData.type && obj.userData.type.toLowerCase().includes(query))
-        );
-      }
-      
-      // 可见性过滤
-      if (showOnlyVisible.value) {
-        objects = objects.filter(obj => obj.visible);
-      }
-      
-      // 选中状态过滤
-      if (showOnlySelected.value) {
-        objects = objects.filter(obj => 
-          selectedObjectIds.value.includes(obj.userData.id)
-        );
-      }
-      
-      return objects;
-    });
-    
-    // 方法
-    /**
-     * 强制刷新层级树展开状态
-     */
-    function refreshHierarchy() {
-      // 强制更新层级树
-      const currentExpanded = Array.from(expandedIds);
-      expandedIds.clear();
-      setTimeout(() => {
-        currentExpanded.forEach(id => expandedIds.add(id));
-      }, 0);
-    }
-    
-    /**
-     * 展开所有对象
-     */
-    function expandAll() {
-      allObjects.value.forEach(obj => {
-        if (obj.userData.id) {
-          expandedIds.add(obj.userData.id);
-        }
-      });
-    }
-    
-    /**
-     * 折叠所有对象
-     */
-    function collapseAll() {
-      expandedIds.clear();
-    }
-    
-    /**
-     * 处理对象选择（支持多选、范围选）
-     * @param {Object} object 选中对象
-     * @param {Event} event 事件对象
-     */
-    function handleObjectSelect(object, event) {
-      const isMultiSelect = event.ctrlKey || event.metaKey;
-      const isRangeSelect = event.shiftKey;
-      
-      if (isRangeSelect) {
-        // TODO: 实现范围选择
-        objectSelection.selectObject(object, true);
-      } else if (isMultiSelect) {
-        objectSelection.toggleSelection(object);
-      } else {
-        objectSelection.selectObject(object);
-      }
-    }
-    
-    /**
-     * 展开/折叠对象
-     * @param {string} objectId 对象ID
-     */
-    function handleToggleExpand(objectId) {
-      if (expandedIds.has(objectId)) {
-        expandedIds.delete(objectId);
-      } else {
-        expandedIds.add(objectId);
-      }
-    }
-    
-    /**
-     * 切换对象可见性
-     * @param {Object} object 目标对象
-     */
-    function handleToggleVisibility(object) {
-      object.visible = !object.visible;
-    }
-    
-    /**
-     * 显示右键菜单
-     * @param {Object} object 目标对象
-     * @param {Event} event 鼠标事件
-     */
-    function handleContextMenu(object, event) {
-      event.preventDefault();
-      contextMenu.visible = true;
-      contextMenu.x = event.clientX;
-      contextMenu.y = event.clientY;
-      contextMenu.object = object;
-    }
-    
-    /**
-     * 隐藏右键菜单
-     */
-    function hideContextMenu() {
-      contextMenu.visible = false;
-      contextMenu.object = null;
-    }
-    
-    /**
-     * 复制对象
-     * @param {Object} object 目标对象
-     */
-    function duplicateObject(object) {
-      objectManager.copyObjects([object.userData.id]);
-      const duplicated = objectManager.pasteObjects();
-      if (duplicated.length > 0) {
-        objectSelection.selectObject(duplicated[0]);
-      }
-      hideContextMenu();
-    }
-    
-    /**
-     * 删除对象
-     * @param {Object} object 目标对象
-     */
-    function deleteObject(object) {
-      emit('delete-selected', object);
-      hideContextMenu();
-    }
-    
-    /**
-     * 隔离显示对象（只显示该对象）
-     * @param {Object} object 目标对象
-     */
-    function isolateObject(object) {
-      // 隐藏其他所有对象，只显示选中的对象
-      allObjects.value.forEach(obj => {
-        obj.visible = obj === object;
-      });
-      hideContextMenu();
-    }
-    
-    /**
-     * 聚焦对象
-     * @param {Object} object 目标对象
-     */
-    function focusObject(object) {
-      scene.focusOnObject(object);
-      objectSelection.selectObject(object);
-      hideContextMenu();
-    }
-    
-    /**
-     * 重命名对象
-     * @param {Object} object 目标对象
-     */
-    function renameObject(object) {
-      const newName = prompt('请输入新名称:', object.name);
-      if (newName && newName.trim()) {
-        object.name = newName.trim();
-      }
-      hideContextMenu();
-    }
-    
-    // 监听全局点击事件来隐藏右键菜单
-    /**
-     * 监听全局点击事件，隐藏右键菜单
-     */
-    function handleGlobalClick() {
-      if (contextMenu.visible) {
-        hideContextMenu();
-      }
-    }
-    
-    onMounted(() => {
-      document.addEventListener('click', handleGlobalClick);
-    });
-    
-    onUnmounted(() => {
-      document.removeEventListener('click', handleGlobalClick);
-    });
-    
-    /**
-     * 切换对象锁定状态
-     * @param {Object} object 目标对象
-     */
-    function handleToggleLock(object) {
-      object.userData.locked = !object.userData.locked;
-      // 锁定后取消选择
-      if (object.userData.locked) {
-        objectSelection.deselectObject(object);
-      }
-    }
+// 响应式状态
+const searchQuery = ref('');
+const showOnlyVisible = ref(false);
+const showOnlySelected = ref(false);
+const expandedIds = reactive(new Set());
+const contextMenu = reactive({
+  visible: false,
+  x: 0,
+  y: 0,
+  object: null
+});
 
-    return {
-      // 状态
-      searchQuery,
-      showOnlyVisible,
-      showOnlySelected,
-      expandedIds,
-      contextMenu,
-      allObjects,
-      selectedObjectIds,
-      filteredObjects,
-      // 多选辅助对象集合，便于调试和扩展
-      currentHelpers: objectSelection.currentHelpers,
-      
-      // 方法
-      refreshHierarchy,
-      expandAll,
-      collapseAll,
-      handleObjectSelect,
-      handleToggleExpand,
-      handleToggleVisibility,
-      handleToggleLock,
-      handleContextMenu,
-      hideContextMenu,
-      duplicateObject,
-      deleteObject,
-      isolateObject,
-      focusObject,
-      renameObject
-    };
+// 计算属性
+const allObjects = computed(() => objectManager.getAllObjects());
+const selectedObjectIds = computed(() => objectSelection.selectedIdsRef.value);
+
+const filteredObjects = computed(() => {
+  let objects = allObjects.value;
+  
+  // 搜索过滤
+  if (searchQuery.value) {
+    const query = searchQuery.value.toLowerCase();
+    objects = objects.filter(obj => 
+      obj.name.toLowerCase().includes(query) ||
+      (obj.userData.type && obj.userData.type.toLowerCase().includes(query))
+    );
   }
-};
+  
+  // 可见性过滤
+  if (showOnlyVisible.value) {
+    objects = objects.filter(obj => obj.visible);
+  }
+  
+  // 选中状态过滤
+  if (showOnlySelected.value) {
+    objects = objects.filter(obj => 
+      selectedObjectIds.value.includes(obj.userData.id)
+    );
+  }
+  
+  return objects;
+});
+
+// 方法
+/**
+ * 强制刷新层级树展开状态
+ */
+function refreshHierarchy() {
+  // 强制更新层级树
+  const currentExpanded = Array.from(expandedIds);
+  expandedIds.clear();
+  setTimeout(() => {
+    currentExpanded.forEach(id => expandedIds.add(id));
+  }, 0);
+}
+
+/**
+ * 展开所有对象
+ */
+function expandAll() {
+  allObjects.value.forEach(obj => {
+    if (obj.userData.id) {
+      expandedIds.add(obj.userData.id);
+    }
+  });
+}
+
+/**
+ * 折叠所有对象
+ */
+function collapseAll() {
+  expandedIds.clear();
+}
+
+/**
+ * 处理对象选择（支持多选、范围选）
+ * @param {Object} object 选中对象
+ * @param {Event} event 事件对象
+ */
+function handleObjectSelect(object, event) {
+  const isMultiSelect = event.ctrlKey || event.metaKey;
+  const isRangeSelect = event.shiftKey;
+  
+  if (isRangeSelect) {
+    // TODO: 实现范围选择
+    objectSelection.selectObject(object, true);
+  } else if (isMultiSelect) {
+    objectSelection.toggleSelection(object);
+  } else {
+    objectSelection.selectObject(object);
+  }
+}
+
+/**
+ * 展开/折叠对象
+ * @param {string} objectId 对象ID
+ */
+function handleToggleExpand(objectId) {
+  if (expandedIds.has(objectId)) {
+    expandedIds.delete(objectId);
+  } else {
+    expandedIds.add(objectId);
+  }
+}
+
+/**
+ * 切换对象可见性
+ * @param {Object} object 目标对象
+ */
+function handleToggleVisibility(object) {
+  object.visible = !object.visible;
+}
+
+/**
+ * 显示右键菜单
+ * @param {Object} object 目标对象
+ * @param {Event} event 鼠标事件
+ */
+function handleContextMenu(object, event) {
+  event.preventDefault();
+  contextMenu.visible = true;
+  contextMenu.x = event.clientX;
+  contextMenu.y = event.clientY;
+  contextMenu.object = object;
+}
+
+/**
+ * 隐藏右键菜单
+ */
+function hideContextMenu() {
+  contextMenu.visible = false;
+  contextMenu.object = null;
+}
+
+/**
+ * 复制对象
+ * @param {Object} object 目标对象
+ */
+function duplicateObject(object) {
+  objectManager.copyObjects([object.userData.id]);
+  const duplicated = objectManager.pasteObjects();
+  if (duplicated.length > 0) {
+    objectSelection.selectObject(duplicated[0]);
+  }
+  hideContextMenu();
+}
+
+/**
+ * 删除对象
+ * @param {Object} object 目标对象
+ */
+function deleteObject(object) {
+  emit('delete-selected', object);
+  hideContextMenu();
+}
+
+/**
+ * 隔离显示对象（只显示该对象）
+ * @param {Object} object 目标对象
+ */
+function isolateObject(object) {
+  // 隐藏其他所有对象，只显示选中的对象
+  allObjects.value.forEach(obj => {
+    obj.visible = obj === object;
+  });
+  hideContextMenu();
+}
+
+/**
+ * 聚焦对象
+ * @param {Object} object 目标对象
+ */
+function focusObject(object) {
+  focusOnObject(object);
+  objectSelection.selectObject(object);
+  hideContextMenu();
+}
+
+/**
+ * 重命名对象
+ * @param {Object} object 目标对象
+ */
+function renameObject(object) {
+  const newName = prompt('请输入新名称:', object.name);
+  if (newName && newName.trim()) {
+    object.name = newName.trim();
+  }
+  hideContextMenu();
+}
+
+/**
+ * 切换对象锁定状态
+ * @param {Object} object 目标对象
+ */
+function handleToggleLock(object) {
+  object.userData.locked = !object.userData.locked;
+  // 锁定后取消选择
+  if (object.userData.locked) {
+    objectSelection.deselectObject(object);
+  }
+}
 </script>
 
 <style lang="scss" scoped>

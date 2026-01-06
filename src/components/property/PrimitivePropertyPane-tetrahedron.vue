@@ -5,17 +5,27 @@
 -->
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, shallowRef, watch } from 'vue'
 import * as THREE from 'three'
 import { useObjectSelection } from '../../composables/useObjectSelection.js'
 
-/** 对象选择管理器 */
-const objectSelection = useObjectSelection()
-/** 当前选中对象 */
-const selectedObject = computed(() => {
-  const objects = objectSelection.selectedObjects.value
-  return objects.length === 1 ? objects[0] : null
-})
+const { selectedIdsRef, getSelectedObjects } = useObjectSelection();
+// 是否有选中对象
+const hasSelection = ref(false);
+// 当前选中对象（仅支持单选）
+const selectedObject = shallowRef(null);
+// 监听选中对象变化，更新activeTab和hasSelection
+watch(selectedIdsRef, (ids) => {
+  if (ids && ids.length > 0) {
+    hasSelection.value = true;
+    let objects = getSelectedObjects();
+    let object = objects ? objects[0] : null;
+    selectedObject.value = object;
+  } else {
+    hasSelection.value = false;
+    selectedObject.value = null;
+  }
+}, { immediate: true });
 
 /** tetrahedron半径 */
 const radius = ref(1)
@@ -61,7 +71,7 @@ function updateTetrahedronGeometry(key, value) {
 </script>
 
 <template>
-  <div v-if="selectedObject && selectedObject.geometry && selectedObject.geometry.type === 'TetrahedronGeometry'" class="tetrahedron-property-pane">
+  <div v-if="selectedObject && selectedObject.geometry && selectedObject.geometry.type === 'TetrahedronGeometry'" class="property-pane">
     <div class="property-section">
       <h4>Tetrahedron属性</h4>
       <el-form label-width="70px" class="property-form">
@@ -88,34 +98,11 @@ function updateTetrahedronGeometry(key, value) {
       </el-form>
     </div>
   </div>
-  <div v-else class="no-tetrahedron-selection">
-    <span style="color:#999;">未选中Tetrahedron对象</span>
+  <div v-else class="no-selection">
+    <span style="color:#999;">未选中对象</span>
   </div>
 </template>
 
 <style lang="scss" scoped>
-.tetrahedron-property-pane {
-  width: 100%;
-  padding: 8px;
-  color: #fff;
-}
-.property-section {
-  margin-bottom: 12px;
-}
-.property-section h4 {
-  margin: 0 0 12px 0;
-  font-size: 14px;
-  font-weight: 600;
-  color: #ccc;
-  border-bottom: 1px solid #444;
-  padding-bottom: 4px;
-}
-.property-form {
-  margin-top: 8px;
-}
-.no-tetrahedron-selection {
-  padding: 20px;
-  text-align: center;
-  color: #999;
-}
+@use './PropertyPane.scss';
 </style>

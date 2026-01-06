@@ -1,7 +1,5 @@
 /**
- * Y轴锁定状态管理
- * 提供axesLockState响应式变量及setAxesLockState方法
- * 可被useScene、ThreeViewer、useObjectSelection等模块安全引用，避免循环依赖
+ * Y轴锁定状态组合式函数
  */
 import { reactive } from 'vue';
 
@@ -13,6 +11,10 @@ export const axesLockState = reactive({
   locked: false,
   yValue: 0
 });
+
+export function useAxesLockState() {
+  return axesLockState;
+}
 
 /**
  * 设置Y轴锁定状态

@@ -25,11 +25,11 @@
             <span class="icon">💾</span>
             <div>保存</div>
           </button>
-          <button @click="loadScene" class="ribbon-btn" title="加载场景">
+          <button @click="handleLoad" class="ribbon-btn" title="加载场景">
             <span class="icon">📂</span>
             <div>加载</div>
           </button>
-          <button @click="exportScene" class="ribbon-btn" title="导出场景">
+          <button @click="handleExport" class="ribbon-btn" title="导出场景">
             <span class="icon">📤</span>
             <div>导出</div>
           </button>
@@ -164,353 +164,293 @@
   </div>
 </template>
 
-<script>
-import { ref, computed, inject, watch } from 'vue';
+<script setup>
+/**
+ * 主工具栏组件
+ * 提供场景文件、编辑、对象变换等操作入口
+ * 新增：集成车站布点对话框
+ */
+import { ref, computed, inject, watch, onMounted } from 'vue';
 import { ElMessageBox, ElMessage } from 'element-plus';
-import 'element-plus/es/components/message/style/css';
-import 'element-plus/es/components/message-box/style/css';
-import { useScene } from '../../composables/useScene.js';
-import { useObjectSelection } from '../../composables/useObjectSelection.js';
-import { useThreeViewer } from '../../composables/useThreeViewer.js';
-import useTransform from '../../composables/useTransform.js';
-import { useObjectManager } from '../../composables/useObjectManager.js';
-import { exportJSON } from '../../utils/fileUtils.js';
+import { useThreeViewer, loadScene, exportScene } from '@/composables/useThreeViewer.js';
+import { useObjectSelection } from '@/composables/useObjectSelection.js';
+import useTransform from '@/composables/useTransform.js';
+import { exportJSON } from '@/utils/fileUtils.js';
+import { useAxesLockState } from '@/composables/useAxesLockState.js';
+import { useControls, setControlsLocked, getControlsLocked } from '@/composables/useControls.js';
+import { setInitialPos } from '@/composables/useCameraPosState.js';
+import { handleFocus, handleLock, handleVisible, handleDelete, handleDuplicate } from '@/composables/useInspectorHandler.js';
+
 import EditorConfigDialog from '../dialog/EditorConfigDialog.vue';
 import VfsFileChooserDialog from '../dialog/VfsFileChooserDialog.vue';
 import VfsFileSaverDialog from '../dialog/VfsFileSaverDialog.vue';
 import vfsService from '../../services/vfs-service.js';
 
-export default {
-  name: 'Toolbar',
-  components: { EditorConfigDialog, VfsFileChooserDialog, VfsFileSaverDialog },
-  emits: ['delete-selected', 'duplicate-selected'],
-  /**
-   * 工具栏组件
-   * 提供场景文件、编辑、对象变换等操作入口
-   */
-  setup(props, { emit }) {
-    // 注入全局appState
-    const appState = inject('appState');
-    /**
-     * 编辑器配置对话框显示状态
-     * @type {import('vue').Ref<boolean>}
-     */
-    const showEditorConfig = ref(false);
-    // Ribbon tab 配置
-    const tabs = [
-      { key: 'file', label: '文件' },
-      { key: 'edit', label: '编辑' },
-      { key: 'tools', label: '工具' },
-      { key: 'view', label: '视图' },
-      { key: 'settings', label: '设置' }
-    ];
-    const activeTab = ref('file');
-    const scene = useScene();
-    const objectSelection = useObjectSelection();
-    const transform = useTransform();
-    const objectManager = useObjectManager();
+const axesLockState = useAxesLockState();
 
-    // Y轴锁定相关
-    const axesLockState = scene.axesLockState;
-    const setAxesLockState = scene.setAxesLockState;
-    /**
-     * 切换Y轴锁定状态
-     * 无选中对象时取controls.target.y，有选中对象时取选中对象position.y
-     */
-    function toggleLockYAxis() {
-      if (axesLockState.locked) {
-        setAxesLockState(false, 0);
-        return;
-      }
-      let y = 0;
-      const selected = objectSelection.selectedObjects.value;
-      if (selected && selected.length > 0 && selected[0] && selected[0].position) {
-        y = selected[0].position.y;
-      } else if (threeViewer && threeViewer.controls && threeViewer.controls.target) {
-        y = threeViewer.controls.target.y;
-      }
-      setAxesLockState(true, y);
-    }
-    // 相机锁定相关
-    const threeViewer = useThreeViewer();
-    const controlsLocked = ref(threeViewer.getControlsLocked());
-    function toggleLockCamera() {
-      const next = !controlsLocked.value;
-      threeViewer.setControlsLocked(next);
-      controlsLocked.value = next;
-    }
-    
-    // 计算属性
-    const transformMode = computed(() => transform.transformMode.value);
-    // 只保留单选模式，移除 selectionMode 相关
-    const hasSelection = computed(() => objectSelection.hasSelection.value);
-    const selectionCount = computed(() => objectSelection.selectionCount.value);
-    const fps = computed(() => scene.fps.value);
-    const objectCount = computed(() => objectManager.getAllObjects().length);
-    const canUndo = computed(() => transform.transformHistory.undoStack.length > 0);
-    const canRedo = computed(() => transform.transformHistory.redoStack.length > 0);
+const emit = defineEmits(['resetView']);
 
-    // 监听选择变化，重新触发锁定相机逻辑
-    watch(hasSelection, () => {
-      threeViewer.setControlsLocked(controlsLocked.value);
-    });
-    
-    // 方法
-    /**
-     * 新建场景，清空所有内容
-     */
-    /**
-     * 新建场景，清空所有内容
-     */
-    function newScene() {
-      ElMessageBox.confirm('确定要新建场景吗？这将清除当前所有内容。', '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(() => {
-        objectSelection.clearSelection();
-        transform.clearHistory();
+// 注入全局appState
+const appState = inject('appState');
 
-        scene.clearScene();
-        scene.resetScene();
-      }).catch(() => {});
-    }
-    
-    /**
-     * 保存当前场景为JSON文件
-     */
-    /**
-     * 导出当前场景为JSON文件
-     */
-    function exportScene() {
-      try {
-        const sceneData = scene.exportScene();
-        const filename = `scene_${new Date().toISOString().slice(0, 19).replace(/[:-]/g, '')}.json`;
-        exportJSON(sceneData, filename);
-        ElMessage.success('场景已导出');
-      } catch (error) {
-        console.error('导出场景失败:', error);
-        ElMessage.error('导出场景失败，请检查控制台错误信息。');
-      }
-    }
+/** 编辑器配置对话框显示状态 */
+const showEditorConfig = ref(false);
 
-    /**
-     * 导入场景文件
-     * 选择JSON文件并调用ThreeViewer.loadScene(json)
-     */
-    async function importScene() {
-      const input = document.createElement('input');
-      input.type = 'file';
-      input.accept = '.json';
-      input.onchange = async (event) => {
-        const file = event.target.files[0];
-        if (file) {
-          try {
-            const text = await file.text();
-            const sceneData = JSON.parse(text);
-            ElMessageBox.confirm('确定要导入这个场景吗？这将替换当前场景。', '提示', {
-              confirmButtonText: '确定',
-              cancelButtonText: '取消',
-              type: 'warning'
-            }).then(async () => {
-              if (appState) appState.isLoading = true;
-              try {
-                const threeViewer = useThreeViewer();
-                objectSelection.clearSelection();
-                transform.clearHistory();
-                await threeViewer.loadScene(sceneData);
-                ElMessage.success('场景导入成功');
-              } catch (e) {
-                console.error('导入场景失败:', e);
-                ElMessage.error('导入场景失败，请检查文件格式。');
-              } finally {
-                if (appState) appState.isLoading = false;
-              }
-            }).catch(() => {});
-          } catch (error) {
-            console.error('导入场景失败:', error);
-            ElMessage.error('导入场景失败，请检查文件格式。');
-          }
-        }
-      };
-      input.click();
-    }
+const objectSelection = useObjectSelection();
+const transform = useTransform();
+const controlsLocked = ref(getControlsLocked());
 
-    /**
-     * 暂存场景到localStorage
-     */
-    function saveLocal() {
-      try {
-        const sceneData = scene.exportScene();
-        localStorage.setItem('three-editor-scene', JSON.stringify(sceneData));
-        ElMessage.success('场景已暂存到本地');
-      } catch (error) {
-        console.error('暂存失败:', error);
-        ElMessage.error('暂存失败，请检查控制台错误信息。');
-      }
-    }
+function toggleLockCamera() {
+  const next = !controlsLocked.value;
+  setControlsLocked(next);
+  controlsLocked.value = next;
+}
 
-    /**
-     * 加载场景：弹出文件选择对话框，选中文件后加载内容并调用loadScene
-     */
-    const showFileChooser = ref(false);
-    async function loadScene() {
-      showFileChooser.value = true;
-    }
-    /**
-     * 文件选择回调
-     * @param {Object} fileInfo 选中的文件信息
-     */
-    async function handleFileSelect(fileInfo) {
-      showFileChooser.value = false;
-      if (!fileInfo || !fileInfo.path) return;
-      try {
-        if (appState) appState.isLoading = true;
-        // 获取文件内容（修正：通过 vfsService.getVfs 获取 vfs，再调用 vfs.content）
-        const vfs = vfsService.getVfs(fileInfo.drive);
-        if (!vfs || typeof vfs.content !== 'function') {
-          ElMessage.error('未找到指定虚拟文件系统或接口不支持');
-          return;
-        }
-        const contentRes = await vfs.content(fileInfo.path + fileInfo.name);
-        if (!contentRes) {
-          ElMessage.error('文件内容获取失败');
-          return;
-        }
-        // 加载场景
-        const threeViewer = useThreeViewer();
-        objectSelection.clearSelection();
-        transform.clearHistory();
-        const sceneData = JSON.parse(contentRes);
-        await threeViewer.loadScene(sceneData);
-        ElMessage.success('场景加载成功');
-      } catch (e) {
-        console.error('加载场景失败:', e);
-        ElMessage.error('加载场景失败，请检查文件内容或格式。');
-      } finally {
-        if (appState) appState.isLoading = false;
-      }
-    }
+const transformMode = computed(() => transform.transformMode.value);
+const hasSelection = computed(() => objectSelection.selectedIdsRef.value.length);
+const canUndo = computed(() => transform.transformHistory.undoStack.length > 0);
+const canRedo = computed(() => transform.transformHistory.redoStack.length > 0);
 
-    /**
-     * 保存场景：弹出保存对话框，填写文件名后保存到虚拟文件系统
-     */
-    const showFileSaver = ref(false);
-    const sceneJsonText = ref('');
-    function saveScene() {
-      try {
-        const sceneData = scene.exportScene();
-        sceneJsonText.value = JSON.stringify(sceneData, null, 2);
-        showFileSaver.value = true;
-      } catch (error) {
-        ElMessage.error('场景序列化失败');
-      }
-    }
-    function handleFileSaved(path) {
-      showFileSaver.value = false;
-      ElMessage.success('场景已保存到虚拟文件系统');
-    }
-    
-    /**
-     * 设置对象变换模式
-     * @param {string} mode 变换模式
-     */
-    function setTransformMode(mode) {
-      transform.transformMode.value = mode;
-    }
-    
-    /**
-     * 撤销上一步操作
-     */
-    function undo() {
-      transform.undo();
-    }
-    
-    /**
-     * 重做操作
-     */
-    function redo() {
-      transform.redo();
-    }
-    
-    /**
-     * 复制选中的对象
-     * 通过事件抛出，由父组件处理
-     */
-    function duplicateSelected() {
-      emit('duplicate-selected');
-    }
-    
-    /**
-     * 删除选中的对象
-     */
-    function deleteSelected() {
-        emit('delete-selected');
-    }
-    
-    /**
-     * 聚焦到选中对象
-     */
-    function focusSelected() {
-      const selectedObjects = objectSelection.selectedObjects.value;
-      if (selectedObjects.length > 0) {
-        scene.focusOnObject(selectedObjects[0]);
-      }
-    }
-    
-    /**
-     * 重置相机位置
-     */
-    function resetCamera() {
-      scene.updateCameraConfig({
-        position: { x: 5, y: 5, z: 5 },
-        target: { x: 0, y: 0, z: 0 }
-      });
-    }
-    
-    
-    
-    return {
-      // 状态
-      tabs,
-      activeTab,
-      transformMode,
-      // selectionMode, // 移除
-      hasSelection,
-      selectionCount,
-      fps,
-      objectCount,
-      canUndo,
-      canRedo,
-      
-      // 方法
-      newScene,
-      exportScene,
-      importScene,
-      saveLocal,
-      loadScene,
-      saveScene,
-      setTransformMode,
-      // setSelectionMode, // 移除
-      undo,
-      redo,
-      duplicateSelected,
-      deleteSelected,
-      focusSelected,
-      resetCamera,
-      showEditorConfig,
-      showFileChooser,
-      handleFileSelect,
-      showFileSaver,
-      sceneJsonText,
-      handleFileSaved,
-      controlsLocked,
-      toggleLockCamera,
-      axesLockState,
-      toggleLockYAxis
-    };
+watch(hasSelection, () => {
+  setControlsLocked(controlsLocked.value);
+});
+
+/**
+ * 新建场景，清空所有内容
+ */
+function newScene() {
+  ElMessageBox.confirm('确定要新建场景吗？这将清除当前所有内容。', '提示', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning'
+  }).then(() => {
+    objectSelection.clearSelection();
+    transform.clearHistory();
+
+    scene.clearScene();
+    scene.resetScene();
+  }).catch(() => {});
+}
+
+/**
+ * 导出当前场景为JSON文件
+ */
+function handleExport() {
+  try {
+    const sceneData = exportScene();
+    const filename = `scene_${new Date().toISOString().slice(0, 19).replace(/[:-]/g, '')}.json`;
+    exportJSON(sceneData, filename);
+    ElMessage.success('场景已导出');
+  } catch (error) {
+    console.error('导出场景失败:', error);
+    ElMessage.error('导出场景失败，请检查控制台错误信息。');
   }
-};
+}
+
+/**
+ * 导入场景文件
+ * 选择JSON文件并调用ThreeViewer.loadScene(json)
+ */
+async function importScene() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  input.onchange = async (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      try {
+        const text = await file.text();
+        const sceneData = JSON.parse(text);
+        ElMessageBox.confirm('确定要导入这个场景吗？这将替换当前场景。', '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }).then(async () => {
+          if (appState) appState.isLoading = true;
+          try {
+            objectSelection.clearSelection();
+            transform.clearHistory();
+            await loadScene(sceneData);
+            ElMessage.success('场景导入成功');
+          } catch (e) {
+            console.error('导入场景失败:', e);
+            ElMessage.error('导入场景失败，请检查文件格式。');
+          } finally {
+            if (appState) appState.isLoading = false;
+          }
+        }).catch(() => {});
+      } catch (error) {
+        console.error('导入场景失败:', error);
+        ElMessage.error('导入场景失败，请检查文件格式。');
+      }
+    }
+  };
+  input.click();
+}
+
+/**
+ * 暂存场景到localStorage
+ */
+function saveLocal() {
+  try {
+    const sceneData = scene.exportScene();
+    localStorage.setItem('three-editor-scene', JSON.stringify(sceneData));
+    ElMessage.success('场景已暂存到本地');
+  } catch (error) {
+    console.error('暂存失败:', error);
+    ElMessage.error('暂存失败，请检查控制台错误信息。');
+  }
+}
+
+/**
+ * 加载场景：弹出文件选择对话框，选中文件后加载内容并调用loadScene
+ */
+const showFileChooser = ref(false);
+async function handleLoad() {
+  showFileChooser.value = true;
+}
+/**
+ * 文件选择回调
+ * @param {Object} fileInfo 选中的文件信息
+ */
+async function handleFileSelect(fileInfo) {
+  showFileChooser.value = false;
+  if (!fileInfo || !fileInfo.path) return;
+  try {
+    if (appState) appState.isLoading = true;
+    // 获取文件内容（修正：通过 vfsService.getVfs 获取 vfs，再调用 vfs.content）
+    const vfs = vfsService.getVfs(fileInfo.drive);
+    if (!vfs || typeof vfs.content !== 'function') {
+      ElMessage.error('未找到指定虚拟文件系统或接口不支持');
+      return;
+    }
+    const contentRes = await vfs.content(fileInfo.path + fileInfo.name);
+    if (!contentRes) {
+      ElMessage.error('文件内容获取失败');
+      return;
+    }
+    // 加载场景
+    const threeViewer = useThreeViewer();
+    objectSelection.clearSelection();
+    transform.clearHistory();
+    const sceneData = JSON.parse(contentRes);
+    await threeViewer.loadScene(sceneData);
+    ElMessage.success('场景加载成功');
+  } catch (e) {
+    console.error('加载场景失败:', e);
+    ElMessage.error('加载场景失败，请检查文件内容或格式。');
+  } finally {
+    if (appState) appState.isLoading = false;
+  }
+}
+
+/**
+ * 保存场景：弹出保存对话框，填写文件名后保存到虚拟文件系统
+ */
+const showFileSaver = ref(false);
+const sceneJsonText = ref('');
+function saveScene() {
+  try {
+    const sceneData = scene.exportScene();
+    sceneJsonText.value = JSON.stringify(sceneData, null, 2);
+    showFileSaver.value = true;
+  } catch (error) {
+    ElMessage.error('场景序列化失败');
+  }
+}
+function handleFileSaved(path) {
+  showFileSaver.value = false;
+  ElMessage.success('场景已保存到虚拟文件系统');
+}
+
+function handleInitialPos() {
+  ElMessageBox.confirm('确定将当前位置设为场景初始位置吗？', '提示', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'info'
+  }).then(() => {
+    setInitialPos();
+    ElMessage.success('已将当前位置设为场景初始位置');
+  });
+}
+
+function setTransformMode(mode) {
+  transform.transformMode.value = mode;
+}
+
+function undo() {
+  transform.undo();
+}
+
+function redo() {
+  transform.redo();
+}
+
+function duplicateSelected() {
+  let selected = objectSelection.getSelectedObjects();
+  handleDuplicate(selected);
+}
+
+function deleteSelected() {
+  let selected = objectSelection.getSelectedObjects();
+  handleDelete(selected);
+}
+
+function lockSelected() {
+  let selected = objectSelection.getSelectedObjects();
+  handleLock(selected);
+}
+
+function visibleSelected() {
+  let selected = objectSelection.getSelectedObjects();
+  handleVisible(selected);
+}
+
+function focusSelected() {
+  let selected = objectSelection.getSelectedObjects();
+  handleFocus(selected[0]);
+}
+
+function resetView() {
+  emit('resetView');
+}
+
+/**
+ * 锁定/解锁Y轴
+ * - 若未锁定，则获取当前选中对象的position.y，否则取controls.target.y，设置axesLockState
+ * - 再次点击则解锁
+ */
+function toggleLockYAxis() {
+  let controlsRef = useControls();
+  let controls = controlsRef.value;
+
+  if (axesLockState.locked) {
+    axesLockState.locked = false;
+  } else {
+    let y = 0;
+    // 优先取选中对象
+    const selectedObjects = objectSelection.getSelectedObjects();
+    if (selectedObjects.length > 0 && selectedObjects[0]?.position) {
+      y = selectedObjects[0].position.y;
+    } else if (controls && controls.target) {
+      y = controls.target.y;
+    }
+    axesLockState.yValue = y;
+    axesLockState.locked = true;
+  }
+}
+
+
+onMounted(async () => {
+  let search = window.location.search;
+  let params = new URLSearchParams(search);
+  let url = params.get('url');
+  if(url) {
+    let resp = await fetch(url);
+    let json = await resp.json();
+    await loadScene(json);
+  }
+});
 </script>
 
 <style lang="scss" scoped>

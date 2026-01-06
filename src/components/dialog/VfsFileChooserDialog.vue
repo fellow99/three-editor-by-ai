@@ -6,8 +6,8 @@ VfsFileChooserDialog.vue
 -->
 <script setup>
 import { ref, shallowRef, onMounted, watch } from 'vue'
-import vfsService from '../../services/vfs-service.js'
 import { ElDialog, ElButton } from 'element-plus'
+import vfsService from '@/services/vfs-service.js'
 
 /** 事件触发器 */
 const emit = defineEmits(['select', 'update:modelValue'])
@@ -28,13 +28,6 @@ const files = shallowRef([])
 const selectedFile = shallowRef(null)
 /** 加载状态 */
 const loading = ref(false)
-
-/**
- * 打开文件选择对话框
- */
-function openDialog() {
-  visible.value = true
-}
 
 /**
  * 关闭文件选择对话框
@@ -63,8 +56,19 @@ async function loadFiles() {
   loading.value = true
   try {
     const res = await currentVfs.value.list(currentPath.value)
-    files.value = (res && res.data && res.data.files) ? res.data.files : []
-  } catch (e) {
+    let list = (res && res.data && res.data.files) ? res.data.files : [];
+    list = list.sort((a, b) => {
+      if (a.type === 'FOLDER' && b.type === 'FILE') {
+        return -1;
+      } else if (a.type === 'FILE' && b.type === 'FOLDER') {
+        return 1;
+      } else {
+        return a.name.localeCompare(b.name);
+      }
+    })
+    files.value = list;
+  } catch (err) {
+    console.error('加载文件列表失败', err);
     files.value = []
   }
   loading.value = false
@@ -84,7 +88,11 @@ function onDriveChange() {
  */
 function onItemClick(item) {
   if (item.type === 'FOLDER') {
-    currentPath.value = item.path + '/' + item.name
+    let path = item.path + '/' + item.name;
+    if (path.startsWith('//')) {
+      path = path.substring(1);
+    }
+    currentPath.value = path
   } else if (item.type === 'FILE') {
     selectedFile.value = item
   }
@@ -128,7 +136,7 @@ watch([currentVfs, currentPath], () => {
 </script>
 
 <template>
-  <ElDialog v-model="visible" title="选择文件" width="600px" @close="closeDialog">
+  <ElDialog v-model="visible" title="选择文件" width="50vw" @close="closeDialog">
     <div class="vfs-header">
       <label>文件系统：</label>
       <select v-model="selectedDrive" @change="onDriveChange">
@@ -176,6 +184,7 @@ watch([currentVfs, currentPath], () => {
   background: #232323;
 }
 .vfs-listview.horizontal {
+  height: 50vh;
   border-top: 1px solid #444;
   padding: 12px 8px 0 8px;
   min-height: 120px;
@@ -185,6 +194,7 @@ watch([currentVfs, currentPath], () => {
   flex-wrap: wrap;
   gap: 12px;
   align-items: flex-start;
+  align-content: baseline;
 }
 .vfs-item {
   display: flex;

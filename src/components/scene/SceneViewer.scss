@@ -1,0 +1,198 @@
+.scene-viewer {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: #1a1a1a;
+  overflow: hidden;
+}
+
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(26, 26, 26, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.loading-content {
+  text-align: center;
+  color: #fff;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #444;
+  border-top: 3px solid #007acc;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 16px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.selection-box {
+  position: absolute;
+  border: 1px dashed #007acc;
+  background: rgba(0, 122, 204, 0.1);
+  pointer-events: none;
+  z-index: 100;
+}
+
+.viewport-controls {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  z-index: 200;
+}
+
+.control-group {
+  display: flex;
+  gap: 4px;
+  background: rgba(42, 42, 42, 0.9);
+  border-radius: 6px;
+  padding: 4px;
+  backdrop-filter: blur(10px);
+}
+
+.control-btn {
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: 1px solid #555;
+  border-radius: 4px;
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  font-size: 12px;
+}
+
+.control-btn:hover {
+  background: #444;
+  border-color: #777;
+}
+
+.control-btn.active {
+  background: #007acc;
+  border-color: #0088dd;
+}
+
+.view-btn {
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.performance-monitor {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  background: rgba(42, 42, 42, 0.9);
+  border-radius: 6px;
+  padding: 12px;
+  backdrop-filter: blur(10px);
+  z-index: 200;
+}
+
+.monitor-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 11px;
+  margin-bottom: 4px;
+}
+
+.monitor-item:last-child {
+  margin-bottom: 0;
+}
+
+.monitor-label {
+  color: #aaa;
+}
+
+.monitor-value {
+  color: #fff;
+  font-weight: 600;
+  font-family: monospace;
+}
+
+.interaction-hints {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  background: rgba(42, 42, 42, 0.9);
+  border-radius: 6px;
+  padding: 12px;
+  backdrop-filter: blur(10px);
+  z-index: 200;
+}
+
+.hint-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  margin-bottom: 4px;
+}
+
+.hint-item:last-child {
+  margin-bottom: 0;
+}
+
+.hint-key {
+  background: #555;
+  color: #fff;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-weight: 600;
+  min-width: 40px;
+  text-align: center;
+}
+
+.hint-action {
+  color: #ccc;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .viewport-controls {
+    top: 8px;
+    right: 8px;
+    gap: 8px;
+  }
+  
+  .control-btn {
+    width: 28px;
+    height: 28px;
+    font-size: 10px;
+  }
+  
+  .performance-monitor,
+  .interaction-hints {
+    font-size: 10px;
+    padding: 8px;
+  }
+  
+  .interaction-hints {
+    display: none;
+  }
+}
+.cube-controls-bottomright {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  z-index: 300;
+}

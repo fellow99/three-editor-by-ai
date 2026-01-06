@@ -1,10 +1,11 @@
 /**
- * 资源管理 Composable
+ * 资源管理组合式函数
  * 提供资源加载和管理相关的响应式状态和操作方法
  */
 
 import { ref, reactive, computed } from 'vue';
 import * as THREE from 'three';
+import { v7 as UUID } from 'uuid';
 import AssetLoader from '../core/AssetLoader.js';
 import { 
   isSupported3DFormat, 
@@ -247,7 +248,7 @@ export function useAssetsManager() {
     });
 
     const modelInfo = {
-      //id: model.userData.id || generateId(),
+      //id: model.userData.id || UUID(),
       id: file.name, // 用文件名作为ID，cache机制中用文件名查找
       name: getFileName(file.name),
       filename: file.name,
@@ -288,7 +289,7 @@ export function useAssetsManager() {
     const texture = await assetLoader.loadTexture(file, options);
 
     const textureInfo = {
-      id: generateId(),
+      id: UUID(),
       name: getFileName(file.name),
       filename: file.name,
       size: file.size,
@@ -535,14 +536,6 @@ export function useAssetsManager() {
     ).length;
     
     loadState.loadProgress = total > 0 ? (completed / total) * 100 : 0;
-  }
-  
-  /**
-   * 生成简单ID
-   * @returns {string} ID
-   */
-  function generateId() {
-    return 'asset_' + Math.random().toString(36).substr(2, 9);
   }
   
   /**

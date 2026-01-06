@@ -2,8 +2,8 @@
     {
         "type": "static",
         "drive": "demo",
-        "baseURL": "/three-editor-by-ai",
-        "root": "/vfs"
+        "baseURL": "",
+        "root": "/three-editor-by-ai/vfs"
     },
     {
         "type": "vfs-server",

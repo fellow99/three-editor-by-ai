@@ -5,20 +5,20 @@
 -->
 
 <script setup>
-import { ref, reactive, computed, watch, inject } from 'vue'
-import { useObjectSelection } from '../../composables/useObjectSelection.js'
-import { useTransform } from '../../composables/useTransform.js'
+import { ref, shallowRef, reactive, watch, computed } from 'vue'
+import { useObjectSelection } from '@/composables/useObjectSelection.js'
+import { useTransform } from '@/composables/useTransform.js'
 import { radToDeg, degToRad } from '../../utils/mathUtils.js'
 
-/** 对象选择管理器 */
-const objectSelection = useObjectSelection()
-/** 当前选中对象 */
-const selectedObject = computed(() => {
-  const objects = objectSelection.selectedObjects.value
-  return objects.length === 1 ? objects[0] : null
+const props = defineProps({
+  selectedObject: {
+    type: Object,
+    default: null
+  }
 })
-/** 是否有选中对象 */
-const hasSelection = computed(() => objectSelection.hasSelection.value)
+
+const selectedObject = computed(() => props.selectedObject);
+
 /** 变换管理器 */
 const transformManager = useTransform()
 /** 变换属性（用于表单绑定） */
@@ -28,7 +28,9 @@ const transform = reactive({
   /** 旋转（角度） */
   rotation: { x: 0, y: 0, z: 0 },
   /** 缩放 */
-  scale: { x: 1, y: 1, z: 1 }
+  scale: { x: 1, y: 1, z: 1 },
+
+  up: { x: 0, y: 1, z: 0 }
 })
 
 /**
@@ -46,6 +48,11 @@ function refreshTransform() {
     transform.scale.x = Number(newObject.scale.x.toFixed(3))
     transform.scale.y = Number(newObject.scale.y.toFixed(3))
     transform.scale.z = Number(newObject.scale.z.toFixed(3))
+    if(newObject.up){
+      transform.up.x = Number(newObject.up.x.toFixed(3))
+      transform.up.y = Number(newObject.up.y.toFixed(3))
+      transform.up.z = Number(newObject.up.z.toFixed(3))
+    }
   }
 }
 watch(selectedObject, refreshTransform, { immediate: true })
@@ -62,7 +69,7 @@ window.addEventListener('object-transform-updated', onTransformUpdated)
  * 更新对象变换属性
  */
 function updateTransform() {
-  if (!selectedObject.value) return
+  if (!selectedObject.value) return;
   transformManager.setPosition(selectedObject.value, [
     transform.position.x,
     transform.position.y,
@@ -79,112 +86,150 @@ function updateTransform() {
     transform.scale.z
   ])
 }
+
+function updateUpVector() {
+  if (!selectedObject.value && !selectedObject.value.up) return;
+  transformManager.setUpVector(selectedObject.value, [
+    transform.up.x,
+    transform.up.y,
+    transform.up.z
+  ])
+}
 </script>
 
 <template>
-  <div v-if="hasSelection" class="property-pane">
+  <div v-if="selectedObject" class="property-pane">
     <div class="property-section">
         <h4>变换</h4>
         <el-form label-width="60px" class="property-form">
-        <!-- 位置 -->
-        <el-form-item label="位置">
-            <div class="vector-input">
-            <el-input-number
-                v-model="transform.position.x"
-                @change="updateTransform"
-                :step="0.1"
-                :precision="3"
-                size="small"
-                placeholder="X"
-                :controls="false"
-            />
-            <el-input-number
-                v-model="transform.position.y"
-                @change="updateTransform"
-                :step="0.1"
-                :precision="3"
-                size="small"
-                placeholder="Y"
-                :controls="false"
-            />
-            <el-input-number
-                v-model="transform.position.z"
-                @change="updateTransform"
-                :step="0.1"
-                :precision="3"
-                size="small"
-                placeholder="Z"
-                :controls="false"
-            />
-            </div>
-        </el-form-item>
-        <!-- 旋转 -->
-        <el-form-item label="旋转">
-            <div class="vector-input">
-            <el-input-number
-                v-model="transform.rotation.x"
-                @change="updateTransform"
-                :step="1"
-                :precision="1"
-                size="small"
-                placeholder="X°"
-                :controls="false"
-            />
-            <el-input-number
-                v-model="transform.rotation.y"
-                @change="updateTransform"
-                :step="1"
-                :precision="1"
-                size="small"
-                placeholder="Y°"
-                :controls="false"
-            />
-            <el-input-number
-                v-model="transform.rotation.z"
-                @change="updateTransform"
-                :step="1"
-                :precision="1"
-                size="small"
-                placeholder="Z°"
-                :controls="false"
-            />
-            </div>
-        </el-form-item>
-        <!-- 缩放 -->
-        <el-form-item label="缩放">
-            <div class="vector-input">
-            <el-input-number
-                v-model="transform.scale.x"
-                @change="updateTransform"
-                :step="0.1"
-                :min="0.001"
-                :precision="3"
-                size="small"
-                placeholder="X"
-                :controls="false"
-            />
-            <el-input-number
-                v-model="transform.scale.y"
-                @change="updateTransform"
-                :step="0.1"
-                :min="0.001"
-                :precision="3"
-                size="small"
-                placeholder="Y"
-                :controls="false"
-            />
-            <el-input-number
-                v-model="transform.scale.z"
-                @change="updateTransform"
-                :step="0.1"
-                :min="0.001"
-                :precision="3"
-                size="small"
-                placeholder="Z"
-                :controls="false"
-            />
-            </div>
-        </el-form-item>
+            <!-- 位置 -->
+            <el-form-item label="位置">
+                <div class="vector-input">
+                <el-input-number
+                    v-model="transform.position.x"
+                    @change="updateTransform"
+                    :step="0.1"
+                    :precision="3"
+                    size="small"
+                    placeholder="X"
+                    :controls="false"
+                />
+                <el-input-number
+                    v-model="transform.position.y"
+                    @change="updateTransform"
+                    :step="0.1"
+                    :precision="3"
+                    size="small"
+                    placeholder="Y"
+                    :controls="false"
+                />
+                <el-input-number
+                    v-model="transform.position.z"
+                    @change="updateTransform"
+                    :step="0.1"
+                    :precision="3"
+                    size="small"
+                    placeholder="Z"
+                    :controls="false"
+                />
+                </div>
+            </el-form-item>
+            <!-- 旋转 -->
+            <el-form-item label="旋转">
+                <div class="vector-input">
+                <el-input-number
+                    v-model="transform.rotation.x"
+                    @change="updateTransform"
+                    :step="1"
+                    :precision="1"
+                    size="small"
+                    placeholder="X°"
+                    :controls="false"
+                />
+                <el-input-number
+                    v-model="transform.rotation.y"
+                    @change="updateTransform"
+                    :step="1"
+                    :precision="1"
+                    size="small"
+                    placeholder="Y°"
+                    :controls="false"
+                />
+                <el-input-number
+                    v-model="transform.rotation.z"
+                    @change="updateTransform"
+                    :step="1"
+                    :precision="1"
+                    size="small"
+                    placeholder="Z°"
+                    :controls="false"
+                />
+                </div>
+            </el-form-item>
+            <!-- 缩放 -->
+            <el-form-item label="缩放">
+                <div class="vector-input">
+                <el-input-number
+                    v-model="transform.scale.x"
+                    @change="updateTransform"
+                    :step="0.1"
+                    :precision="3"
+                    size="small"
+                    placeholder="X"
+                    :controls="false"
+                />
+                <el-input-number
+                    v-model="transform.scale.y"
+                    @change="updateTransform"
+                    :step="0.1"
+                    :precision="3"
+                    size="small"
+                    placeholder="Y"
+                    :controls="false"
+                />
+                <el-input-number
+                    v-model="transform.scale.z"
+                    @change="updateTransform"
+                    :step="0.1"
+                    :precision="3"
+                    size="small"
+                    placeholder="Z"
+                    :controls="false"
+                />
+                </div>
+            </el-form-item>
+            <!-- Up -->
+            <el-form-item label="Up">
+                <div class="vector-input">
+                <el-input-number
+                    v-model="transform.up.x"
+                    @change="updateUpVector"
+                    :step="0.1"
+                    :precision="3"
+                    size="small"
+                    placeholder="X"
+                    :controls="false"
+                />
+                <el-input-number
+                    v-model="transform.up.y"
+                    @change="updateUpVector"
+                    :step="0.1"
+                    :precision="3"
+                    size="small"
+                    placeholder="Y"
+                    :controls="false"
+                />
+                <el-input-number
+                    v-model="transform.up.z"
+                    @change="updateUpVector"
+                    :step="0.1"
+                    :precision="3"
+                    size="small"
+                    placeholder="Z"
+                    :controls="false"
+                />
+                </div>
+            </el-form-item>
         </el-form>
     </div>
     </div>

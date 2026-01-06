@@ -1,12 +1,7 @@
-// useEditorConfig.js
-// ===========================
-// 编辑器配置响应式状态与操作方法
-// 提供控制器、网格、坐标轴、场景默认配置的响应式管理
-// 新语法说明：使用Vue 3 Composition API（ref、reactive、computed），支持响应式对象与方法导出
-// ===========================
-
-import { ref, reactive, computed } from 'vue';
-
+/**
+ * 编辑器配置组合式函数
+ */
+import { reactive, computed, watch } from 'vue';
 /**
  * 控制器类型选项
  */
@@ -42,16 +37,21 @@ function saveConfigToLocalStorage() {
 }
 
 const defaultConfig = {
-  controlsType: 'OrbitControls',
+  controlsType: 'FlyControls',
+  // FlyControls相关参数
+  targetDistance: 10,
+  lockY: false,
+  enableKeyboard: true,
+  movementSpeed: 10.0,
+  rollSpeed: 0.05,
   panSpeed: 1.0,
   rotateSpeed: 1.0,
   zoomSpeed: 1.0,
   gridSize: 1000,
-  gridDivisions: 1000,
+  gridDivisions: 100,
   gridColorCenterLine: '#666666',
   gridColorGrid: '#333333',
-  axesSize: 5,
-  sceneBgColor: '#222222'
+  axesSize: 5
 };
 
 const loadedConfig = loadConfigFromLocalStorage();
@@ -83,6 +83,11 @@ function setControlsType(type) {
  * @param {object} params
  */
 function setControlsParams(params) {
+  if (typeof params.targetDistance === 'number') editorConfig.targetDistance = params.targetDistance;
+  if (typeof params.lockY === 'boolean') editorConfig.lockY = params.lockY;
+  if (typeof params.enableKeyboard === 'boolean') editorConfig.enableKeyboard = params.enableKeyboard;
+  if (typeof params.movementSpeed === 'number') editorConfig.movementSpeed = params.movementSpeed;
+  if (typeof params.rollSpeed === 'number') editorConfig.rollSpeed = params.rollSpeed;
   if (typeof params.panSpeed === 'number') editorConfig.panSpeed = params.panSpeed;
   if (typeof params.rotateSpeed === 'number') editorConfig.rotateSpeed = params.rotateSpeed;
   if (typeof params.zoomSpeed === 'number') editorConfig.zoomSpeed = params.zoomSpeed;
@@ -111,15 +116,6 @@ function setAxesSize(size) {
 }
 
 /**
- * 设置场景背景色
- * @param {string} color
- */
-function setSceneBgColor(color) {
-  editorConfig.sceneBgColor = color;
-  saveConfigToLocalStorage();
-}
-
-/**
  * 重置为默认配置
  */
 function resetEditorConfig() {
@@ -136,7 +132,6 @@ export function useEditorConfig() {
     setControlsParams,
     setGridConfig,
     setAxesSize,
-    setSceneBgColor,
     resetEditorConfig,
     CONTROLS_OPTIONS
   };

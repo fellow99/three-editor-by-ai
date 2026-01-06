@@ -6,10 +6,11 @@
 
 <script setup>
 import { ref, watch, computed } from 'vue'
-import { useScene } from '../../composables/useScene'
 
-/** 获取场景管理器和配置 */
-const { sceneConfig, updateSceneConfig } = useScene()
+const sceneConfig = {
+  name: '',
+  userData: {}
+}
 
 /** userData编辑区文本
   用于展示和编辑场景的userData属性（JSON字符串）
@@ -58,9 +59,7 @@ watch(() => sceneConfig.userData, (val) => {
 function onUserDataBlur() {
   try {
     const json = JSON.parse(userDataText.value)
-    updateSceneConfig({
-      userData: json
-    })
+    setSceneUserData(json);
     userDataError.value = ''
   } catch (e) {
     userDataError.value = 'JSON格式错误，请检查输入'

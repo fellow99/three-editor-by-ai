@@ -6,18 +6,28 @@
 
 <script setup>
 import * as THREE from 'three'
-import { ref, computed, watch } from 'vue'
-import { useObjectSelection } from '../../composables/useObjectSelection.js'
+import { ref, shallowRef, computed, watch } from 'vue'
+import { useObjectSelection } from '@/composables/useObjectSelection.js'
 
 /** 对象选择管理器 */
-const objectSelection = useObjectSelection()
-/** 是否有选中对象 */
-const { hasSelection } = objectSelection
-/** 当前选中对象 */
-const selectedObject = computed(() => {
-  const objects = objectSelection.selectedObjects.value
-  return objects.length === 1 ? objects[0] : null
-})
+const { selectedIdsRef, getSelectedObjects } = useObjectSelection();
+// 是否有选中对象
+const hasSelection = ref(false);
+// 当前选中对象（仅支持单选）
+const selectedObject = shallowRef(null);
+// 监听选中对象变化，更新activeTab和hasSelection
+watch(selectedIdsRef, (ids) => {
+  if (ids && ids.length > 0) {
+    hasSelection.value = true;
+    let objects = getSelectedObjects();
+    let object = objects ? objects[0] : null;
+    selectedObject.value = object;
+  } else {
+    hasSelection.value = false;
+    selectedObject.value = null;
+  }
+}, { immediate: true });
+
 /** 动画相关变量 */
 const animationIndex = ref(-1) // 当前选中动画索引，-1为无动画
 const mixer = ref(null) // AnimationMixer实例
@@ -88,54 +98,30 @@ function updateAnimation(delta) {
 </script>
 
 <template>
-  <div v-if="hasSelection" class="property-pane">
-    <div v-if="animationList.length > 0" class="property-section">
-        <h4>动画</h4>
-        <el-form label-width="60px" class="property-form">
-        <el-form-item label="动画选择">
-            <el-select
-            v-model="animationIndex"
-            placeholder="无动画"
-            @change="onAnimationChange"
-            size="small"
-            style="width: 100%;"
-            clearable
-            >
-            <el-option
-                v-for="item in animationList"
-                :key="item.value"
-                :label="item.label"
-                :value="item.value"
-            />
-            </el-select>
-        </el-form-item>
-        </el-form>
-    </div>
+  <div v-if="hasSelection && animationList.length > 0" class="property-section">
+      <h4>动画</h4>
+      <el-form label-width="60px" class="property-form">
+      <el-form-item label="动画选择">
+          <el-select
+          v-model="animationIndex"
+          placeholder="无动画"
+          @change="onAnimationChange"
+          size="small"
+          style="width: 100%;"
+          clearable
+          >
+          <el-option
+              v-for="item in animationList"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+          />
+          </el-select>
+      </el-form-item>
+      </el-form>
   </div>
 </template>
 
 <style lang="scss" scoped>
-.property-pane {
-  width: 100%;
-  height: fit-content;
-  display: flex;
-  flex-direction: column;
-  color: #fff;
-}
-.property-section {
-  padding: 8px;
-  overflow-y: auto;
-  max-height: calc(100vh - 48px - 32px);
-}
-.property-section h4 {
-  margin: 0 0 12px 0;
-  font-size: 14px;
-  font-weight: 600;
-  color: #ccc;
-  border-bottom: 1px solid #444;
-  padding-bottom: 4px;
-}
-.property-form {
-  margin-top: 8px;
-}
+@use './PropertyPane.scss';
 </style>

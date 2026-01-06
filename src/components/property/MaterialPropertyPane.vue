@@ -4,279 +4,657 @@
   支持多种材质类型（标准、物理、Phong等）
 -->
 <script setup>
-import { ref, watch } from 'vue';
-import TextureSelectDialog from '../dialog/TextureSelectDialog.vue';
-import { useObjectSelection } from '../../composables/useObjectSelection.js';
-import { useObjectManager } from '../../composables/useObjectManager.js';
-// 引入element-plus组件
-import { ElSelect, ElOption, ElColorPicker, ElSlider, ElButton } from 'element-plus';
+import { nextTick, ref, computed, watch } from 'vue';
+import { ElMessage, ElMessageBox } from 'element-plus';
+import { addMaterialToState, useMaterialSelection, setMaterialToObject, loadMaterial, loadImageTexture, updateTexture, exportMaterial } from '@/composables/useMaterial.js';
+import { useThreeViewer } from '@/composables/useThreeViewer.js';
+import vfsService from '@/services/vfs-service.js'
+import VfsFolderChooserDialog from '@/components/dialog/VfsFolderChooserDialog.vue';
 
-const objectSelection = useObjectSelection();
-const objectManager = useObjectManager();
+import { HDRLoader } from "three/examples/jsm/loaders/HDRLoader"; // HDRLoader
 
-// 选中对象
-const selectedObject = ref(null);
-watch(() => objectSelection.selectedObjects.value, (objs) => {
-  selectedObject.value = objs.length === 1 ? objs[0] : null;
-}, { immediate: true });
+import TexturePropertyItem from './TexturePropertyItem.vue';
+import MaterialSelectPropertyItem from './MaterialSelectPropertyItem.vue';
 
-// 材质相关响应式变量
-const materialType = ref('MeshStandardMaterial');
-const materialColor = ref('#888888');
-const materialRoughness = ref(0.4);
-const materialMetalness = ref(0.1);
-const materialClearcoat = ref(0);
-const materialClearcoatRoughness = ref(0);
-const materialSpecular = ref('#ffffff');
-const materialShininess = ref(30);
-const materialEmissive = ref('#000000');
+const materialSelection = useMaterialSelection();
 
-// 纹理弹窗相关
-const showTextureDialog = ref(false);
-const showTextureDialogType = ref('map');
+const props = defineProps({
+  material: { type: Object, default: null }
+});
+
+const materialProp = computed(() => props.material);
+
+const showExportDialog = ref(false);
+
+/**
+ * 材质属性表单响应式对象
+ * 材质配置结构：
+{
+  // 材质类型
+  type: 'MeshStandardMaterial',
+  // 主颜色
+  color: '#888888',
+  // 粗糙度
+  roughness: 0.4,
+  // 金属度
+  metalness: 0.1,
+  // 清漆
+  clearcoat: 0,
+  // 清漆粗糙度
+  clearcoatRoughness: 0,
+  // 高光色
+  specular: '#ffffff',
+  // 高光强度
+  shininess: 30,
+  // 自发光
+  emissive: '#000000'
+}
+ */
+const materialFormRef = ref(null);
+
+/**
+ * 贴图配置表单响应式对象
+ * 贴图配置结构：
+ {
+  // 重复
+  repeat: [1, 1],
+  // 偏移
+  offset: [0, 0],
+  // 中心
+  center: [0, 0],
+  // 旋转
+  rotation: 0,
+  // 环绕模式
+  wrapS: 'RepeatWrapping',
+  wrapT: 'RepeatWrapping',
+}
+ */
+const textureFormRef = ref(null);
 
 // 监听对象变化，更新材质属性
-watch(selectedObject, (object) => {
-  if (object && object.material) {
-    materialType.value = object.material.type || 'MeshStandardMaterial';
-    materialColor.value = `#${object.material.color?.getHexString?.() ?? '888888'}`;
-    materialRoughness.value = object.material.roughness ?? 0.4;
-    materialMetalness.value = object.material.metalness ?? 0.1;
-    materialClearcoat.value = object.material.clearcoat ?? 0;
-    materialClearcoatRoughness.value = object.material.clearcoatRoughness ?? 0;
-    materialSpecular.value = object.material.specular ? `#${object.material.specular.getHexString()}` : '#ffffff';
-    materialShininess.value = object.material.shininess ?? 30;
-    materialEmissive.value = object.material.emissive ? `#${object.material.emissive.getHexString()}` : '#000000';
-  }
+watch(materialProp, () => {
+  updateMaterialForm();
 }, { immediate: true });
 
-// 直接修改对象材质
-function setMaterial(update) {
-  if (!selectedObject.value) return;
-  objectManager.setObjectMaterial(selectedObject.value.userData.id, update);
-}
-function onMaterialTypeChange() {
-  setMaterial({ type: materialType.value });
-}
-function updateMaterialColor() {
-  setMaterial({ color: materialColor.value });
-}
-function updateMaterialRoughness() {
-  setMaterial({ roughness: materialRoughness.value });
-}
-function updateMaterialMetalness() {
-  setMaterial({ metalness: materialMetalness.value });
-}
-function updateMaterialClearcoat() {
-  setMaterial({ clearcoat: materialClearcoat.value });
-}
-function updateMaterialClearcoatRoughness() {
-  setMaterial({ clearcoatRoughness: materialClearcoatRoughness.value });
-}
-function updateMaterialSpecular() {
-  setMaterial({ specular: materialSpecular.value.replace('#', '0x') });
-}
-function updateMaterialShininess() {
-  setMaterial({ shininess: materialShininess.value });
-}
-function updateMaterialEmissive() {
-  setMaterial({ emissive: materialEmissive.value.replace('#', '0x') });
-}
-function clearTexture(type) {
-  setMaterial({ [type]: null });
-}
-function onTextureSelected(textureInfo) {
-  showTextureDialog.value = false;
-  if (textureInfo?.texture) {
-    setMaterial({ [showTextureDialogType.value]: textureInfo.texture });
+function updateMaterialForm(){
+  let material = materialProp.value;
+  let texture = material?.map;
+  if(material) {
+    materialFormRef.value = {
+      type: material.type,
+      side: material.side ?? THREE.FrontSide,
+      transparent: material.transparent ?? false,
+      opacity: material.opacity ?? 1,
+      color: `#${material.color?.getHexString() || '888888'}`,
+      roughness: material.roughness ?? 0.4,
+      metalness: material.metalness ?? 0.1,
+      clearcoat: material.clearcoat ?? 0,
+      clearcoatRoughness: material.clearcoatRoughness ?? 0,
+      specular: material.specular ? `#${material.specular?.getHexString()}` : '#ffffff',
+      shininess: material.shininess ?? 30,
+      emissive: material.emissive ? `#${material.emissive?.getHexString()}` : '#000000',
+    };
+  }
+  if(texture) {
+    textureFormRef.value = {
+      repeat: [parseFloat(texture.repeat.x), parseFloat(texture.repeat.y)],
+      offset: [texture.offset.x, texture.offset.y],
+      center: [texture.center.x, texture.center.y],
+      rotation: texture.rotation,
+      wrapS: texture.wrapS,
+      wrapT: texture.wrapT,
+    };
   }
 }
-function getTexturePreviewSrc(image) {
-  const canvas = document.createElement('canvas');
-  canvas.width = image.width;
-  canvas.height = image.height;
-  const ctx = canvas.getContext('2d');
-  ctx.drawImage(image, 0, 0);
-  return canvas.toDataURL();
+
+// 直接修改对象材质
+/**
+ * 设置材质属性
+ * @param {Object} update 需要更新的材质属性
+ */
+function setMaterial(update) {
+  let viewerRef = useThreeViewer();
+  let viewer = viewerRef.value;
+  if (!viewer) return;
+  
+  let name = materialSelection.selectedMaterialNameRef.value;
+  setMaterialToObject(viewer.scene, name, update);
+
+  let material = materialSelection.getSelectedMaterial();
+  if (material) addMaterialToState(name, material);
+
+  // 刷新选中材质以触发界面更新
+  materialSelection.selectedMaterialNameRef.value = null;
+  nextTick(() => {
+    materialSelection.selectedMaterialNameRef.value = name;
+  });
+}
+
+function changeMaterial() {
+  let val = materialFormRef.value;
+  setMaterial({
+    type: val.type,
+    side: val.side,
+    transparent: val.transparent,
+    opacity: val.opacity,
+    color: new THREE.Color(val.color),
+    roughness: val.roughness,
+    metalness: val.metalness,
+    clearcoat: val.clearcoat,
+    clearcoatRoughness: val.clearcoatRoughness,
+    specular: new THREE.Color(val.specular),
+    shininess: val.shininess,
+    emissive: new THREE.Color(val.emissive),
+  });
+}
+
+function changeTexture(textureType, update) {
+  let material = materialSelection.getSelectedMaterial();
+  if(!material[textureType])return;
+
+  // 更新贴图属性
+  updateTexture(material[textureType], update);
+
+  // 材质已修改，更新到状态库
+  let name = materialSelection.selectedMaterialNameRef.value;
+  if (material) addMaterialToState(name, material);
+}
+
+function setTexture() {
+  let val = {...textureFormRef.value};
+  changeTexture('map', val);
+  changeTexture('normalMap', val);
+  changeTexture('roughnessMap', val);
+  changeTexture('alphaMap', val);
+  changeTexture('metalnessMap', val);
+  changeTexture('emissiveMap', val);
+  changeTexture('envMap', val);
+}
+
+/**
+ * 清除指定类型的贴图
+ * @param {string} textureType 贴图类型字段名
+ */
+function clearTexture(textureType) {
+  setMaterial({ [textureType]: null });
+}
+
+/**
+ * 处理纹理选择弹窗回调
+ * @param {Object} fileInfo 纹理文件信息
+ */
+async function onTextureSelected(fileInfo, textureType) {
+  if (!fileInfo || !textureType) return;
+
+  let { type, drive, path, name, url } = fileInfo;
+  if(!url) {
+      const vfs = vfsService.getVfs(drive);
+      url = vfs.url(path + '/' + name);
+  }
+  fileInfo.url = url;
+
+  if(!url) return;
+  else if(url.endsWith('.hdr') || url.endsWith('.exr')) {
+    let viewerRef = useThreeViewer();
+    let viewer = viewerRef.value;
+    if (!viewer) return;
+  
+    const loader = new HDRLoader();
+    let texture = await loader.loadAsync(url);
+    texture.mapping = THREE.EquirectangularReflectionMapping;
+    texture.needsUpdate = true;
+    texture.userData = texture.userData || {};
+    texture.userData.fileInfo = fileInfo; // 记录图片URL来源
+
+    setMaterial({ [textureType]: texture });
+  } else {
+    let texture = await loadImageTexture(url);
+    texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+    texture.repeat.set(1, 1);
+    texture.userData = texture.userData || {};
+    texture.userData.fileInfo = fileInfo; // 记录图片URL来源
+    
+    setMaterial({ [textureType]: texture });
+  }
+  
+}
+
+/**
+ * 处理预置材质选择弹窗回调
+ * @param {Object} materialInfo 预置材质信息
+ */
+async function onMaterialSelected(materialInfo) {
+  let { quality, properties } = materialInfo;
+  let base = properties[`modelLop-base-${quality}`];
+  let mask = properties[`modelLop-mask-${quality}`];
+  let normal = properties[`modelLop-normal-${quality}`];
+  let y = properties.y || 1;
+  let z = properties.z || 1;
+  base = base?.url;
+  mask = mask?.url;
+  normal = normal?.url;
+
+  if(base) {
+    let texture = await loadImageTexture(base);
+    texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+    texture.repeat.set(y, z);
+    texture.userData = texture.userData || {};
+    texture.userData.fileInfo = {url: base}; // 记录图片URL来源
+    setMaterial({ map: texture });
+  }
+  if(mask) {
+    let texture = await loadImageTexture(mask);
+    texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+    texture.repeat.set(y, z);
+    texture.userData = texture.userData || {};
+    texture.userData.fileInfo = {url: mask}; // 记录图片URL来源
+    setMaterial({ 
+      roughnessMap: texture,
+      alphaMap: texture,
+    });
+  }
+  if(normal) {
+    let texture = await loadImageTexture(normal);
+    texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+    texture.repeat.set(y, z);
+    texture.userData = texture.userData || {};
+    texture.userData.fileInfo = {url: normal}; // 记录图片URL来源
+    setMaterial({ normalMap: texture });
+  }
+}
+
+/**
+ * 处理预置材质选择弹窗回调
+ * @param {Object} materialInfo 预置材质信息
+ */
+async function onMaterialSelectedV2(materialInfo) {
+  let material = await loadMaterial(materialInfo);
+  console.log('选择预置材质2:', material);
+  setMaterial(material);
+}
+
+async function handleExportDialog() {
+  let material = materialSelection.getSelectedMaterial();
+  if(!material)return;
+
+  showExportDialog.value = true;
+}
+
+async function handleExport(folderInfo) {
+  let material = materialSelection.getSelectedMaterial();
+  if(!material)return;
+
+  let materialName = material.name || '';
+  let ret = await ElMessageBox.prompt('请输入材质名称', '导出材质', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      inputValue: material.name || '',
+      inputPattern: /.+/,
+      inputErrorMessage: '名称不能为空'
+  })
+  if(!ret || !ret.value)return;
+
+  materialName = ret.value;
+  let json = await exportMaterial(material);
+  if(!json)return;
+
+  console.log('导出材质：', json);
+
+  if(json.metadata && json.metadata.thumbnail) {
+    try {
+      let thumbnail = json.metadata.thumbnail;
+      if(thumbnail.startsWith('data:image/png;base64,')) {
+        let base64 = thumbnail.replace('data:image/png;base64,', '');
+        let path = folderInfo.path;
+        let name = materialName + '_thumbnail.png';
+        let vfs = vfsService.getVfs(folderInfo.drive);
+        await vfs.saveBase64(`${path}/${name}`, base64);
+
+        json.metadata.thumbnail = vfs.url(`${path}/${name}`); // 更新为文件URL
+      }
+    } catch (err) {
+      console.error('保存材质缩略图失败:', err);
+      ElMessage.error('保存材质缩略图失败: ' + err.message);
+      return;
+    }
+  }
+
+  for(let idx=0; idx < json.images.length; idx++) {
+    try {
+      let image = json.images[idx];
+      let {uuid: imageUuid, url} = image;
+      if(url.startsWith('data:image/png;base64,')) {
+        let base64 = url.replace('data:image/png;base64,', '');
+
+        let subname = `${idx}`;
+        let texture = json.textures.find(t => t.image === imageUuid);
+        if(texture && texture.uuid) {
+          let textureUuid = texture.uuid;
+          if(json.map === textureUuid) subname = 'map';
+          else if(json.normalMap === textureUuid) subname = 'normalMap';
+          else if(json.roughnessMap === textureUuid) subname = 'roughnessMap';
+          else if(json.metalnessMap === textureUuid) subname = 'metalnessMap';
+          else if(json.emissiveMap === textureUuid) subname = 'emissiveMap';
+          else if(json.alphaMap === textureUuid) subname = 'alphaMap';
+          else if(json.aoMap === textureUuid) subname = 'aoMap';
+          else if(json.envMap === textureUuid) subname = 'envMap';
+          else if(json.bumpMap === textureUuid) subname = 'bumpMap';
+          else if(json.clearcoatMap === textureUuid) subname = 'clearcoatMap';
+          else if(json.clearcoatRoughnessMap === textureUuid) subname = 'clearcoatRoughnessMap';
+          else if(json.clearcoatNormalMap === textureUuid) subname = 'clearcoatNormalMap';
+          else if(json.displacementMap === textureUuid) subname = 'displacementMap';
+          else if(json.emissiveMap === textureUuid) subname = 'emissiveMap';
+          else if(json.lightMap === textureUuid) subname = 'lightMap';
+          else if(json.metalnessMap === textureUuid) subname = 'metalnessMap';
+          else if(json.roughnessMap === textureUuid) subname = 'roughnessMap';
+          else if(json.sheenColorMap === textureUuid) subname = 'sheenColorMap';
+          else if(json.sheenRoughnessMap === textureUuid) subname = 'sheenRoughnessMap';
+          else if(json.specularMap === textureUuid) subname = 'specularMap';
+          else if(json.specularColorMap === textureUuid) subname = 'specularColorMap';
+          else if(json.specularIntensityMap === textureUuid) subname = 'specularIntensityMap';
+          else if(json.thicknessMap === textureUuid) subname = 'thicknessMap';
+          else if(json.transmissionMap === textureUuid) subname = 'transmissionMap';
+        }
+
+        let path = folderInfo.path;
+        let name = materialName + `_${subname}.png`;
+        let vfs = vfsService.getVfs(folderInfo.drive);
+        await vfs.saveBase64(`${path}/${name}`, base64);
+
+        image.url = vfs.url(`${path}/${name}`); // 更新为文件URL
+      }
+    } catch (err) {
+      console.error('保存材质贴图失败:', err);
+      ElMessage.error('保存材质贴图失败: ' + err.message);
+      return;
+    }
+  }
+
+  try {
+    let text = JSON.stringify(json, null, 2);
+    let path = folderInfo.path;
+    let name = materialName + '.material.json';
+    let vfs = vfsService.getVfs(folderInfo.drive);
+    await vfs.save(`${path}/${name}`, text);
+  } catch (err) {
+    console.error('保存材质文件失败:', err);
+    ElMessage.error('保存材质文件失败: ' + err.message);
+    return;
+  }
+
+  ElMessage.success('材质导出成功');
 }
 </script>
 
 <template>
-  <div v-if="selectedObject && selectedObject.material" class="property-section">
-    <h4>材质</h4>
-    <el-form label-width="70px">
+  <div v-if="materialFormRef" class="property-section">
+    <h4>
+      <span>材质属性：{{ material.name }}</span>
+      <el-button size="small" @click="handleExportDialog">导出</el-button>
+      <VfsFolderChooserDialog
+        v-model="showExportDialog"
+        @select="handleExport"
+      />
+    </h4>
+    <el-form v-if="materialFormRef" label-width="80px">
       <el-form-item label="类型">
-        <el-select v-model="materialType" @change="onMaterialTypeChange" class="property-input" size="small">
+        <el-select v-model="materialFormRef.type" @change="changeMaterial" class="property-input" size="small">
           <el-option label="标准(Standard)" value="MeshStandardMaterial" />
           <el-option label="物理(Physical)" value="MeshPhysicalMaterial" />
           <el-option label="冯氏(Phong)" value="MeshPhongMaterial" />
           <el-option label="兰伯特(Lambert)" value="MeshLambertMaterial" />
+          <el-option label="卡通（Toon）" value="MeshToonMaterial" />
           <el-option label="法向(Normal)" value="MeshNormalMaterial" />
           <el-option label="基础(Basic)" value="MeshBasicMaterial" />
         </el-select>
       </el-form-item>
+      <el-form-item label="可见面">
+        <el-select
+          v-model="materialFormRef.side"
+          @change="setMaterial({ side: materialFormRef.side })"
+          class="property-input"
+          size="small"
+        >
+          <el-option label="单面(FrontSide)" :value="0" />
+          <el-option label="背面(BackSide)" :value="1" />
+          <el-option label="双面(DoubleSide)" :value="2" />
+        </el-select>
+      </el-form-item>
+      <el-form-item label="是否透明">
+        <el-switch
+          v-model="materialFormRef.transparent"
+          @change="setMaterial({ transparent: materialFormRef.transparent })"
+          active-text="是"
+          inactive-text="否"
+          size="small"
+        />
+      </el-form-item>
+      <el-form-item label="不透明度">
+        <el-slider
+          v-model="materialFormRef.opacity"
+          :min="0"
+          :max="1"
+          :step="0.01"
+          @change="setMaterial({ opacity: materialFormRef.opacity })"
+          class="range-input"
+          size="small"
+        />
+        <span class="range-value">{{ materialFormRef.opacity?.toFixed(2) }}</span>
+      </el-form-item>
       <el-form-item label="颜色">
         <el-color-picker
-          v-model="materialColor"
-          @change="updateMaterialColor"
+          v-model="materialFormRef.color"
+          @change="setMaterial({ color: materialFormRef.color })"
           class="color-input"
           size="small"
         />
       </el-form-item>
-      <el-form-item v-if="materialType==='MeshStandardMaterial' || materialType==='MeshPhysicalMaterial'" label="粗糙度">
+      <el-form-item v-if="materialFormRef.type==='MeshStandardMaterial' || materialFormRef.type==='MeshPhysicalMaterial'" label="粗糙度">
         <el-slider
-          v-model="materialRoughness"
+          v-model="materialFormRef.roughness"
           :min="0"
           :max="1"
           :step="0.01"
-          @change="updateMaterialRoughness"
+          @change="setMaterial({ roughness: materialFormRef.roughness })"
           class="range-input"
           size="small"
         />
-        <span class="range-value">{{ materialRoughness.toFixed(2) }}</span>
+        <span class="range-value">{{ materialFormRef.roughness?.toFixed(2) }}</span>
       </el-form-item>
-      <el-form-item v-if="materialType==='MeshStandardMaterial' || materialType==='MeshPhysicalMaterial'" label="金属度">
+      <el-form-item v-if="(materialFormRef.type==='MeshStandardMaterial' || materialFormRef.type==='MeshPhysicalMaterial')" label="金属度">
         <el-slider
-          v-model="materialMetalness"
+          v-model="materialFormRef.metalness"
           :min="0"
           :max="1"
           :step="0.01"
-          @change="updateMaterialMetalness"
+          @change="setMaterial({ metalness: materialFormRef.metalness })"
           class="range-input"
           size="small"
         />
-        <span class="range-value">{{ materialMetalness.toFixed(2) }}</span>
+        <span class="range-value">{{ materialFormRef.metalness?.toFixed(2) }}</span>
       </el-form-item>
-      <el-form-item v-if="materialType==='MeshPhysicalMaterial'" label="清漆(clearcoat)">
+      <el-form-item v-if="materialFormRef.type==='MeshPhysicalMaterial'" label="清漆">
         <el-slider
-          v-model="materialClearcoat"
+          v-model="materialFormRef.clearcoat"
           :min="0"
           :max="1"
           :step="0.01"
-          @change="updateMaterialClearcoat"
+          @change="setMaterial({ clearcoat: materialFormRef.clearcoat })"
           class="range-input"
           size="small"
         />
-        <span class="range-value">{{ materialClearcoat.toFixed(2) }}</span>
+        <span class="range-value">{{ materialFormRef.clearcoat?.toFixed(2) }}</span>
       </el-form-item>
-      <el-form-item v-if="materialType==='MeshPhysicalMaterial'" label="清漆粗糙度">
+      <el-form-item v-if="materialFormRef.type==='MeshPhysicalMaterial'" label="清漆粗糙度">
         <el-slider
-          v-model="materialClearcoatRoughness"
+          v-model="materialFormRef.clearcoatRoughness"
           :min="0"
           :max="1"
           :step="0.01"
-          @change="updateMaterialClearcoatRoughness"
+          @change="setMaterial({ clearcoatRoughness: materialFormRef.clearcoatRoughness })"
           class="range-input"
           size="small"
         />
-        <span class="range-value">{{ materialClearcoatRoughness.toFixed(2) }}</span>
+        <span class="range-value">{{ materialFormRef.clearcoatRoughness?.toFixed(2) }}</span>
       </el-form-item>
-      <el-form-item v-if="materialType==='MeshPhongMaterial'" label="高光">
+      <el-form-item v-if="materialFormRef.type==='MeshPhongMaterial'" label="高光">
         <el-color-picker
-          v-model="materialSpecular"
-          @change="updateMaterialSpecular"
+          v-model="materialFormRef.specular"
+          @change="setMaterial({ specular: materialFormRef.specular })"
           class="color-input"
           size="small"
         />
       </el-form-item>
-      <el-form-item v-if="materialType==='MeshPhongMaterial'" label="高光强度">
+      <el-form-item v-if="materialFormRef.type==='MeshPhongMaterial'" label="高光强度">
         <el-slider
-          v-model="materialShininess"
+          v-model="materialFormRef.shininess"
           :min="0"
           :max="200"
           :step="1"
-          @change="updateMaterialShininess"
+          @change="setMaterial({ shininess: materialFormRef.shininess })"
           class="range-input"
           size="small"
         />
-        <span class="range-value">{{ materialShininess }}</span>
+        <span class="range-value">{{ materialFormRef.shininess }}</span>
       </el-form-item>
-      <el-form-item v-if="materialType==='MeshLambertMaterial'" label="自发光">
+      <el-form-item v-if="materialFormRef.type==='MeshLambertMaterial' || materialFormRef.type==='MeshStandardMaterial' || materialFormRef.type==='MeshPhysicalMaterial'" label="自发光">
         <el-color-picker
-          v-model="materialEmissive"
-          @change="updateMaterialEmissive"
+          v-model="materialFormRef.emissive"
+          @change="setMaterial({ emissive: materialFormRef.emissive })"
           class="color-input"
           size="small"
         />
       </el-form-item>
+    </el-form>
+    <el-form v-if="materialFormRef" label-width="80px">
+      <el-divider>材质贴图</el-divider>
+      <el-form-item label="预置材质">
+        <MaterialSelectPropertyItem @select-material="onMaterialSelected" />
+      </el-form-item>
       <!-- 统一贴图相关写法 -->
       <el-form-item label="颜色贴图">
-        <div v-if="selectedObject.material.map" class="texture-preview-wrapper">
-          <img :src="getTexturePreviewSrc(selectedObject.material.map.image)" alt="纹理预览" class="texture-preview-img">
-          <el-button type="danger" size="small" @click="clearTexture('map')">清理</el-button>
-          <el-button type="primary" size="small" @click="showTextureDialogType = 'map'; showTextureDialog = true">重选</el-button>
-        </div>
-        <el-button v-else type="primary" size="small" @click="showTextureDialogType = 'map'; showTextureDialog = true">选择</el-button>
+        <TexturePropertyItem :texture="materialProp.map"
+          @select-texture="onTextureSelected($event, 'map')" @clear-texture="clearTexture('map')" 
+          @change-texture="changeTexture('map', $event)" />
       </el-form-item>
-      <el-form-item v-if="materialType==='MeshStandardMaterial' || materialType==='MeshPhysicalMaterial'" label="遮蔽贴图">
-        <div v-if="selectedObject.material.aoMap" class="texture-preview-wrapper">
-          <img :src="getTexturePreviewSrc(selectedObject.material.aoMap.image)" alt="纹理预览" class="texture-preview-img">
-          <el-button type="danger" size="small" @click="clearTexture('aoMap')">清理</el-button>
-          <el-button type="primary" size="small" @click="showTextureDialogType = 'aoMap'; showTextureDialog = true">重选</el-button>
-        </div>
-        <el-button v-else type="primary" size="small" @click="showTextureDialogType = 'aoMap'; showTextureDialog = true">选择</el-button>
+      <el-form-item v-if="materialFormRef.type==='MeshStandardMaterial' || materialFormRef.type==='MeshPhysicalMaterial'" label="法线贴图">
+        <TexturePropertyItem :texture="materialProp.normalMap"
+          @select-texture="onTextureSelected($event, 'normalMap')" @clear-texture="clearTexture('normalMap')"
+          @change-texture="changeTexture('map', $event)" />
       </el-form-item>
-      <el-form-item v-if="materialType==='MeshStandardMaterial' || materialType==='MeshPhysicalMaterial'" label="位移贴图">
-        <div v-if="selectedObject.material.displacementMap" class="texture-preview-wrapper">
-          <img :src="getTexturePreviewSrc(selectedObject.material.displacementMap.image)" alt="纹理预览" class="texture-preview-img">
-          <el-button type="danger" size="small" @click="clearTexture('displacementMap')">清理</el-button>
-          <el-button type="primary" size="small" @click="showTextureDialogType = 'displacementMap'; showTextureDialog = true">重选</el-button>
-        </div>
-        <el-button v-else type="primary" size="small" @click="showTextureDialogType = 'displacementMap'; showTextureDialog = true">选择</el-button>
+      <el-form-item v-if="materialFormRef.type==='MeshStandardMaterial' || materialFormRef.type==='MeshPhysicalMaterial'" label="粗糙贴图">
+        <TexturePropertyItem :texture="materialProp.roughnessMap"
+          @select-texture="onTextureSelected($event, 'roughnessMap')" @clear-texture="clearTexture('roughnessMap')"
+          @change-texture="changeTexture('roughnessMap', $event)" />
       </el-form-item>
-      <el-form-item v-if="materialType==='MeshStandardMaterial' || materialType==='MeshPhysicalMaterial'" label="法线贴图">
-        <div v-if="selectedObject.material.normalMap" class="texture-preview-wrapper">
-          <img :src="getTexturePreviewSrc(selectedObject.material.normalMap.image)" alt="纹理预览" class="texture-preview-img">
-          <el-button type="danger" size="small" @click="clearTexture('normalMap')">清理</el-button>
-          <el-button type="primary" size="small" @click="showTextureDialogType = 'normalMap'; showTextureDialog = true">重选</el-button>
-        </div>
-        <el-button v-else type="primary" size="small" @click="showTextureDialogType = 'normalMap'; showTextureDialog = true">选择</el-button>
+      <el-form-item v-if="materialFormRef.type==='MeshStandardMaterial' || materialFormRef.type==='MeshPhysicalMaterial'" label="金属贴图">
+        <TexturePropertyItem :texture="materialProp.metalnessMap"
+        @select-texture="onTextureSelected($event, 'metalnessMap')" @clear-texture="clearTexture('metalnessMap')"
+        @change-texture="changeTexture('metalnessMap', $event)" />
       </el-form-item>
-      <el-form-item v-if="materialType==='MeshStandardMaterial' || materialType==='MeshPhysicalMaterial'" label="金属贴图">
-        <div v-if="selectedObject.material.metalnessMap" class="texture-preview-wrapper">
-          <img :src="getTexturePreviewSrc(selectedObject.material.metalnessMap.image)" alt="纹理预览" class="texture-preview-img">
-          <el-button type="danger" size="small" @click="clearTexture('metalnessMap')">清理</el-button>
-          <el-button type="primary" size="small" @click="showTextureDialogType = 'metalnessMap'; showTextureDialog = true">重选</el-button>
-        </div>
-        <el-button v-else type="primary" size="small" @click="showTextureDialogType = 'metalnessMap'; showTextureDialog = true">选择</el-button>
+      <el-form-item v-if="materialFormRef.type==='MeshStandardMaterial' || materialFormRef.type==='MeshPhysicalMaterial'" label="自发光贴图">
+        <TexturePropertyItem :texture="materialProp.emissiveMap"
+          @select-texture="onTextureSelected($event, 'emissiveMap')" @clear-texture="clearTexture('emissiveMap')"
+          @change-texture="changeTexture('emissiveMap', $event)" />
       </el-form-item>
-      <el-form-item v-if="materialType==='MeshStandardMaterial' || materialType==='MeshPhysicalMaterial'" label="粗糙贴图">
-        <div v-if="selectedObject.material.roughnessMap" class="texture-preview-wrapper">
-          <img :src="getTexturePreviewSrc(selectedObject.material.roughnessMap.image)" alt="纹理预览" class="texture-preview-img">
-          <el-button type="danger" size="small" @click="clearTexture('roughnessMap')">清理</el-button>
-          <el-button type="primary" size="small" @click="showTextureDialogType = 'roughnessMap'; showTextureDialog = true">重选</el-button>
-        </div>
-        <el-button v-else type="primary" size="small" @click="showTextureDialogType = 'roughnessMap'; showTextureDialog = true">选择</el-button>
+      <el-form-item v-if="materialFormRef.type==='MeshStandardMaterial' || materialFormRef.type==='MeshPhysicalMaterial'" label="透明贴图">
+        <TexturePropertyItem :texture="materialProp.alphaMap"
+          @select-texture="onTextureSelected($event, 'alphaMap')" @clear-texture="clearTexture('alphaMap')"
+          @change-texture="changeTexture('alphaMap', $event)"/>
       </el-form-item>
-      <el-form-item v-if="materialType==='MeshStandardMaterial' || materialType==='MeshPhysicalMaterial'" label="映射贴图">
-        <div v-if="selectedObject.material.envMap" class="texture-preview-wrapper">
-          <img :src="getTexturePreviewSrc(selectedObject.material.envMap.image)" alt="纹理预览" class="texture-preview-img">
-          <el-button type="danger" size="small" @click="clearTexture('envMap')">清理</el-button>
-          <el-button type="primary" size="small" @click="showTextureDialogType = 'envMap'; showTextureDialog = true">重选</el-button>
-        </div>
-        <el-button v-else type="primary" size="small" @click="showTextureDialogType = 'envMap'; showTextureDialog = true">选择</el-button>
-      </el-form-item>
-      <el-form-item v-if="materialType==='MeshToonMaterial'" label="渐变贴图">
-        <div v-if="selectedObject.material.gradientMap" class="texture-preview-wrapper">
-          <img :src="getTexturePreviewSrc(selectedObject.material.gradientMap.image)" alt="纹理预览" class="texture-preview-img">
-          <el-button type="danger" size="small" @click="clearTexture('gradientMap')">清理</el-button>
-          <el-button type="primary" size="small" @click="showTextureDialogType = 'gradientMap'; showTextureDialog = true">重选</el-button>
-        </div>
-        <el-button v-else type="primary" size="small" @click="showTextureDialogType = 'gradientMap'; showTextureDialog = true">选择</el-button>
-      </el-form-item>
-      <el-form-item v-if="materialType==='MeshMatcapMaterial'" label="Matcap贴图">
-        <div v-if="selectedObject.material.matcap" class="texture-preview-wrapper">
-          <img :src="getTexturePreviewSrc(selectedObject.material.matcap.image)" alt="纹理预览" class="texture-preview-img">
-          <el-button type="danger" size="small" @click="clearTexture('matcap')">清理</el-button>
-          <el-button type="primary" size="small" @click="showTextureDialogType = 'matcap'; showTextureDialog = true">重选</el-button>
-        </div>
-        <el-button v-else type="primary" size="small" @click="showTextureDialogType = 'matcap'; showTextureDialog = true">选择</el-button>
+      <el-form-item v-if="materialFormRef.type==='MeshStandardMaterial' || materialFormRef.type==='MeshPhysicalMaterial'" label="环境贴图">
+        <TexturePropertyItem :texture="materialProp.envMap"
+          @select-texture="onTextureSelected($event, 'envMap')" @clear-texture="clearTexture('envMap')"
+          @change-texture="changeTexture('envMap', $event)"/>
       </el-form-item>
     </el-form>
-    <TextureSelectDialog
-      v-model="showTextureDialog"
-      @select="onTextureSelected"
-    />
+    <el-form v-if="textureFormRef" label-width="80px">
+      <el-divider>贴图配置</el-divider>
+      <!--
+        贴图配置表单
+        支持repeat、offset、center、rotation、wrap、minFilter、magFilter、anisotropy、flipY、generateMipmaps、premultiplyAlpha、unpackAlignment等参数
+      -->
+      <el-form-item label="重复">
+        <!-- repeat: 纹理在U/V方向的重复次数 -->
+        <el-input-number
+          v-model="textureFormRef.repeat[0]"
+          :min="0.01"
+          :step="0.01"
+          @change="setTexture"
+          size="small"
+          controls-position="right"
+          style="width:5em"
+        /> ×
+        <el-input-number
+          v-model="textureFormRef.repeat[1]"
+          :min="0.01"
+          :step="0.01"
+          @change="setTexture"
+          size="small"
+          controls-position="right"
+          style="width:5em"
+        />
+      </el-form-item>
+      <el-form-item label="偏移">
+        <!-- offset: 纹理在U/V方向的偏移 -->
+        <el-input-number
+          v-model="textureFormRef.offset[0]"
+          :min="-1"
+          :max="1"
+          :step="0.01"
+          @change="setTexture"
+          size="small"
+          controls-position="right"
+          style="width:5em"
+        /> ×
+        <el-input-number
+          v-model="textureFormRef.offset[1]"
+          :min="-1"
+          :max="1"
+          :step="0.01"
+          @change="setTexture"
+          size="small"
+          controls-position="right"
+          style="width:5em"
+        />
+      </el-form-item>
+      <el-form-item label="中心">
+        <!-- center: 旋转中心点 -->
+        <el-input-number
+          v-model="textureFormRef.center[0]"
+          :min="0"
+          :max="1"
+          :step="0.01"
+          @change="setTexture"
+          size="small"
+          controls-position="right"
+          style="width:5em"
+        /> ×
+        <el-input-number
+          v-model="textureFormRef.center[1]"
+          :min="0"
+          :max="1"
+          :step="0.01"
+          @change="setTexture"
+          size="small"
+          controls-position="right"
+          style="width:5em"
+        />
+      </el-form-item>
+      <el-form-item label="旋转">
+        <!-- rotation: 纹理旋转角度，单位弧度 -->
+        <el-input-number
+          v-model="textureFormRef.rotation"
+          :min="-6.28"
+          :max="6.28"
+          :step="0.01"
+          @change="setTexture"
+          size="small"
+          controls-position="right"
+          style="width:5em"
+        />
+      </el-form-item>
+    </el-form>
   </div>
 </template>
 
@@ -287,12 +665,17 @@ function getTexturePreviewSrc(image) {
   max-height: calc(100vh - 48px - 32px);
 }
 .property-section h4 {
+  height: 50px;
   margin: 0 0 12px 0;
   font-size: 14px;
   font-weight: 600;
   color: #ccc;
   border-bottom: 1px solid #444;
   padding-bottom: 4px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
 }
 .property-group {
   margin-bottom: 12px;
@@ -347,22 +730,5 @@ function getTexturePreviewSrc(image) {
 }
 .action-btn.danger:hover {
   background: #e85662;
-}
-.texture-preview-wrapper {
-  position: relative;
-  display: flex;
-  width: 100%;
-  height: 24px;
-
-  .texture-preview-img {
-    width: 48px;
-    height: 24px;
-    border: 1px solid #555;
-    display: inline-block;
-    border-radius: 4px;
-  }
-  .el-button {
-    margin-left: 8px;
-  }
 }
 </style>

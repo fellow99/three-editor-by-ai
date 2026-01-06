@@ -5,28 +5,41 @@
 -->
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, shallowRef, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
-import { useObjectSelection } from '../../composables/useObjectSelection.js'
+import { useObjectSelection } from '@/composables/useObjectSelection.js'
 
-/** 对象选择管理器 */
-const objectSelection = useObjectSelection()
-/** 当前选中对象 */
-const selectedObject = computed(() => {
-  const objects = objectSelection.selectedObjects.value
-  return objects.length === 1 ? objects[0] : null
-})
-/** 是否有选中对象 */
-const hasSelection = computed(() => objectSelection.hasSelection.value)
+const { selectedIdsRef, getSelectedObjects } = useObjectSelection();
+// 是否有选中对象
+const hasSelection = ref(false);
+// 当前选中对象（仅支持单选）
+const selectedObject = shallowRef(null);
+// 监听选中对象变化，更新activeTab和hasSelection
+watch(selectedIdsRef, (ids) => {
+  if (ids && ids.length > 0) {
+    hasSelection.value = true;
+    let objects = getSelectedObjects();
+    let object = objects ? objects[0] : null;
+    selectedObject.value = object;
+  } else {
+    hasSelection.value = false;
+    selectedObject.value = null;
+  }
+}, { immediate: true });
 
-/** userData编辑区文本
-  用于展示和编辑选中对象的userData属性（JSON字符串）
-*/
+/** 
+ * userData编辑区文本，用于展示和编辑选中对象的userData属性（JSON字符串）
+ */
 const userDataText = ref('')
 
-/** userData属性表格数据
-  用于以key-value表格方式展示userData
-*/
+/**
+ * userData校验错误信息，用于提示userData输入的JSON格式错误
+ */
+const userDataError = ref('')
+
+/**
+ * userData属性表格数据，用于以key-value表格方式展示userData
+ */
 const userDataEntries = computed(() => {
   if (!selectedObject.value || !selectedObject.value.userData) return []
   const entries = []
@@ -47,11 +60,6 @@ const userDataEntries = computed(() => {
   }
   return entries
 })
-
-/** userData校验错误信息
-  用于提示userData输入的JSON格式错误
-*/
-const userDataError = ref('')
 
 /**
  * 刷新userData显示
@@ -81,6 +89,7 @@ function onUserDataBlur() {
     userDataError.value = 'JSON格式错误，请检查输入'
   }
 }
+
 </script>
 
 <template>
@@ -101,7 +110,7 @@ function onUserDataBlur() {
                   <template #reference>
                     <el-link size="small">查看</el-link>
                   </template>
-                  <pre style="white-space: pre-wrap; margin: 0;">{{ scope.row.str }}</pre>
+                  <pre style="max-height: 40vh; overflow: auto;white-space: pre-wrap; margin: 0;">{{ scope.row.str }}</pre>
                 </el-popover>
               <span v-else-if="scope.row.str">{{ scope.row.str }}</span>
               <span v-else>{{ scope.row.value }}</span>

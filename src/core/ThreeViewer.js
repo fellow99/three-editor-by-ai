@@ -1,10 +1,8 @@
 /**
- * 场景管理器
- * 负责Three.js场景的创建、管理和渲染，并统一驱动对象动画（如GLTF动画）。
+ * 视图管理器
+ * 负责Three.js视图的创建、管理和渲染，并统一驱动对象动画（如GLTF动画）。
  * 动画机制：遍历场景对象，若对象有mixer（AnimationMixer实例），则在渲染循环中调用mixer.update(delta)。
- * 为每个有动画的对象挂载mixer到object.userData._mixer，动画选择由userData.animationIndex控制。
- * 
- * 事件机制：集成mitt库，实现事件收发（on、off、emit），用于场景相关事件分发与监听。
+ * 为每个有动画的对象挂载mixer到object._mixer，动画选择由userData.animationIndex控制。
  */
 
 import { reactive, watch } from 'vue';
@@ -22,7 +20,7 @@ import vfsService from '../services/vfs-service.js';
 
 /**
  * @class ThreeViewer
- * Three.js场景、渲染器、相机、控制器、后处理等统一管理类
+ * 视图管理器，Three.js场景、渲染器、相机、控制器、后处理等统一管理类
  */
 class ThreeViewer {
   /**
@@ -61,6 +59,7 @@ class ThreeViewer {
     this.objectManager = options.objectManager;
     this.objectSelection = options.objectSelection;
     this.assetsManager = options.assetsManager;
+    this.inputManager = options.inputManager;
 
     this.scene = null;
     this.renderer = null;
@@ -385,25 +384,10 @@ class ThreeViewer {
   async setupLights() {
     const { objectManager } = this;
     const ambient = objectManager.createPrimitive?.('AmbientLight', {
-      color: 0x404040,
-      intensity: 10
+      color: 0x999999,
+      intensity: 5
     });
     if (ambient) this.addObject(ambient);
-
-    const directional = objectManager.createPrimitive?.('DirectionalLight', {
-      color: 0xffffff,
-      intensity: 1,
-      position: [50, 50, 50],
-      castShadow: true,
-      shadowMapSize: { width: 2048, height: 2048 },
-      shadowCameraNear: 0.5,
-      shadowCameraFar: 500,
-      shadowCameraLeft: -50,
-      shadowCameraRight: 50,
-      shadowCameraTop: 50,
-      shadowCameraBottom: -50
-    });
-    if (directional) this.addObject(directional);
   }
 
   setupGrid() {
@@ -439,6 +423,9 @@ class ThreeViewer {
     if (container && this.renderer) {
       container.appendChild(this.renderer.domElement);
       this.setupControls();
+      
+      this.inputManager.setElement(this.renderer.domElement);
+
       this.handleResize();
       window.addEventListener('resize', this.resizeHandler);
     }
@@ -706,6 +693,8 @@ class ThreeViewer {
   }
 
   clearScene() {
+    const { objectManager } = this;
+    
     const reservedNames = ['grid_helper', 'axes_helper'];
     for (let i = this.scene.children.length - 1; i >= 0; i--) {
       const child = this.scene.children[i];
@@ -724,7 +713,6 @@ class ThreeViewer {
       }
     }
     this.setupGrid();
-    const objectManager = useObjectManager();
     objectManager.clear();
   }
 

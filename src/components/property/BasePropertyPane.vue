@@ -5,87 +5,94 @@
 -->
 
 <script setup>
-import { ref, computed, watch } from 'vue'
-import { ElMessage } from 'element-plus'
-import { useObjectSelection } from '../../composables/useObjectSelection.js'
+import { ref, shallowRef, watch } from 'vue'
+import { useObjectSelection } from '@/composables/useObjectSelection.js'
 
-/** 对象选择管理器 */
-const objectSelection = useObjectSelection()
-/** 当前选中对象 */
-const selectedObject = computed(() => {
-  const objects = objectSelection.selectedObjects.value
-  return objects.length === 1 ? objects[0] : null
-})
-/** 是否有选中对象 */
-const hasSelection = computed(() => objectSelection.hasSelection.value)
-/** 对象类型 */
-const objectType = computed(() => {
-  if (!selectedObject.value) return ''
-  return selectedObject.value.userData?.type || selectedObject.value.type || 'Object3D'
-})
+const { selectedIdsRef, getSelectedObjects } = useObjectSelection();
+// 是否有选中对象
+const hasSelection = ref(false);
+// 当前选中对象（仅支持单选）
+const selectedObject = shallowRef(null);
 
-/** 内部ID（唯一标识，来源于THREE.Object3D.uuid，仅内部使用） */
-const internalId = computed(() => selectedObject.value?.uuid ?? '')
 
-/** 对外ID（可编辑，来源于userData.id） */
-const externalId = ref('')
+// 对象基本信息表单数据
+const formDataRef = ref({
+  id: '',
+  name: '',
+  visible: true
+});
 
-/** 对象名称 */
-const objectName = ref('')
-
-/**
- * 刷新属性显示
- * @description 同步objectName和externalId
- */
-function refreshBaseInfo() {
-  const newObject = selectedObject.value
-  if (newObject) {
-    objectName.value = newObject.name || ''
-    externalId.value = newObject.userData?.id || ''
+// 监听选中对象变化，更新activeTab和hasSelection
+watch(selectedIdsRef, (ids) => {
+  if (ids && ids.length > 0) {
+    hasSelection.value = true;
+    let objects = getSelectedObjects();
+    let object = objects ? objects[0] : null;
+    selectedObject.value = object;
+    formDataRef.value = {
+      id: object.userData?.id || '',
+      name: object.name || object.userData?.name || object.userData?.equipmentInfo?.name || object.userData?.fileInfo?.name || '',
+      visible: object.visible
+    }
+  } else {
+    hasSelection.value = false;
+    selectedObject.value = null;
+    formDataRef.value = {
+      id: '',
+      name: '',
+      visible: true
+    }
   }
-}
-watch(selectedObject, refreshBaseInfo, { immediate: true })
+}, { immediate: true });
 
 /**
  * 更新对象名称
  * @description 修改对象的name属性
  */
-function updateObjectName() {
-  if (selectedObject.value) {
-    selectedObject.value.name = objectName.value
-    ElMessage.success('对象名称已更新')
-  }
+function updateObject() {
+  if (!selectedObject.value) return;
+    
+  selectedObject.value._edited = true; // 标记为已编辑
+  selectedObject.value.name = formDataRef.value.name;
+  selectedObject.value.visible = formDataRef.value.visible;
+  if(selectedObject.value.userData && formDataRef.value.id)selectedObject.value.userData.id = formDataRef.value.id;
 }
 
 </script>
 
 <template>
-  <div v-if="hasSelection" class="property-pane">
+  <div v-if="selectedObject && formDataRef" class="property-pane">
     <!-- 基本信息 -->
     <div class="property-section">
       <h4>基本信息</h4>
       <el-form label-width="60px" class="property-form">
-        <el-form-item label="内部ID">
-          <el-input v-model="internalId" disabled size="small" />
+        <el-form-item label="UUID">
+          <el-input :modelValue="selectedObject.uuid" disabled size="small" />
         </el-form-item>
         <el-form-item label="对外ID">
           <el-input
-            v-model="externalId"
-            disabled
+            v-model="formDataRef.id"
             size="small"
           />
         </el-form-item>
         <el-form-item label="名称">
           <el-input
-            v-model="objectName"
+            v-model="formDataRef.name"
             placeholder="请输入对象名称"
-            @blur="updateObjectName"
+            @blur="updateObject"
             size="small"
             clearable
           />
         </el-form-item>
         <el-form-item label="类型">
-          <span class="property-value">{{ objectType }}</span>
+          <span class="property-value">{{ selectedObject.type }}</span>
+        </el-form-item>
+        <el-form-item label="是否可见">
+          <el-switch
+            v-model="formDataRef.visible"
+            size="small"
+            @change="updateObject"
+            />
         </el-form-item>
       </el-form>
     </div>
@@ -93,34 +100,5 @@ function updateObjectName() {
 </template>
 
 <style lang="scss" scoped>
-.property-pane {
-  width: 100%;
-  height: fit-content;
-  display: flex;
-  flex-direction: column;
-  color: #fff;
-}
-.property-section {
-  padding: 8px;
-  overflow-y: auto;
-  max-height: calc(100vh - 48px - 32px);
-}
-.property-section h4 {
-  margin: 0 0 12px 0;
-  font-size: 14px;
-  font-weight: 600;
-  color: #ccc;
-  border-bottom: 1px solid #444;
-  padding-bottom: 4px;
-}
-.property-form {
-  margin-top: 8px;
-}
-.property-value {
-  padding: 0 6px;
-  background: #333;
-  border-radius: 4px;
-  font-size: 12px;
-  color: #ccc;
-}
+@use './PropertyPane.scss';
 </style>

@@ -217,14 +217,12 @@ import { ElMessage } from 'element-plus';
 import 'element-plus/es/components/message/style/css';
 import { useAssetsManager } from '../../composables/useAssetsManager.js';
 import { useObjectSelection } from '../../composables/useObjectSelection.js';
-import { useScene } from '../../composables/useScene.js';
 import { useObjectManager } from '../../composables/useObjectManager.js';
 export default {
   name: 'AssetBrowser',
   setup() {
     const assets = useAssetsManager();
     const objectSelection = useObjectSelection();
-    const scene = useScene();
     
     // 本地状态
     const activeTab = ref('models');

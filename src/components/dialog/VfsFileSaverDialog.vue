@@ -7,7 +7,7 @@ VfsFileSaverDialog.vue
 <script setup>
 import { ref, shallowRef, onMounted, watch } from 'vue'
 import { ElDialog, ElInput, ElButton, ElSelect, ElOption, ElMessage } from 'element-plus'
-import vfsService from '../../services/vfs-service.js'
+import vfsService from '@/services/vfs-service.js'
 
 /**
  * props:
@@ -82,7 +82,11 @@ async function loadFiles() {
 /** 切换目录 */
 function onItemClick(item) {
   if (item.type === 'FOLDER') {
-    currentPath.value = item.path + '/' + item.name
+    let path = item.path + '/' + item.name;
+    if (path.startsWith('//')) {
+      path = path.substring(1);
+    }
+    currentPath.value = path
   } else if (item.type === 'FILE') {
     fileName.value = item.name.replace(/\.[^/.]+$/, '')
   }
@@ -189,6 +193,7 @@ watch([currentVfs, currentPath], () => {
   flex-wrap: wrap;
   gap: 12px;
   align-items: flex-start;
+  align-content: baseline;
 }
 .vfs-item {
   display: flex;

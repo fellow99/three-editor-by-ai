@@ -7,8 +7,7 @@
 
 <script setup>
 import { ref, watch } from 'vue';
-import { ElDialog, ElForm, ElFormItem, ElSelect, ElOption, ElInputNumber, ElColorPicker, ElButton } from 'element-plus';
-import { useEditorConfig, CONTROLS_OPTIONS } from '../../composables/useEditorConfig.js';
+import { useEditorConfig, CONTROLS_OPTIONS } from '@/composables/useEditorConfig.js';
 
 /**
  * 对话框显示状态，由父组件通过 v-model:visible 控制
@@ -27,7 +26,6 @@ const {
   setControlsParams,
   setGridConfig,
   setAxesSize,
-  setSceneBgColor,
   resetEditorConfig
 } = useEditorConfig();
 
@@ -36,6 +34,11 @@ const {
  */
 const form = ref({
   controlsType: editorConfig.controlsType,
+  targetDistance: editorConfig.targetDistance,
+  lockY: editorConfig.lockY,
+  enableKeyboard: editorConfig.enableKeyboard,
+  movementSpeed: editorConfig.movementSpeed,
+  rollSpeed: editorConfig.rollSpeed,
   panSpeed: editorConfig.panSpeed,
   rotateSpeed: editorConfig.rotateSpeed,
   zoomSpeed: editorConfig.zoomSpeed,
@@ -44,7 +47,6 @@ const form = ref({
   gridColorCenterLine: editorConfig.gridColorCenterLine,
   gridColorGrid: editorConfig.gridColorGrid,
   axesSize: editorConfig.axesSize,
-  sceneBgColor: editorConfig.sceneBgColor
 });
 
 /**
@@ -55,6 +57,11 @@ watch(
   (val) => {
     if (val) {
       form.value.controlsType = editorConfig.controlsType;
+      form.value.targetDistance = editorConfig.targetDistance;
+      form.value.lockY = editorConfig.lockY;
+      form.value.enableKeyboard = editorConfig.enableKeyboard;
+      form.value.movementSpeed = editorConfig.movementSpeed;
+      form.value.rollSpeed = editorConfig.rollSpeed;
       form.value.panSpeed = editorConfig.panSpeed;
       form.value.rotateSpeed = editorConfig.rotateSpeed;
       form.value.zoomSpeed = editorConfig.zoomSpeed;
@@ -63,7 +70,6 @@ watch(
       form.value.gridColorCenterLine = editorConfig.gridColorCenterLine;
       form.value.gridColorGrid = editorConfig.gridColorGrid;
       form.value.axesSize = editorConfig.axesSize;
-      form.value.sceneBgColor = editorConfig.sceneBgColor;
     }
   }
 );
@@ -74,6 +80,11 @@ watch(
 function handleSave() {
   setControlsType(form.value.controlsType);
   setControlsParams({
+    targetDistance: form.value.targetDistance,
+    lockY: form.value.lockY,
+    enableKeyboard: form.value.enableKeyboard,
+    movementSpeed: form.value.movementSpeed,
+    rollSpeed: form.value.rollSpeed,
     panSpeed: form.value.panSpeed,
     rotateSpeed: form.value.rotateSpeed,
     zoomSpeed: form.value.zoomSpeed
@@ -85,7 +96,6 @@ function handleSave() {
     gridColorGrid: form.value.gridColorGrid
   });
   setAxesSize(form.value.axesSize);
-  setSceneBgColor(form.value.sceneBgColor);
   emit('update:modelValue', false);
 }
 
@@ -102,6 +112,11 @@ function handleClose() {
 function handleReset() {
   resetEditorConfig();
   form.value.controlsType = editorConfig.controlsType;
+  form.value.targetDistance = editorConfig.targetDistance;
+  form.value.lockY = editorConfig.lockY;
+  form.value.enableKeyboard = editorConfig.enableKeyboard;
+  form.value.movementSpeed = editorConfig.movementSpeed;
+  form.value.rollSpeed = editorConfig.rollSpeed;
   form.value.panSpeed = editorConfig.panSpeed;
   form.value.rotateSpeed = editorConfig.rotateSpeed;
   form.value.zoomSpeed = editorConfig.zoomSpeed;
@@ -110,70 +125,93 @@ function handleReset() {
   form.value.gridColorCenterLine = editorConfig.gridColorCenterLine;
   form.value.gridColorGrid = editorConfig.gridColorGrid;
   form.value.axesSize = editorConfig.axesSize;
-  form.value.sceneBgColor = editorConfig.sceneBgColor;
 }
 </script>
 
 <template>
-  <ElDialog
+  <el-dialog
     :model-value="props.modelValue"
     title="编辑器配置"
     width="500px"
     @close="handleClose"
   >
-    <ElForm label-width="120px" size="small">
+    <el-form label-width="120px" size="small">
       <el-divider content-position="left">控制器配置</el-divider>
       <!-- 控制器配置 -->
-      <ElFormItem label="默认Controls">
-        <ElSelect v-model="form.controlsType" style="width: 200px">
-          <ElOption
+      <el-form-item label="默认Controls">
+        <el-select v-model="form.controlsType" style="width: 200px">
+          <el-option
             v-for="item in CONTROLS_OPTIONS"
             :key="item.value"
             :label="item.label"
             :value="item.value"
           />
-        </ElSelect>
-      </ElFormItem>
-      <ElFormItem label="平移速度">
-        <ElInputNumber v-model="form.panSpeed" :min="0.1" :max="10" :step="0.1" />
-      </ElFormItem>
-      <ElFormItem label="旋转速度">
-        <ElInputNumber v-model="form.rotateSpeed" :min="0.1" :max="10" :step="0.1" />
-      </ElFormItem>
-      <ElFormItem label="缩放速度">
-        <ElInputNumber v-model="form.zoomSpeed" :min="0.1" :max="10" :step="0.1" />
-      </ElFormItem>
+        </el-select>
+      </el-form-item>
+      <template v-if="form.controlsType === 'FlyControls'">
+        <el-form-item label="目标距离">
+          <el-input-number v-model="form.targetDistance" :min="0.1" :max="1000" :step="0.1" />
+        </el-form-item>
+        <el-form-item label="镜头锁定Y轴">
+          <el-switch v-model="form.lockY" active-text="强制平视" />
+        </el-form-item>
+        <el-form-item label="允许键盘操作">
+          <el-switch v-model="form.enableKeyboard" />
+        </el-form-item>
+        <el-form-item label="键盘移动速度">
+          <el-input-number v-model="form.movementSpeed" :min="0.1" :max="10" :step="0.1" />
+        </el-form-item>
+        <el-form-item label="键盘旋转速度">
+          <el-input-number v-model="form.rollSpeed" :min="0.001" :max="1" :step="0.001" />
+        </el-form-item>
+        <el-form-item label="鼠标平移速度">
+          <el-input-number v-model="form.panSpeed" :min="0.1" :max="10" :step="0.1" />
+        </el-form-item>
+        <el-form-item label="鼠标旋转速度">
+          <el-input-number v-model="form.rotateSpeed" :min="0.1" :max="10" :step="0.1" />
+        </el-form-item>
+        <el-form-item label="鼠标缩放速度">
+          <el-input-number v-model="form.zoomSpeed" :min="0.1" :max="10" :step="0.1" />
+        </el-form-item>
+      </template>
+      <template v-else>
+        <!-- 其他控制器通用配置 -->
+      <el-form-item label="平移速度">
+        <el-input-number v-model="form.panSpeed" :min="0.1" :max="10" :step="0.1" />
+      </el-form-item>
+      <el-form-item label="旋转速度">
+        <el-input-number v-model="form.rotateSpeed" :min="0.1" :max="10" :step="0.1" />
+      </el-form-item>
+      <el-form-item label="缩放速度">
+        <el-input-number v-model="form.zoomSpeed" :min="0.1" :max="10" :step="0.1" />
+      </el-form-item>
+      </template>
       <el-divider content-position="left">网格配置</el-divider>
       <!-- 网格配置 -->
-      <ElFormItem label="网格尺寸">
-        <ElInputNumber v-model="form.gridSize" :min="1" :max="1000" :step="1" />
-      </ElFormItem>
-      <ElFormItem label="网格分段">
-        <ElInputNumber v-model="form.gridDivisions" :min="1" :max="100" :step="1" />
-      </ElFormItem>
-      <ElFormItem label="中心线颜色">
-        <ElColorPicker v-model="form.gridColorCenterLine" />
-      </ElFormItem>
-      <ElFormItem label="网格颜色">
-        <ElColorPicker v-model="form.gridColorGrid" />
-      </ElFormItem>
-      <el-divider content-position="left">坐标轴配置</el-divider>
-      <!-- 坐标轴配置 -->
-      <ElFormItem label="坐标轴尺寸">
-        <ElInputNumber v-model="form.axesSize" :min="1" :max="500" :step="1" />
-      </ElFormItem>
-      <el-divider content-position="left">场景默认配置</el-divider>
-      <!-- 场景默认配置 -->
-      <ElFormItem label="背景色">
-        <ElColorPicker v-model="form.sceneBgColor" />
-      </ElFormItem>
-    </ElForm>
+      <el-form-item label="网格尺寸">
+        <el-input-number v-model="form.gridSize" :min="1" :step="1" />
+      </el-form-item>
+      <el-form-item label="网格分段">
+        <el-input-number v-model="form.gridDivisions" :min="1" :step="1" />
+      </el-form-item>
+      <el-form-item label="中心线颜色">
+        <el-color-picker v-model="form.gridColorCenterLine" />
+      </el-form-item>
+      <el-form-item label="网格颜色">
+        <el-color-picker v-model="form.gridColorGrid" />
+      </el-form-item>
+      <el-divider content-position="left">视点坐标轴配置</el-divider>
+      <!-- 视点坐标轴配置 -->
+      <el-form-item label="坐标轴尺寸">
+        <el-input-number v-model="form.axesSize" :min="1" :max="100" :step="1" />
+      </el-form-item>
+    </el-form>
     <template #footer>
-      <ElButton @click="handleReset" type="warning">重置默认</ElButton>
-      <ElButton @click="handleClose">取消</ElButton>
-      <ElButton @click="handleSave" type="primary">保存</ElButton>
+      <el-button @click="handleReset" type="warning">重置默认</el-button>
+      <el-button @click="handleClose">取消</el-button>
+      <el-button @click="handleSave" type="primary">保存</el-button>
     </template>
-  </ElDialog>
+  </el-dialog>
 </template>
 
 <style scoped>

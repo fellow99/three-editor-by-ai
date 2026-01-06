@@ -1,9 +1,6 @@
 /**
  * 输入管理器
  * 负责处理鼠标、键盘等输入事件
- * 
- * 事件机制：集成mitt库，实现事件收发（on、off、emit），用于输入相关事件分发与监听。
- * 新语法：通过this.emitter = mitt()创建事件总线，提供on、off、emit方法。
  */
 
 import * as THREE from 'three';

@@ -1,9 +1,6 @@
 /**
  * 资源加载器
  * 负责加载3D模型、纹理等资源
- * 
- * 事件机制：集成mitt库，实现事件收发（on、off、emit），用于资源加载相关事件分发与监听。
- * 新语法：通过this.emitter = mitt()创建事件总线，提供on、off、emit方法。
  */
 
 import * as THREE from 'three';

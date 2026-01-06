@@ -1,30 +1,14 @@
 /**
  * 对象管理器
  * 负责3D对象的创建、管理和操作
- * 
- * 事件机制：集成mitt库，实现事件收发（on、off、emit），用于对象相关事件分发与监听。
- * 新语法：通过this.emitter = mitt()创建事件总线，提供on、off、emit方法。
- * 
- * 新增方法说明：
- * - getIntersectedFirstObject(raycaster)：高效获取射线第一个相交对象，仅返回第一个命中的顶级对象，适用于对象数量极大时的高性能选择。
- * - getUnlockedObjects()：获取所有未被锁定（userData.locked !== true）的对象，便于过滤交互对象。
  */
 
+import { reactive } from 'vue';
 import * as THREE from 'three';
 import mitt from 'mitt'; // 事件机制库
-import { reactive } from 'vue';
-/**
- * 简单的UUID生成器
- * @returns {string} 生成的唯一ID
- */
-function generateId() {
-  return 'xxxx-xxxx-4xxx-yxxx'.replace(/[xy]/g, function(c) {
-    const r = Math.random() * 16 | 0;
-    const v = c == 'x' ? r : (r & 0x3 | 0x8);
-    return v.toString(16);
-  });
-}
+import { v7 as UUID } from 'uuid';
 import { createBoxGeometry, createSphereGeometry, createCylinderGeometry } from '../utils/geometryUtils.js';
+
 
 /**
  * @class ObjectManager
@@ -339,7 +323,7 @@ class ObjectManager {
    */
   addObject(object) {
     if (!object.userData.id) {
-      object.userData.id = generateId();
+      object.userData.id = UUID();
     }
     this.state.objects.set(object.userData.id, object);
   }
@@ -531,7 +515,7 @@ class ObjectManager {
       const clone = this.deepCloneObject(clipboardObj);
       
       // 重新生成ID
-      clone.userData.id = generateId();
+      clone.userData.id = UUID();
       clone.name = `${clone.name}_copy`;
 
       // 随机新位置

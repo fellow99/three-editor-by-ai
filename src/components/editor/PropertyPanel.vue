@@ -8,42 +8,35 @@
   <div class="property-panel">
     <div class="property-content">
       <div class="tabs">
-        <button v-if="!hasSelection"
+        <button v-if="!selectedObject && !selectedMaterial"
           class="tab-btn"
           :class="{ active: activeTab === '场景' }"
           @click="activeTab = '场景'"
         >
           场景
         </button>
-        <button v-if="!hasSelection"
-          class="tab-btn"
-          :class="{ active: activeTab === '环境' }"
-          @click="activeTab = '环境'"
-        >
-          环境
-        </button>
-        <button v-if="!hasSelection"
-          class="tab-btn"
-          :class="{ active: activeTab === '后处理' }"
-          @click="activeTab = '后处理'"
-        >
-          后处理
-        </button>
-        <button v-if="hasSelection"
+        <button v-if="selectedObject"
           class="tab-btn"
           :class="{ active: activeTab === '对象' }"
           @click="activeTab = '对象'"
         >
           对象
         </button>
-        <button v-if="hasSelection"
+        <button v-if="selectedMaterial"
           class="tab-btn"
-          :class="{ active: activeTab === '材质' }"
-          @click="activeTab = '材质'"
+          :class="{ active: activeTab === '材质' && !isMaterialPropertyPaneAdv }"
+          @click="isMaterialPropertyPaneAdv=false; activeTab = '材质'"
         >
           材质
         </button>
-        <button
+        <button v-if="selectedMaterial"
+          class="tab-btn"
+          :class="{ active: activeTab === '材质' && isMaterialPropertyPaneAdv }"
+          @click="isMaterialPropertyPaneAdv=true; activeTab = '材质'"
+        >
+          材质专家模式
+        </button>
+        <button v-if="!selectedMaterial"
           class="tab-btn"
           :class="{ active: activeTab === 'userData' }"
           @click="activeTab = 'userData'"
@@ -52,15 +45,18 @@
         </button>
       </div>
       <!-- Tab内容区域 -->
-      <ScenePropertyPane v-if="activeTab === '场景'" />
-      <div v-if="activeTab === '光影'" style="padding: 24px; color: #888;">光影内容占位</div>
-      <div v-if="activeTab === '环境'" style="padding: 24px; color: #888;">环境内容占位</div>
-      <div v-if="activeTab === '后处理'" style="padding: 24px; color: #888;">后处理内容占位</div>
+      <ScenePropertyPane v-if="activeTab === '场景' && !selectedObject && !selectedMaterial" />
       <div v-if="activeTab === '对象'">
         <BasePropertyPane />
-        <TransformPropertyPane />
-        <AnimationPropertyPane />
-        <PrimitivePropertyPaneBox v-if="selectedObject && selectedObject.geometry && selectedObject.geometry.type === 'BoxGeometry'" />
+        <TransformPropertyPane v-if="selectedObject" :selectedObject="selectedObject" />
+        <AnimationPropertyPane v-if="selectedObject" />
+        <LightPropertyPaneDirectionalLight v-if="selectedObject && selectedObject.type === 'DirectionalLight'" />
+        <LightPropertyPanePointLight v-else-if="selectedObject && selectedObject.type === 'PointLight'" />
+        <LightPropertyPaneSpotLight v-else-if="selectedObject && selectedObject.type === 'SpotLight'" />
+        <LightPropertyPaneAmbientLight v-else-if="selectedObject && selectedObject.type === 'AmbientLight'" />
+        <LightPropertyPaneRectAreaLight v-else-if="selectedObject && selectedObject.type === 'RectAreaLight'" />
+        <LightPropertyPaneHemisphereLight v-else-if="selectedObject && selectedObject.type === 'HemisphereLight'" />
+        <PrimitivePropertyPaneBox v-else-if="selectedObject && selectedObject.geometry && selectedObject.geometry.type === 'BoxGeometry'" />
         <PrimitivePropertyPaneSphere v-else-if="selectedObject && selectedObject.geometry && selectedObject.geometry.type === 'SphereGeometry'" />
         <PrimitivePropertyPaneCylinder v-else-if="selectedObject && selectedObject.geometry && selectedObject.geometry.type === 'CylinderGeometry'" />
         <PrimitivePropertyPanePlane v-else-if="selectedObject && selectedObject.geometry && selectedObject.geometry.type === 'PlaneGeometry'" />
@@ -72,24 +68,22 @@
         <PrimitivePropertyPaneIcosahedron v-else-if="selectedObject && selectedObject.geometry && selectedObject.geometry.type === 'IcosahedronGeometry'" />
         <PrimitivePropertyPaneRing v-else-if="selectedObject && selectedObject.geometry && selectedObject.geometry.type === 'RingGeometry'" />
         <PrimitivePropertyPaneTube v-else-if="selectedObject && selectedObject.geometry && selectedObject.geometry.type === 'TubeGeometry'" />
-        <LightPropertyPaneDirectionalLight v-else-if="selectedObject && selectedObject.type === 'DirectionalLight'" />
-        <LightPropertyPanePointLight v-else-if="selectedObject && selectedObject.type === 'PointLight'" />
-        <LightPropertyPaneSpotLight v-else-if="selectedObject && selectedObject.type === 'SpotLight'" />
-        <LightPropertyPaneAmbientLight v-else-if="selectedObject && selectedObject.type === 'AmbientLight'" />
-        <LightPropertyPaneHemisphereLight v-else-if="selectedObject && selectedObject.type === 'HemisphereLight'" />
+        <PrimitivePropertyPaneCircle v-else-if="selectedObject && selectedObject.geometry && selectedObject.geometry.type === 'CircleGeometry'" />
       </div>
-      <MaterialPropertyPane v-if="activeTab === '材质'" />
+      <MaterialPropertyPane v-if="activeTab === '材质' && !isMaterialPropertyPaneAdv && selectedMaterial" :material="selectedMaterial" />
       <UserDataPropertyPane v-if="activeTab === '属性'" />
       <div v-if="activeTab === 'userData'">
-        <SceneUserDataPropertyPane v-show="!hasSelection" />
-        <UserDataPropertyPane v-if="selectedObject" v-show="hasSelection" :object="selectedObject" />
+        <SceneUserDataPropertyPane v-if="!selectedObject && !selectedMaterial" />
+        <UserDataPropertyPane v-if="selectedObject" :object="selectedObject" />
       </div>
     </div>
   </div>
 </template>
 
-<script>
-import { ref, watch, computed } from 'vue';
+<script setup>
+import { ref, watch, shallowRef } from 'vue';
+import { useObjectSelection } from '@/composables/useObjectSelection.js';
+import { useMaterialSelection } from '@/composables/useMaterial.js';
 import ScenePropertyPane from '../property/ScenePropertyPane.vue';
 import SceneUserDataPropertyPane from '../property/SceneUserDataPropertyPane.vue';
 import BasePropertyPane from '../property/BasePropertyPane.vue';
@@ -97,6 +91,12 @@ import UserDataPropertyPane from '../property/UserDataPropertyPane.vue';
 import TransformPropertyPane from '../property/TransformPropertyPane.vue';
 import AnimationPropertyPane from '../property/AnimationPropertyPane.vue';
 import MaterialPropertyPane from '../property/MaterialPropertyPane.vue';
+import LightPropertyPaneDirectionalLight from '../property/LightPropertyPane-DirectionalLight.vue';
+import LightPropertyPanePointLight from '../property/LightPropertyPane-PointLight.vue';
+import LightPropertyPaneSpotLight from '../property/LightPropertyPane-SpotLight.vue';
+import LightPropertyPaneAmbientLight from '../property/LightPropertyPane-AmbientLight.vue';
+import LightPropertyPaneRectAreaLight from '../property/LightPropertyPane-RectAreaLight.vue';
+import LightPropertyPaneHemisphereLight from '../property/LightPropertyPane-HemisphereLight.vue';
 import PrimitivePropertyPaneBox from '../property/PrimitivePropertyPane-box.vue';
 import PrimitivePropertyPaneSphere from '../property/PrimitivePropertyPane-sphere.vue';
 import PrimitivePropertyPaneCylinder from '../property/PrimitivePropertyPane-cylinder.vue';
@@ -109,72 +109,40 @@ import PrimitivePropertyPaneDodecahedron from '../property/PrimitivePropertyPane
 import PrimitivePropertyPaneIcosahedron from '../property/PrimitivePropertyPane-icosahedron.vue';
 import PrimitivePropertyPaneRing from '../property/PrimitivePropertyPane-ring.vue';
 import PrimitivePropertyPaneTube from '../property/PrimitivePropertyPane-tube.vue';
-import LightPropertyPaneDirectionalLight from '../property/LightPropertyPane-DirectionalLight.vue';
-import LightPropertyPanePointLight from '../property/LightPropertyPane-PointLight.vue';
-import LightPropertyPaneSpotLight from '../property/LightPropertyPane-SpotLight.vue';
-import LightPropertyPaneAmbientLight from '../property/LightPropertyPane-AmbientLight.vue';
-import LightPropertyPaneHemisphereLight from '../property/LightPropertyPane-HemisphereLight.vue';
-import { useObjectSelection } from '../../composables/useObjectSelection.js';
+import PrimitivePropertyPaneCircle from '../property/PrimitivePropertyPane-circle.vue';
 
-export default {
-  name: 'PropertyPanel',
-  components: {
-    ScenePropertyPane,
-    SceneUserDataPropertyPane,
-    BasePropertyPane,
-    UserDataPropertyPane,
-    TransformPropertyPane,
-    AnimationPropertyPane,
-    MaterialPropertyPane,
-    PrimitivePropertyPaneBox,
-    PrimitivePropertyPaneSphere,
-    PrimitivePropertyPaneCylinder,
-    PrimitivePropertyPanePlane,
-    PrimitivePropertyPaneTorus,
-    PrimitivePropertyPaneCone,
-    PrimitivePropertyPaneTetrahedron,
-    PrimitivePropertyPaneOctahedron,
-    PrimitivePropertyPaneDodecahedron,
-    PrimitivePropertyPaneIcosahedron,
-    PrimitivePropertyPaneRing,
-    PrimitivePropertyPaneTube,
-    LightPropertyPaneDirectionalLight,
-    LightPropertyPanePointLight,
-    LightPropertyPaneSpotLight,
-    LightPropertyPaneAmbientLight,
-    LightPropertyPaneHemisphereLight
-  },
-  setup() {
-    /**
-     * 属性面板Tab切换逻辑
-     * - activeTab: 当前激活的Tab
-     * - hasSelection: 是否有选中对象
-     * - selectedObject: 当前选中对象（仅支持单选）
-     */
-    const activeTab = ref('场景');
-    const { hasSelection, selectedObjects } = useObjectSelection(); // 是否有选中对象
 
-    // 当前选中对象（仅支持单选）
-    const selectedObject = computed(() => {
-      const arr = selectedObjects.value || [];
-      return arr.length === 1 ? arr[0] : null;
-    });
+const activeTab = ref('场景');
+const materialPropertyPaneAdvTab = ref('基础');
+const isMaterialPropertyPaneAdv = ref(false);
 
-    watch(hasSelection, (val) => {
-      if (val) {
-        activeTab.value = '对象';
-      } else {
-        activeTab.value = '场景';
-      }
-    });
+const { selectedIdsRef, getSelectedObjects } = useObjectSelection();
+const { selectedMaterialNameRef, getSelectedMaterial } = useMaterialSelection();
 
-    return {
-      activeTab,
-      hasSelection,
-      selectedObject
-    };
+// 当前选中的对象
+const selectedObject = shallowRef(null);
+// 当前选中的材质
+const selectedMaterial = shallowRef(null);
+
+// 监听选中对象变化
+watch([selectedIdsRef, selectedMaterialNameRef], () => {
+  let ids = selectedIdsRef.value;
+  let materialName = selectedMaterialNameRef.value;
+  selectedObject.value = null;
+  selectedMaterial.value = null;
+  if (ids && ids.length > 0) {
+    activeTab.value = '对象';
+    let objects = getSelectedObjects();
+    let object = objects ? objects[0] : null;
+    selectedObject.value = object;
+  } else if(materialName) {
+    activeTab.value = '材质';
+    selectedMaterial.value = getSelectedMaterial();
+  } else {
+    activeTab.value = '场景';
   }
-};
+});
+
 </script>
 
 <style lang="scss" scoped>

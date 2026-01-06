@@ -1,7 +1,6 @@
 /**
- * 对象选择与变换控制管理 Composable
+ * 对象选择与变换控制管理组合式函数
  * 提供对象选择、TransformControls、选中对象辅助显示等功能
- * 新增功能：拖拽结束时根据ThreeViewer的controlsLocked状态决定是否恢复controls.enabled，避免与镜头锁定冲突。
  */
 
 import { ref, reactive, computed, watch } from 'vue';
@@ -11,56 +10,16 @@ import { TransformControls } from 'three/examples/jsm/controls/TransformControls
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { MapControls } from 'three/examples/jsm/controls/MapControls.js';
 import { FlyControls } from '../controls/FlyControls.js';
-import { axesLockState } from './useAxesLockState.js';
-import { useObjectManager } from './useObjectManager.js';
+import { useAxesLockState } from './useAxesLockState.js';
+import { useThreeViewer, getObjectById, getObjectsByIds } from './useThreeViewer.js';
+import { useControls, getControlsLocked } from './useControls.js';
 import { useInputManager } from './useInputManager.js';
 
-/**
- * selectionStore
- * 用于存储选中对象的临时材质信息，key为对象id
- */
-const selectionStore = reactive({});
-
-const objectManager = useObjectManager();
 const inputManager = useInputManager();
+const axesLockState = useAxesLockState();
 
-
-// 响应式状态
-const selectedObjects = computed(() => 
-  Array.from(objectManager.state.selectedObjects)
-    .map(id => objectManager.getObject(id))
-    .filter(Boolean)
-);
-
-const selectedObjectIds = computed(() => 
-  Array.from(objectManager.state.selectedObjects)
-);
-
-const hasSelection = computed(() => 
-  objectManager.state.selectedObjects.size > 0
-);
-
-const selectionCount = computed(() => 
-  objectManager.state.selectedObjects.size
-);
-
-
-// 框选状态
-const boxSelection = reactive({
-  isActive: false,
-  startX: 0,
-  startY: 0,
-  endX: 0,
-  endY: 0
-});
-
-// 选择配置（已去除高亮相关）
-const selectionConfig = reactive({
-  showBoundingBox: true
-});
-
-// 悬停状态
-const hoveredObject = ref(null);
+// 选中的对象ID列表
+const selectedIdsRef = ref([]);
 
 // TransformControls及辅助对象相关
 /** @type {TransformControls|null} */
@@ -85,6 +44,9 @@ let renderer = null; // 外部传入Three.js渲染器对象
 /** @type {object|null} */
 let controls = null; // OrbitControls实例
 
+let multiSelectBoxRef = ref(null);
+let multiSelectBoxHelper = null;
+
 /**
  * 初始化TransformControls及辅助对象
  * @param {object} options { scene, camera, renderer, controls, objectSelection, transform }
@@ -106,7 +68,19 @@ function initTransformControls(options = {}) {
 
   // 监听变换事件，同步属性
   transformControls.addEventListener('objectChange', () => {
-    if (currentTransformObject) {
+    // 变换时动态更新BoxHelper
+    Object.values(currentHelpers).forEach(helper => {
+      if (helper instanceof BoxHelper) {
+        helper.update();
+      }
+    });
+    
+    if (currentTransformObject.type === 'AxesHelper' && controls) {
+      // 移动视点
+      let pos = currentTransformObject.position;
+      controls.target.copy(pos);
+
+    } else if (currentTransformObject) {
       // Y轴锁定：仅translate模式且锁定时生效
       if (
         transformControls.mode === 'translate' &&
@@ -114,40 +88,32 @@ function initTransformControls(options = {}) {
       ) {
         currentTransformObject.position.y = axesLockState.yValue;
       }
-      // 变换时动态更新BoxHelper
-      Object.values(currentHelpers).forEach(helper => {
-        if (helper instanceof BoxHelper) {
-          helper.update();
+      setObjectTransform(
+        currentTransformObject.uuid,
+        {
+          position: [
+            currentTransformObject.position.x,
+            currentTransformObject.position.y,
+            currentTransformObject.position.z
+          ],
+          rotation: [
+            currentTransformObject.rotation.x,
+            currentTransformObject.rotation.y,
+            currentTransformObject.rotation.z
+          ],
+          scale: [
+            currentTransformObject.scale.x,
+            currentTransformObject.scale.y,
+            currentTransformObject.scale.z
+          ]
         }
-      });
-      if (objectManager && objectManager.setObjectTransform) {
-        objectManager.setObjectTransform(
-          currentTransformObject.userData.id,
-          {
-            position: [
-              currentTransformObject.position.x,
-              currentTransformObject.position.y,
-              currentTransformObject.position.z
-            ],
-            rotation: [
-              currentTransformObject.rotation.x,
-              currentTransformObject.rotation.y,
-              currentTransformObject.rotation.z
-            ],
-            scale: [
-              currentTransformObject.scale.x,
-              currentTransformObject.scale.y,
-              currentTransformObject.scale.z
-            ]
-          }
-        );
-      }
+      );
     }
   });
 
   // 拖拽时禁用当前控制器（OrbitControls、MapControls、FlyControls）
   // 拖拽时禁用当前控制器（OrbitControls、MapControls、FlyControls）
-transformControls.addEventListener('dragging-changed', (event) => {
+  transformControls.addEventListener('dragging-changed', (event) => {
     // 拖拽开始/结束时，记录变换历史
     try {
       // 动态引入 useTransform，避免循环依赖
@@ -178,12 +144,11 @@ transformControls.addEventListener('dragging-changed', (event) => {
         }
         // 拖拽结束时，若镜头锁定则保持controls.enabled=false
         if (!event.value) {
-          import('../core/ThreeViewer.js').then(mod => {
-            const threeViewer = mod.useThreeViewer();
-            if (threeViewer.getControlsLocked && threeViewer.getControlsLocked()) {
-              controls.enabled = false;
-            }
-          });
+          let controlsRef = useControls();
+          let controls = controlsRef.value;
+          if(controls && getControlsLocked()) {
+            controls.enabled = false;
+          }
         }
       }
     }
@@ -214,36 +179,29 @@ transformControls.addEventListener('dragging-changed', (event) => {
   }
 
   // 监听选中对象变化
-  if (selectedObjects) {
-    watch(selectedObjects, (objs) => {
-      if (objs.length === 1) {
-        currentTransformObject = objs[0];
-        // 检查transformHelper是否已挂载到场景，若未挂载则重新添加
-        if (transformHelper && scene && !scene.children.includes(transformHelper)) {
-          scene.add(transformHelper);
-        }
-        // 锁定状态下不绑定transformControls
-        if (currentTransformObject.userData && currentTransformObject.userData.locked) {
-          transformControls.detach();
-          transformControls.visible = false;
-        } else {
-          transformControls.attach(currentTransformObject);
-          transformControls.visible = true;
-        }
-      } else {
+  watch(selectedIdsRef, (ids) => {
+    let objs = getObjectsByIds(ids);
+    if (objs.length === 1) {
+      currentTransformObject = objs[0];
+      // 检查transformHelper是否已挂载到场景，若未挂载则重新添加
+      if (transformHelper && scene && !scene.children.includes(transformHelper)) {
+        scene.add(transformHelper);
+      }
+      // 锁定状态下不绑定transformControls
+      if (currentTransformObject.userData && currentTransformObject.userData.locked) {
         transformControls.detach();
         transformControls.visible = false;
+      } else {
+        transformControls.attach(currentTransformObject);
+        transformControls.visible = true;
       }
-      // 多选时也要为每个选中对象生成helper
-      updateSelectedHelpers(objs);
-    }, { immediate: true });
-  }
-
-  // 新版three.js写法：只添加transformHelper
-  transformHelper = transformControls.getHelper ? transformControls.getHelper() : null;
-  if (transformHelper) {
-    scene.add(transformHelper);
-  }
+    } else {
+      transformControls.detach();
+      transformControls.visible = false;
+    }
+    // 多选时也要为每个选中对象生成helper
+    updateSelectedHelpers();
+  }, { deep: true, immediate: true });
 }
 
 /**
@@ -264,13 +222,23 @@ function disposeTransformControls() {
 }
 
 /**
- * 为每个选中对象动态添加helper
- * @param {THREE.Object3D[]} selectedObjs
+ * 为每个选中对象动态更新helper
  */
-function updateSelectedHelpers(selectedObjs) {
+function updateSelectedHelpers() {
   clearCurrentHelpers();
-  if (!scene || !selectedObjs) return;
-  selectedObjs.forEach(selected => {
+
+  let objects = getSelectedObjects();
+  
+  let viewerRef = useThreeViewer();
+  let viewer = viewerRef.value;
+  if (!viewer) return;
+
+  let { scene } = viewer;
+  if (!scene || !objects) return;
+
+  if(!Array.isArray(objects)) objects = [objects];
+
+  objects.forEach(selected => {
     let helper = null;
     if (selected.isDirectionalLight) {
       helper = new DirectionalLightHelper(selected, 5, 0xffaa00);
@@ -282,12 +250,15 @@ function updateSelectedHelpers(selectedObjs) {
       helper = new HemisphereLightHelper(selected, 2);
     } else if (selected.isCamera) {
       helper = new CameraHelper(selected);
+    } else if (selected.type && selected.type.indexOf('Helper') !== -1) {
+      // 已经是Helper类型，则不再添加
+      helper = null;
     } else {
       helper = new BoxHelper(selected, 0xffff00);
     }
     if (helper) {
       scene.add(helper);
-      currentHelpers[selected.userData.id] = helper;
+      currentHelpers[selected.uuid] = helper;
     }
   });
 }
@@ -296,12 +267,24 @@ function updateSelectedHelpers(selectedObjs) {
  * 清除所有当前helper
  */
 function clearCurrentHelpers() {
-  if (!scene) return;
+  let viewerRef = useThreeViewer();
+  let viewer = viewerRef.value;
+  if (!viewer) return;
+
+  let { scene } = viewer;
   Object.values(currentHelpers).forEach(helper => {
     scene.remove(helper);
     if (helper.dispose) helper.dispose();
   });
   currentHelpers = {};
+  
+  // 更新/清除多选盒
+  updateMultiSelectBox();
+}
+
+function getSelectedObjects() {
+  let ids = selectedIdsRef.value;
+  return getObjectsByIds(ids);
 }
 
 /**
@@ -310,43 +293,75 @@ function clearCurrentHelpers() {
  * @param {boolean} addToSelection 是否添加到现有选择
  */
 function selectObject(objectOrId, addToSelection = false) {
-  let id;
-  if (typeof objectOrId === 'string') {
-    id = objectOrId;
-  } else {
-    id = objectOrId.userData.id;
+  if (!addToSelection) {
+    clearSelection();
   }
-  if (!id) return;
-  objectManager.selectObjects(id, addToSelection);
+  if(!objectOrId) return;
+
+  let viewerRef = useThreeViewer();
+  let viewer = viewerRef.value;
+  if (!viewer) return;
+
+  let id;
+  if(objectOrId.isObject3D) {
+    id = objectOrId.uuid;
+  } else {
+    id = objectOrId;
+  }
+  let object = getObjectById(id);
+  if (!object) return;
+  if(selectedIdsRef.value.includes(id)) return;
+
+  // 添加到选择集中
+  selectedIdsRef.value.push(id);
 }
 
 /**
- * 选择多个对象
- * @param {string[]|THREE.Object3D[]} objects 对象数组
- * @param {boolean} addToSelection 是否添加到现有选择
+ * 取消选择对象
+ * 保证镜头锁定状态优先，主动同步SceneManager的controlsLocked到controls.enabled
+ * @param {string|THREE.Object3D} objectOrId 对象或ID
  */
-function selectObjects(objects, addToSelection = false) {
-  const ids = objects.map(obj => 
-    typeof obj === 'string' ? obj : obj.userData.id
-  ).filter(Boolean);
+function deselectObject(objectOrId) {
+  if(!objectOrId) return;
+
+  let viewerRef = useThreeViewer();
+  let viewer = viewerRef.value;
+  if (!viewer) return;
+
+  let id;
+  if(objectOrId.isObject3D) {
+    id = objectOrId.uuid;
+  } else {
+    id = objectOrId;
+  }
+  let object = getObjectById(id);
+  if (!object) return;
   
-  objectManager.selectObjects(ids, addToSelection);
+  // 从选择集中移除
+  if(selectedIdsRef.value.includes(id)) {
+    selectedIdsRef.value = selectedIdsRef.value.filter(selectedId => selectedId !== id);
+  }
+  
+  // 同步controls.enabled状态
+  let controlsRef = useControls();
+  let controls = controlsRef.value;
+  if(controls && getControlsLocked()) {
+    controls.enabled = false;
+  }
 }
 
 /**
  * 清空选择
- * 保证镜头锁定状态优先，主动同步ThreeViewer的controlsLocked到controls.enabled
+ * 保证镜头锁定状态优先，主动同步SceneManager的controlsLocked到controls.enabled
  */
 function clearSelection() {
-  objectManager.clearSelection();
-  try {
-    const { useThreeViewer } = require('../composables/useThreeViewer.js');
-    const threeViewer = useThreeViewer();
-    if (threeViewer.controls && threeViewer.getControlsLocked) {
-      threeViewer.controls.enabled = !threeViewer.getControlsLocked();
-    }
-  } catch (e) {
-    // ignore
+  selectedIdsRef.value = [];
+
+  // 同步controls.enabled状态
+  let controlsRef = useControls();
+  let controls = controlsRef.value;
+  if(controls && getControlsLocked()) {
+    controls.enabled = false;
   }
 }
 
@@ -355,14 +370,16 @@ function clearSelection() {
  * @param {string|THREE.Object3D} objectOrId 对象或ID
  */
 function toggleSelection(objectOrId) {
+  if(!objectOrId) return;
+
   let id;
-  if (typeof objectOrId === 'string') {
-    id = objectOrId;
+  if(objectOrId.isObject3D) {
+    id = objectOrId.uuid;
   } else {
-    id = objectOrId.userData.id;
+    id = objectOrId;
   }
-  if (!id) return;
-  if (objectManager.state.selectedObjects.has(id)) {
+
+  if(selectedIdsRef.value.includes(id)) {
     deselectObject(id);
   } else {
     selectObject(id, true);
@@ -370,121 +387,46 @@ function toggleSelection(objectOrId) {
 }
 
 /**
- * 全选对象
+ * 高效获取射线第一个相交未锁定对象
+ * 只返回第一个命中的顶级未锁定对象，适用于对象数量极大时的高性能选择
+ * @param {THREE.Raycaster} raycaster 射线投射器
+ * @returns {THREE.Object3D|null} 第一个相交未锁定对象或null
  */
-function selectAll() {
-  const allObjects = objectManager.getAllObjects();
-  const allIds = allObjects.map(obj => obj.userData.id).filter(Boolean);
-  objectManager.selectObjects(allIds);
-}
-
-/**
- * 反选对象
- */
-function invertSelection() {
-  const allObjects = objectManager.getAllObjects();
-  const selectedIds = Array.from(objectManager.state.selectedObjects);
+function getIntersectedFirstObject(camera) {
+  const viewerRef = useThreeViewer();
+  const viewer = viewerRef.value;
+  if(!viewer) return null;
   
-  const invertedIds = allObjects
-    .map(obj => obj.userData.id)
-    .filter(id => id && !selectedIds.includes(id));
-  
-  objectManager.selectObjects(invertedIds);
-}
+  // 合并模型和标签进行射线检测
+  const objects = viewer.scene.children;
 
-/**
- * 根据类型选择对象
- * @param {string} type 对象类型
- * 支持: primitive（几何体），light，group，camera，具体几何体类型（如 box、sphere 等）
- */
-function selectByType(type) {
-  const objects = objectManager.getAllObjects().filter(obj => {
-    if (type === 'primitive') {
-      return obj.isMesh;
-    }
-    if (type === 'light') {
-      return obj.isLight;
-    }
-    if (type === 'group') {
-      return obj.isGroup;
-    }
-    if (type === 'camera') {
-      return obj.isCamera;
-    }
-    // 具体几何体类型
-    if (obj.isMesh && obj.geometry && obj.geometry.type) {
-      return obj.geometry.type.replace('Geometry', '').toLowerCase() === type;
-    }
-    // 灯光类型
-    if (obj.isLight && obj.type) {
-      return obj.type === type;
-    }
-    return false;
-  });
-  const ids = objects.map(obj => obj.userData.id).filter(Boolean);
-  objectManager.selectObjects(ids);
-}
+  // 射线检测 
+  const raycaster = inputManager.getRaycaster(camera);
+  const intersects = raycaster.intersectObjects(objects, true);
+  if (intersects.length === 0) return null;
 
-/**
- * 根据名称选择对象
- * @param {string} name 对象名称
- * @param {boolean} exactMatch 是否精确匹配
- */
-function selectByName(name, exactMatch = false) {
-  const objects = objectManager.getAllObjects()
-    .filter(obj => {
-      if (exactMatch) {
-        return obj.name === name;
-      } else {
-        return obj.name.toLowerCase().includes(name.toLowerCase());
-      }
-    });
-  
-  const ids = objects.map(obj => obj.userData.id).filter(Boolean);
-  objectManager.selectObjects(ids);
-}
-
-/**
- * 取消选择对象
- * 保证镜头锁定状态优先，主动同步ThreeViewer的controlsLocked到controls.enabled
- * @param {string|THREE.Object3D} objectOrId 对象或ID
- */
-function deselectObject(objectOrId) {
-  let id;
-  
-  if (typeof objectOrId === 'string') {
-    id = objectOrId;
-  } else {
-    id = objectOrId.userData.id;
+  // 找到顶级管理的对象
+  let targetObject = intersects[0].object;
+  while (targetObject.parent && !objects.find(obj => obj.uuid === targetObject.uuid)) {
+    targetObject = targetObject.parent;
   }
-  
-  if (!id) return;
-  
-  objectManager.deselectObjects(id);
-  try {
-    const { useThreeViewer } = require('../composables/useThreeViewer.js');
-    const threeViewer = useThreeViewer();
-    if (threeViewer.controls && threeViewer.getControlsLocked) {
-      threeViewer.controls.enabled = !threeViewer.getControlsLocked();
-    }
-  } catch (e) {
-    // ignore
-  }
+  return objects.find(obj => obj.uuid === targetObject.uuid) || null;
 }
 
 /**
  * 处理鼠标点击选择
- * 使用ObjectManager.getIntersectedFirstObject(raycaster)高效获取第一个相交对象
  * @param {object} event 鼠标事件数据
  * @param {THREE.Camera} camera 相机
  */
 function handleClickSelection(event, camera) {
-  if (!camera) return;
-  const raycaster = inputManager.getRaycaster(camera);
-  const targetObject = objectManager.getIntersectedFirstObject(raycaster);
+  const targetObject = getIntersectedFirstObject(camera);
   if (targetObject) {
-    // 如果对象被锁定，则不允许选中
     if (targetObject.userData && targetObject.userData.locked) {
+      // 如果对象被锁定，则不允许选中
+      return;
+    }
+    if(targetObject.type && targetObject.type.indexOf('Helper') !== -1) {
+      // 如果点击的是Helper类型对象，则不允许选中
       return;
     }
     const addToSelection = event.modifiers?.ctrl || event.modifiers?.shift;
@@ -501,82 +443,17 @@ function handleClickSelection(event, camera) {
   }
 }
 
-// 已去除悬停高亮相关功能
-
-/**
- * 开始框选
- * @param {number} x 起始X坐标
- * @param {number} y 起始Y坐标
- */
-function startBoxSelection(x, y) {
-  boxSelection.isActive = true;
-  boxSelection.startX = x;
-  boxSelection.startY = y;
-  boxSelection.endX = x;
-  boxSelection.endY = y;
-}
-
-/**
- * 更新框选
- * @param {number} x 当前X坐标
- * @param {number} y 当前Y坐标
- */
-function updateBoxSelection(x, y) {
-  if (!boxSelection.isActive) return;
-  
-  boxSelection.endX = x;
-  boxSelection.endY = y;
-}
-
-/**
- * 结束框选
- * @param {THREE.Camera} camera 相机
- * @param {HTMLElement} element 渲染元素
- */
-function endBoxSelection(camera, element) {
-  if (!boxSelection.isActive || !camera || !element) return;
-  
-  const rect = element.getBoundingClientRect();
-  const selectedIds = [];
-  
-  // 计算框选区域
-  const minX = Math.min(boxSelection.startX, boxSelection.endX);
-  const maxX = Math.max(boxSelection.startX, boxSelection.endX);
-  const minY = Math.min(boxSelection.startY, boxSelection.endY);
-  const maxY = Math.max(boxSelection.startY, boxSelection.endY);
-  
-  // 检查每个对象是否在框选区域内
-  objectManager.getAllObjects().forEach(object => {
-    const box = new THREE.Box3().setFromObject(object);
-    const center = box.getCenter(new THREE.Vector3());
-    
-    // 将世界坐标转换为屏幕坐标
-    const screenPos = center.clone().project(camera);
-    const x = (screenPos.x + 1) / 2 * rect.width;
-    const y = -(screenPos.y - 1) / 2 * rect.height;
-    
-    if (x >= minX && x <= maxX && y >= minY && y <= maxY) {
-      selectedIds.push(object.userData.id);
-    }
-  });
-  
-  if (selectedIds.length > 0) {
-    objectManager.selectObjects(selectedIds);
-  }
-  
-  boxSelection.isActive = false;
-}
-
 /**
  * 获取选择边界框
  * @returns {THREE.Box3|null} 边界框
  */
 function getSelectionBounds() {
-  if (selectedObjects.value.length === 0) return null;
+  let objs = getSelectedObjects();
+  if (objs.length === 0) return null;
   
   const box = new THREE.Box3();
   
-  selectedObjects.value.forEach(object => {
+  objs.forEach(object => {
     const objectBox = new THREE.Box3().setFromObject(object);
     box.union(objectBox);
   });
@@ -593,45 +470,101 @@ function getSelectionCenter() {
   return bounds ? bounds.getCenter(new THREE.Vector3()) : null;
 }
 
+/**
+ * 设置对象变换
+ * @param {string} objectId 对象ID
+ * @param {object} transform 变换参数
+ */
+function setObjectTransform(objectId, transform) {
+  const object = getObjectById(objectId);
+  if (!object) return;
   
-/**
- * 复制选中的对象
- */
-/**
- * 复制选中的对象
- * 复制后将新对象添加到Three.js场景，避免TransformControls报错
- */
-function duplicateSelected() {
-  const selectedIds = Array.from(objectManager.state.selectedObjects);
-
-  // 用 useObjectSelection 的 deselectObject 取消选择，确保高亮和 userData 恢复
-  selectedIds.forEach(id => {
-    const obj = objectManager.getObject(id);
-    if (obj) deselectObject(obj);
-  });
-
-  objectManager.copyObjects(selectedIds);
-
-  // 粘贴到原对象附近（避免重叠）
-  const duplicated = objectManager.pasteObjects(new THREE.Vector3(Math.random(), Math.random(), Math.random()));
-
-  // 新对象必须添加到Three.js场景
-  if (scene && typeof scene.add === 'function') {
-    duplicated.forEach(obj => {
-      scene.add(obj);
-    });
+  if (transform.position) {
+    object.position.set(...transform.position);
   }
-
-  const duplicatedIds = duplicated.map(obj => obj.userData.id);
-  objectManager.selectObjects(duplicatedIds);
-
-  return duplicated;
+  if (transform.rotation) {
+    object.rotation.set(...transform.rotation);
+  }
+  if (transform.scale) {
+    object.scale.set(...transform.scale);
+  }
+  // 变换后分发事件，通知属性面板刷新
+  window.dispatchEvent(new CustomEvent('object-transform-updated', { detail: { objectId } }));
 }
 
-// 监听选择变化
-watch(selectedObjects, (newSelection, oldSelection) => {
-  // 可以在这里触发选择变化事件
-});
+/**
+ * 获取对象变换
+ * @param {string} objectId 对象ID
+ * @returns {object|null} 变换数据
+ */
+function getObjectTransform(objectId) {
+  const object = getObject(objectId);
+  if (!object) return null;
+  
+  return {
+    position: object.position.toArray(),
+    rotation: object.rotation.toArray(),
+    scale: object.scale.toArray()
+  };
+}
+
+
+
+/**
+ * 选择对象
+ * @param {string|string[]} objectIds 对象ID或ID数组
+ * @param {boolean} addToSelection 是否添加到现有选择
+ */
+function selectObjects(objectIds, addToSelection = false) {
+  if (!addToSelection) {
+    selectedIdsRef.value = [];
+  }
+  
+  objectIds && objectIds.forEach(id => {
+    selectedObject(id, true);
+  });
+}
+
+function updateMultiSelectBox() {
+  if (multiSelectBoxHelper) {
+    multiSelectBoxHelper.object.dispose();
+    scene.remove(multiSelectBoxHelper);
+    multiSelectBoxHelper.dispose();
+    multiSelectBoxHelper = null;
+  }
+
+  // 先清除旧的多选盒
+  if(multiSelectBoxRef.value) {
+    multiSelectBoxRef.value.geometry.dispose();
+    multiSelectBoxRef.value = null;
+  }
+
+  let ids = selectedIdsRef.value;
+  if(!ids || ids.length < 2) return;
+  const bounds = getSelectionBounds();
+  if (!bounds) return;
+
+  let multiSelectBox = new THREE.Mesh(new THREE.BoxGeometry(
+    bounds.max.x - bounds.min.x,
+    bounds.max.y - bounds.min.y,
+    bounds.max.z - bounds.min.z
+  ));
+  // 取最小坐标作为位置基准
+  multiSelectBox.geometry.translate(
+    (bounds.max.x - bounds.min.x) / 2,
+    (bounds.max.y - bounds.min.y) / 2,
+    (bounds.max.z - bounds.min.z) / 2
+  );
+  multiSelectBox.position.copy((bounds.min));
+  multiSelectBoxRef.value = multiSelectBox;
+
+  multiSelectBoxHelper = new BoxHelper();
+  multiSelectBoxHelper.setFromObject(multiSelectBox);
+  multiSelectBoxHelper.position.copy(bounds.getCenter(new THREE.Vector3()));
+  scene.add(multiSelectBoxHelper);
+
+  return multiSelectBox;
+}
 
 /**
  * useObjectSelection
@@ -641,13 +574,8 @@ watch(selectedObjects, (newSelection, oldSelection) => {
 export function useObjectSelection() {
   return {
     // 状态
-    selectedObjects,
-    selectedObjectIds,
-    hasSelection,
-    selectionCount,
-    boxSelection,
-    selectionConfig,
-    hoveredObject,
+    selectedIdsRef,
+    multiSelectBoxRef,
 
     // TransformControls相关
     initTransformControls,
@@ -658,21 +586,20 @@ export function useObjectSelection() {
     get currentHelpers() { return currentHelpers; },
 
     // 方法
+    getSelectedObjects,
     selectObject,
     selectObjects,
     deselectObject,
     clearSelection,
     toggleSelection,
-    selectAll,
-    invertSelection,
-    selectByType,
-    selectByName,
     handleClickSelection,
-    startBoxSelection,
-    updateBoxSelection,
-    endBoxSelection,
     getSelectionBounds,
     getSelectionCenter,
-    duplicateSelected
+
+    setObjectTransform,
+    getObjectTransform,
+
+    updateMultiSelectBox
+    
   };
 }

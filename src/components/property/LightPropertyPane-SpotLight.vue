@@ -5,34 +5,43 @@
 -->
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, shallowRef, computed, watch } from 'vue'
 import * as THREE from 'three'
-import { useObjectSelection } from '../../composables/useObjectSelection.js'
+import { useObjectSelection } from '@/composables/useObjectSelection.js'
 
-/** 对象选择管理器 */
-const objectSelection = useObjectSelection()
-/** 当前选中对象 */
-const selectedObject = computed(() => {
-  const objects = objectSelection.selectedObjects.value
-  return objects.length === 1 ? objects[0] : null
-})
+const { selectedIdsRef, getSelectedObjects } = useObjectSelection();
+// 是否有选中对象
+const hasSelection = ref(false);
+// 当前选中对象（仅支持单选）
+const selectedObject = shallowRef(null);
+// 监听选中对象变化，更新activeTab和hasSelection
+watch(selectedIdsRef, (ids) => {
+  if (ids && ids.length > 0) {
+    hasSelection.value = true;
+    let objects = getSelectedObjects();
+    let object = objects ? objects[0] : null;
+    selectedObject.value = object;
+  } else {
+    hasSelection.value = false;
+    selectedObject.value = null;
+  }
+}, { immediate: true });
 
-/** 灯光颜色 */
 const color = ref('#ffffff') // 用于设置灯光颜色
-/** 灯光强度 */
 const intensity = ref(1) // 用于设置灯光强度
-/** 灯光距离 */
+const castShadow = ref(false) // 用于设置灯光是否投射阴影
+
 const distance = ref(0) // 用于设置聚光灯照射距离
-/** 灯光衰减 */
 const decay = ref(1) // 用于设置聚光灯衰减
-/** 灯光角度 */
 const angle = ref(Math.PI / 3) // 用于设置聚光灯角度
-/** 灯光聚光指数 */
 const penumbra = ref(0) // 用于设置聚光灯聚光指数
-/** 灯光目标点 */
+
 const targetX = ref(0) // 用于设置灯光目标点X
 const targetY = ref(0) // 用于设置灯光目标点Y
 const targetZ = ref(0) // 用于设置灯光目标点Z
+
+const followCamera = ref(false) // 用于设置灯光是否跟随相机
+const targetDistance = ref(100) // 用于设置灯光跟随目标距离
 
 /**
  * 刷新属性显示
@@ -52,6 +61,8 @@ function refreshLightProps() {
       targetY.value = obj.target.position.y ?? 0
       targetZ.value = obj.target.position.z ?? 0
     }
+    followCamera.value = obj.followCamera ?? false
+    targetDistance.value = obj.targetDistance ?? 100
   }
 }
 watch(selectedObject, refreshLightProps, { immediate: true })
@@ -63,19 +74,11 @@ watch(selectedObject, refreshLightProps, { immediate: true })
  */
 function updateLightProperty(key, value) {
   const obj = selectedObject.value
-  if (!obj || obj.type !== 'SpotLight') return
+  if (!obj) return;
   if (key === 'color') {
-    obj.color = new THREE.Color(value)
-  } else if (key === 'intensity') {
-    obj.intensity = value
-  } else if (key === 'distance') {
-    obj.distance = value
-  } else if (key === 'decay') {
-    obj.decay = value
-  } else if (key === 'angle') {
-    obj.angle = value
-  } else if (key === 'penumbra') {
-    obj.penumbra = value
+    obj.color = new THREE.Color(value);
+  } else {
+    obj[key] = value;
   }
 }
 
@@ -90,10 +93,16 @@ function updateLightTarget() {
 </script>
 
 <template>
-  <div v-if="selectedObject && selectedObject.type === 'SpotLight'" class="light-property-pane">
+  <div v-if="selectedObject && selectedObject.type === 'SpotLight'" class="property-pane">
     <div class="property-section">
       <h4>聚光灯属性</h4>
       <el-form label-width="80px" class="property-form">
+        <el-form-item label="投射阴影">
+          <el-switch
+            v-model="castShadow"
+            @change="val => updateLightProperty('castShadow', val)"
+          />
+        </el-form-item>
         <el-form-item label="颜色">
           <el-color-picker
             v-model="color"
@@ -153,64 +162,59 @@ function updateLightTarget() {
             @change="val => updateLightProperty('penumbra', val)"
           />
         </el-form-item>
-        <el-form-item label="目标点X">
-          <el-input-number
-            v-model="targetX"
-            :step="0.1"
-            :precision="2"
-            size="small"
-            @change="updateLightTarget"
+        <el-form-item label="跟随相机">
+          <el-switch
+            v-model="followCamera"
+            @change="val => updateLightProperty('followCamera', val)"
           />
         </el-form-item>
-        <el-form-item label="目标点Y">
+        <el-form-item v-if="followCamera" label="跟随距离">
           <el-input-number
-            v-model="targetY"
-            :step="0.1"
-            :precision="2"
+            v-model="targetDistance"
+            :step="1"
             size="small"
-            @change="updateLightTarget"
+            @change="val => updateLightProperty('targetDistance', val)"
           />
         </el-form-item>
-        <el-form-item label="目标点Z">
-          <el-input-number
-            v-model="targetZ"
-            :step="0.1"
-            :precision="2"
-            size="small"
-            @change="updateLightTarget"
-          />
+        <el-form-item v-else label="目标">
+           <div class="vector-input">
+              <el-input-number
+                  v-model="targetX"
+                  @change="updateLightTarget"
+                  :step="0.1"
+                  :precision="3"
+                  size="small"
+                  placeholder="X"
+                  :controls="false"
+              />
+              <el-input-number
+                  v-model="targetY"
+                @change="updateLightTarget"
+                  :step="0.1"
+                  :precision="3"
+                  size="small"
+                  placeholder="Y"
+                  :controls="false"
+              />
+              <el-input-number
+                  v-model="targetZ"
+                  @change="updateLightTarget"
+                  :step="0.1"
+                  :precision="3"
+                  size="small"
+                  placeholder="Z"
+                  :controls="false"
+              />
+          </div>
         </el-form-item>
       </el-form>
     </div>
   </div>
-  <div v-else class="no-light-selection">
-    <span style="color:#999;">未选中聚光灯对象</span>
+  <div v-else class="no-selection">
+    <span style="color:#999;">未选中对象</span>
   </div>
 </template>
 
 <style lang="scss" scoped>
-.light-property-pane {
-  width: 100%;
-  padding: 8px;
-  color: #fff;
-}
-.property-section {
-  margin-bottom: 12px;
-}
-.property-section h4 {
-  margin: 0 0 12px 0;
-  font-size: 14px;
-  font-weight: 600;
-  color: #ccc;
-  border-bottom: 1px solid #444;
-  padding-bottom: 4px;
-}
-.property-form {
-  margin-top: 8px;
-}
-.no-light-selection {
-  padding: 20px;
-  text-align: center;
-  color: #999;
-}
+@use './PropertyPane.scss';
 </style>

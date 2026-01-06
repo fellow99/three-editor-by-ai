@@ -109,52 +109,23 @@
     </main>
 
     <!-- 状态栏 -->
-    <EditorFooter
-      :objectSelection="objectSelection"
-      :scene="scene"
-      :cameraPosition="cameraPosition"
-      :cameraTarget="cameraTarget"
-      @update:cameraPosition="onCameraPositionUpdate"
-      @update:cameraTarget="onCameraTargetUpdate"
-    />
+    <EditorFooter />
   </div>
 </template>
 
 <script setup>
  // 3D场景编辑器主应用组件
 import { ref, reactive, provide, onMounted, onUnmounted } from 'vue';
-
-/**
- * 处理EditorFooter相机位置变更事件
- * @param {Object} pos 新的相机位置
- */
-function onCameraPositionUpdate(pos) {
-  if (threeViewer?.camera) {
-    threeViewer.camera.position.set(pos.x, pos.y, pos.z);
-  }
-}
-/**
- * 处理EditorFooter目标点变更事件
- * @param {Object} target 新的controls target
- */
-function onCameraTargetUpdate(target) {
-  if (threeViewer?.controls && threeViewer.controls.target) {
-    threeViewer.controls.target.set(target.x, target.y, target.z);
-    // 同步相机朝向
-    if (threeViewer.camera && typeof threeViewer.camera.lookAt === 'function') {
-      threeViewer.camera.lookAt(target.x, target.y, target.z);
-    }
-  }
-}
 import { ElMessageBox } from 'element-plus';
-import 'element-plus/es/components/message-box/style/css';
-import { useScene } from './composables/useScene.js';
-// 引入element-plus图标
-import { Setting, Loading } from '@element-plus/icons-vue';
+import { Loading } from '@element-plus/icons-vue';
+
 import { useObjectSelection } from './composables/useObjectSelection.js';
 import { useTransform } from './composables/useTransform.js';
 import { useAssetsManager } from './composables/useAssetsManager.js';
+import { useObjectManager } from './composables/useObjectManager.js';
 import { useThreeViewer } from './composables/useThreeViewer.js';
+import { applyInitialPos } from '@/composables/useCameraPosState.js';
+import { useEventBus } from '@/composables/useEventBus.js';
 
 // 导入组件
 import Toolbar from './components/editor/Toolbar.vue';
@@ -192,19 +163,17 @@ function toggleLeftPanel() {
 import { computed } from 'vue';
 
  // 使用各种 composables
-const scene = useScene();
 const threeViewer = useThreeViewer();
 const objectSelection = useObjectSelection();
 const transform = useTransform();
 const assets = useAssetsManager();
 
 /** 是否显示多选面板（选中对象数大于1） */
-const showMultiSelectPanel = computed(() => objectSelection.selectedObjects.value.length > 1);
+const showMultiSelectPanel = computed(() => objectSelection.selectedIdsRef.value.length > 1);
 
 import * as THREE from 'three';
 
 // 提供给子组件使用
-provide('scene', scene);
 provide('objectSelection', objectSelection);
 provide('transform', transform);
 provide('assets', assets);
@@ -226,10 +195,29 @@ const cameraQuaternion = ref({ x: 0, y: 0, z: 0, w: 1 });
  */
 const cameraTarget = reactive({ x: 0, y: 0, z: 0 });
 
-// 性能监控
-const fps = computed(() => scene.fps.value);
-const sceneStats = computed(() => scene.getSceneStats());
 
+/**
+ * 处理EditorFooter相机位置变更事件
+ * @param {Object} pos 新的相机位置
+ */
+function onCameraPositionUpdate(pos) {
+  if (threeViewer?.camera) {
+    threeViewer.camera.position.set(pos.x, pos.y, pos.z);
+  }
+}
+/**
+ * 处理EditorFooter目标点变更事件
+ * @param {Object} target 新的controls target
+ */
+function onCameraTargetUpdate(target) {
+  if (threeViewer?.controls && threeViewer.controls.target) {
+    threeViewer.controls.target.set(target.x, target.y, target.z);
+    // 同步相机朝向
+    if (threeViewer.camera && typeof threeViewer.camera.lookAt === 'function') {
+      threeViewer.camera.lookAt(target.x, target.y, target.z);
+    }
+  }
+}
 // 定时更新相机状态
 let animationId = null;
 function updateCameraState() {
@@ -251,14 +239,12 @@ function updateCameraState() {
 
 // 控制方法
 function resetView() {
-  scene.updateCameraConfig({
-    position: { x: 5, y: 5, z: 5 },
-    target: { x: 0, y: 0, z: 0 }
-  });
+  applyInitialPos();
 }
 
 function fitToScreen() {
-  const objects = scene.objectManager.getAllObjects();
+  const objectManager = useObjectManager();
+  const objects = objectManager.getAllObjects();
   if (objects.length > 0) {
     const box = new THREE.Box3();
     objects.forEach(obj => {
