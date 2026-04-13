@@ -10,6 +10,13 @@ import pkg from './package.json'
 // https://vite.dev/config/
 export default defineConfig({
   base: `/${pkg.name}`,
+  server: {
+    host: '0.0.0.0',
+    // 避免端口冲突
+    strictPort: true,
+    // 允许所有域名
+    allowedHosts: true,
+  },
   build: {
     outDir: `dist/${pkg.name}`
   },
