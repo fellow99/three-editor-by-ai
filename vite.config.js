@@ -12,8 +12,6 @@ export default defineConfig({
   base: `/${pkg.name}`,
   server: {
     host: '0.0.0.0',
-    // 避免端口冲突
-    strictPort: true,
     // 允许所有域名
     allowedHosts: true,
   },
