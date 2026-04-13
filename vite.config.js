@@ -16,7 +16,7 @@ export default defineConfig({
     allowedHosts: true,
   },
   build: {
-    outDir: `dist/${pkg.name}`
+    outDir: `dist`
   },
   resolve: {
     alias: {
