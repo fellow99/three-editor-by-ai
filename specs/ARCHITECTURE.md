@@ -1,54 +1,91 @@
 # Three Editor by AI - 架构设计
 
-**生成日期**: 2026-04-07  
+**生成日期**: 2026-04-14  
 **项目版本**: 0.1.0
 
 ---
 
 ## 架构概述
 
-本项目采用**分层架构**和**模块化设计**，基于 Vue 3 Composition API 实现关注点分离。整体架构遵循"UI - 逻辑 - 引擎 - 服务"四层分离原则。
+本项目采用**五层分层架构**和**模块化设计**，基于 Vue 3 Composition API 实现关注点分离。整体架构遵循"UI - 逻辑 - 引擎 - 服务 - 工具"五层分离原则。
 
 ---
 
 ## 架构分层
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                  UI Layer (Vue Components)               │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐     │
-│  │   Editor    │  │   Dialogs   │  │  Property   │     │
-│  │   Panels    │  │             │  │   Panels    │     │
-│  └─────────────┘  └─────────────┘  └─────────────┘     │
-├─────────────────────────────────────────────────────────┤
-│              Logic Layer (Composables / Hooks)           │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐     │
-│  │ useThree-   │  │ useObject-  │  │  useTrans-  │     │
-│  │ Viewer      │  │ Selection   │  │  form       │     │
-│  └─────────────┘  └─────────────┘  └─────────────┘     │
-├─────────────────────────────────────────────────────────┤
-│              Engine Layer (Core Managers)                │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐     │
-│  │ ThreeViewer │  │  Object     │  │   Input     │     │
-│  │             │  │  Manager    │  │  Manager    │     │
-│  └─────────────┘  └─────────────┘  └─────────────┘     │
-│  ┌─────────────┐                                        │
-│  │   Asset     │                                        │
-│  │   Loader    │                                        │
-│  └─────────────┘                                        │
-├─────────────────────────────────────────────────────────┤
-│              Service Layer (External APIs)               │
-│  ┌─────────────┐  ┌─────────────┐                       │
-│  │   VFS       │  │   Static    │                       │
-│  │   Server    │  │   Drive     │                       │
-│  └─────────────┘  └─────────────┘                       │
-├─────────────────────────────────────────────────────────┤
-│              Utilities Layer                             │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐     │
-│  │   Math      │  │  Geometry   │  │    File     │     │
-│  │   Utils     │  │   Utils     │  │    Utils    │     │
-│  └─────────────┘  └─────────────┘  └─────────────┘     │
-└─────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                  UI Layer (Vue Components)                    │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐         │
+│  │   Editor    │  │   Dialogs   │  │  Property   │         │
+│  │   Panels    │  │             │  │   Panels    │         │
+│  └─────────────┘  └─────────────┘  └─────────────┘         │
+│  ┌─────────────┐  ┌─────────────┐                          │
+│  │   Scene     │  │  Resource   │                          │
+│  │ Components  │  │  Panels     │                          │
+│  └─────────────┘  └─────────────┘                          │
+├─────────────────────────────────────────────────────────────┤
+│              Logic Layer (Composables / Hooks)               │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐         │
+│  │ useThree-   │  │ useObject-  │  │  useTrans-  │         │
+│  │ Viewer      │  │ Selection   │  │  form       │         │
+│  └─────────────┘  └─────────────┘  └─────────────┘         │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐         │
+│  │ useAssets-  │  │ useInput-   │  │  useCamera- │         │
+│  │ Manager     │  │ Manager     │  │  PosState   │         │
+│  └─────────────┘  └─────────────┘  └─────────────┘         │
+├─────────────────────────────────────────────────────────────┤
+│              Engine Layer (Core Managers)                    │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐         │
+│  │ ThreeViewer │  │  Object     │  │   Input     │         │
+│  │  (790 lines)│  │  Manager    │  │  Manager    │         │
+│  │             │  │ (752 lines) │  │ (381 lines) │         │
+│  └─────────────┘  └─────────────┘  └─────────────┘         │
+│  ┌─────────────┐                                            │
+│  │   Asset     │                                            │
+│  │   Loader    │                                            │
+│  │ (460 lines) │                                            │
+│  └─────────────┘                                            │
+├─────────────────────────────────────────────────────────────┤
+│              Service Layer (External APIs)                   │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐         │
+│  │   VFS       │  │   VFS       │  │   Static    │         │
+│  │   Service   │  │   Server    │  │   Drive     │         │
+│  │             │  │   API       │  │   API       │         │
+│  └─────────────┘  └─────────────┘  └─────────────┘         │
+│  ┌─────────────┐                                            │
+│  │   Fly       │                                            │
+│  │   Controls  │                                            │
+│  │ (840 lines) │                                            │
+│  └─────────────┘                                            │
+├─────────────────────────────────────────────────────────────┤
+│              Utilities Layer                                 │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐         │
+│  │   Math      │  │  Geometry   │  │    File     │         │
+│  │   Utils     │  │   Utils     │  │    Utils    │         │
+│  └─────────────┘  └─────────────┘  └─────────────┘         │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Editor.vue 布局
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  Toolbar (ribbon-style: File/Edit/Transform/View/Config)     │
+├─────────────────────────────────────────────────────────────┤
+│  ┌─────────────┐  ┌──────────────────────────┐  ┌─────────┐ │
+│  │ ResourcePanel│  │    editor-viewport       │  │Property │ │
+│  │ (left panel) │  │  SceneViewer + overlays  │  │Panel /  │ │
+│  │ 4 tabs       │  │  (ViewportControls,      │  │MultiSel │ │
+│  │              │  │   CubeViewportCtrl,      │  │Panel    │ │
+│  │              │  │   StatHints,             │  │(right)  │ │
+│  │              │  │   InteractionHints)      │  │         │ │
+│  └─────────────┘  └──────────────────────────┘  └─────────┘ │
+├─────────────────────────────────────────────────────────────┤
+│  EditorFooter (status bar: selection, camera pos, stats)     │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -59,7 +96,12 @@
 
 **职责**: 用户界面展示和交互处理
 
-**主要组件**:
+**组件统计**:
+- 主编辑器: 1 个 (Editor.vue)
+- 编辑器面板: 10 个 (components/editor/)
+- 对话框组件: 6 个 (components/dialog/)
+- 场景组件: 5 个 (components/scene/)
+- 属性组件: 49 个 (components/property/)
 
 #### Editor.vue - 主编辑器
 - 集成所有子组件
@@ -67,32 +109,41 @@
 - 处理全局事件
 
 #### 编辑器面板组件 (components/editor/)
-- `Toolbar.vue` - 工具栏
+- `Toolbar.vue` - 工具栏（ribbon 风格）
 - `PropertyPanel.vue` - 属性面板
+- `MultiSelectPanel.vue` - 多对象批量操作面板
 - `Inspector.vue` - 对象检查器
 - `AssetBrowser.vue` - 资源浏览器
-- `ResourcePanel.vue` - 资源面板
+- `PrimitiveBrowser.vue` - 基础几何体与灯光浏览
+- `ResourcePanel.vue` - 资源面板（4 个标签页）
 - `VfsFileBrowser.vue` - VFS 文件浏览器
 - `EditorFooter.vue` - 底部状态栏
 
 #### 属性编辑组件 (components/property/)
-- `TransformPropertyPane.vue` - 变换属性
+- `TransformPropertyPane.vue` - 变换属性（位置、旋转、缩放）
 - `MaterialPropertyPane.vue` - 材质属性
-- `AnimationPropertyPane.vue` - 动画属性
+- `AnimationPropertyPane.vue` - 动画属性（选择与播放）
+- `BasePropertyPane.vue` - 对象基础属性
+- `ScenePropertyPane.vue` - 场景属性
 - `UserDataPropertyPane.vue` - userData 属性
+- `SceneUserDataPropertyPane.vue` - 场景 userData 属性
+- `TexturePropertyPane.vue` - 纹理编辑
 - 各种几何体和灯光的专属属性面板
 
 #### 对话框组件 (components/dialog/)
 - `EditorConfigDialog.vue` - 编辑器配置
 - `VfsFileChooserDialog.vue` - 文件选择
+- `VfsFolderChooserDialog.vue` - 目录选择
 - `VfsFileSaverDialog.vue` - 文件保存
 - `VfsMaterialChooserDialog.vue` - 材质选择
+- `UserDataPopup.vue` - UserData 编辑
 
 #### 场景组件 (components/scene/)
 - `SceneViewer.vue` - 3D 场景视图
-- `ViewportControls.vue` - 视图控制
-- `CubeViewportControls.vue` - 立方体视角
+- `ViewportControls.vue` - 视图控制面板
+- `CubeViewportControls.vue` - 立方体视角控件
 - `InteractionHints.vue` - 操作提示
+- `StatHints.vue` - 性能监控面板
 
 ---
 
@@ -104,26 +155,75 @@
 - 每个 composable 函数封装单一业务领域
 - 使用 Vue 3 响应式 API 管理状态
 - 提供清晰的输入输出接口
+- 采用单例模式（singleton composables）
 
 #### 核心 Composables
 
 | 函数 | 职责 | 关键功能 |
 |------|------|----------|
-| `useThreeViewer` | Three.js 场景管理 | 场景初始化、渲染循环、相机控制 |
+| `useThreeViewer` | Three.js 场景管理（中央枢纽） | 场景初始化、渲染循环、相机控制 |
 | `useObjectSelection` | 对象选择与变换 | 选择管理、TransformControls、辅助显示 |
 | `useTransform` | 变换操作 | 移动/旋转/缩放、撤销重做、Y 轴锁定 |
+| `useObjectManager` | 对象管理 | 对象创建、添加、移除 |
 | `useAssetsManager` | 资源管理 | 资源加载、缓存、资源库管理 |
-| `useMaterial` | 材质管理 | 材质创建、编辑、材质库 |
+| `useInputManager` | 输入管理 | 键盘/鼠标输入处理 |
 | `useControls` | 控制器管理 | Orbit/Map/Fly 控制器切换 |
 | `useCameraPosState` | 相机位置状态 | 预设视角、相机位置管理 |
-| `useInspectorHandler` | 检查器处理 | 对象信息检查 |
 | `useEditorConfig` | 编辑器配置 | 配置状态管理 |
 | `useEventBus` | 事件总线 | 全局事件分发 |
-| `useInputManager` | 输入管理 | 键盘/鼠标输入处理 |
 | `useHelpers` | 辅助对象 | 辅助线、辅助面等 |
-| `useStats` | 性能统计 | FPS、内存等统计 |
+| `useMaterial` | 材质管理 | 材质创建、编辑、材质库 |
+| `useInspectorHandler` | 检查器处理 | 对象信息检查 |
 | `useAxesLockState` | Y 轴锁定 | 变换轴锁定状态 |
 | `useNavigationsState` | 漫游列表 | 漫游路径管理 |
+| `useStats` | 性能统计 | FPS、内存等统计 |
+
+**Composable 依赖关系**:
+
+```
+useThreeViewer (中央枢纽)
+├──→ useEditorConfig
+├──→ useCameraPosState
+├──→ useObjectManager
+├──→ useObjectSelection
+├──→ useAssetsManager
+├──→ useInputManager
+├──→ useAxesLockState
+├──→ useHelpers
+├──→ useControls
+├──→ vfsService
+└──→ useEventBus
+
+useObjectSelection
+├──→ useAxesLockState
+├──→ useThreeViewer
+├──→ useControls
+├──→ useInputManager
+└──→ useTransform (动态)
+
+useControls
+├──→ useThreeViewer
+└──→ useEditorConfig
+
+useCameraPosState
+├──→ useThreeViewer
+└──→ useControls
+
+useNavigationsState
+└──→ useCameraPosState
+
+useInspectorHandler
+├──→ useThreeViewer
+├──→ useObjectSelection
+└──→ useEventBus
+
+useMaterial
+└──→ useThreeViewer
+
+useTransform
+├──→ useObjectManager
+└──→ useObjectSelection
+```
 
 **状态流向**:
 ```
@@ -139,7 +239,7 @@ Component → Composable → Core Manager → Three.js
 
 **职责**: Three.js 核心逻辑封装
 
-#### ThreeViewer.js - 场景管理器
+#### ThreeViewer.js - 场景管理器 (790 行)
 **职责**: Three.js 场景、相机、渲染器管理
 
 **核心功能**:
@@ -147,7 +247,7 @@ Component → Composable → Core Manager → Three.js
 - 渲染循环管理
 - 相机控制和预设
 - 场景序列化/反序列化
-- 对象查找和过滤
+- 对象查找和过滤（支持多层 userData key）
 - 动画系统驱动
 
 **关键方法**:
@@ -155,21 +255,22 @@ Component → Composable → Core Manager → Three.js
 class ThreeViewer {
   init(container)           // 初始化
   render()                  // 渲染循环
-  loadScene(json)           // 加载场景
+  loadScene(json)           // 加载场景（完整恢复 userData）
   exportScene()             // 导出场景
-  findObjectsByUserData()   // 按 userData 查找
+  findObjectsByUserData()   // 按 userData 查找（支持嵌套 key）
   driveAnimations()         // 驱动所有动画
 }
 ```
 
 **事件**:
+- `before-render` - 渲染前
 - `scene-loaded` - 场景加载完成
 - `object-added` - 对象添加
 - `object-removed` - 对象移除
 
 ---
 
-#### ObjectManager.js - 对象管理器
+#### ObjectManager.js - 对象管理器 (752 行)
 **职责**: 场景对象的生命周期管理
 
 **核心功能**:
@@ -179,14 +280,16 @@ class ThreeViewer {
 - 对象锁定/解锁
 - 射线检测
 - 动画状态管理
+- 对象序列化（仅保留可序列化字段）
 
 **关键方法**:
 ```javascript
 class ObjectManager {
-  createPrimitive(type, options)  // 创建几何体
+  createPrimitive(type, options)  // 创建几何体（工厂模式）
   add(object)                      // 添加对象
   remove(object)                   // 移除对象
-  getIntersectedObjects()          // 获取相交对象
+  getIntersectedObjects()          // 获取相交对象（仅未锁定）
+  getIntersectedFirstObject()      // 获取第一个相交对象
   getUnlockedObjects()             // 获取未锁定对象
   exportObject(object)             // 导出对象
   importObject(json)               // 导入对象
@@ -194,13 +297,14 @@ class ObjectManager {
 ```
 
 **事件**:
-- `object-added` - 对象添加
-- `object-removed` - 对象移除
+- `before-add-object` - 添加对象前
+- `add-object` - 对象添加
+- `remove-object` - 对象移除
 - `object-transform-updated` - 变换更新
 
 ---
 
-#### InputManager.js - 输入管理器
+#### InputManager.js - 输入管理器 (381 行)
 **职责**: 用户输入处理（键盘、鼠标）
 
 **核心功能**:
@@ -219,9 +323,18 @@ class InputManager {
 }
 ```
 
+**事件**:
+- `click` - 点击
+- `drag-start` - 拖拽开始
+- `drag` - 拖拽中
+- `drag-end` - 拖拽结束
+- `wheel` - 滚轮
+- `keydown` - 按键按下
+- `keyup` - 按键释放
+
 ---
 
-#### AssetLoader.js - 资源加载器
+#### AssetLoader.js - 资源加载器 (460 行)
 **职责**: 3D 资源和纹理加载
 
 **核心功能**:
@@ -252,6 +365,16 @@ class AssetLoader {
 ### 4. Service Layer (服务层)
 
 **职责**: 外部 API 封装和数据访问
+
+#### VfsService - 虚拟文件系统服务
+**封装**: `src/services/vfs-service.js`
+
+**功能**:
+- VFS 业务逻辑封装
+- 文件操作协调
+- 与后端服务通信
+
+---
 
 #### VfsServerApi - 虚拟文件系统 API
 **封装**: `src/services/vfs-server-api.js`
@@ -299,6 +422,17 @@ class StaticDriveApi {
 
 ---
 
+#### FlyControls.js - 飞行控制器 (840 行)
+**封装**: `src/controls/FlyControls.js`
+
+**功能**:
+- 基于键盘的三维飞行控制（WASD/QE/方向键）
+- 基于鼠标的三维飞行控制
+- 速度、旋转、拖拽操作
+- 空格键与 R 键向上飞行
+
+---
+
 ### 5. Utilities Layer (工具层)
 
 **职责**: 通用工具函数
@@ -328,7 +462,7 @@ class StaticDriveApi {
 ```
 用户拖拽文件
     ↓
-AssetBrowser.vue (检测拖拽)
+ResourcePanel / VfsFileBrowser (检测拖拽)
     ↓
 useAssetsManager.loadModel()
     ↓
@@ -338,7 +472,7 @@ ThreeViewer.scene.add()
     ↓
 ObjectManager.add()
     ↓
-分发 'object-added' 事件
+分发 'add-object' 事件
     ↓
 useObjectSelection 监听并更新
     ↓
@@ -385,23 +519,36 @@ VfsServerApi.save() 保存到 VFS
 
 ### mitt 事件总线集成
 
-**核心管理器事件**:
+**核心管理器均集成 mitt 事件机制**:
 
 ```javascript
 // ThreeViewer.js
 this.emitter = mitt();
-this.emitter.on('scene-loaded', callback);
-this.emitter.emit('scene-loaded', data);
+this.emitter.on('before-render', callback);
+this.emitter.emit('before-render', data);
 
 // ObjectManager.js
 this.emitter = mitt();
-this.emitter.on('object-added', callback);
-this.emitter.emit('object-added', object);
+this.emitter.on('before-add-object', callback);
+this.emitter.on('add-object', callback);
+this.emitter.on('remove-object', callback);
+this.emitter.on('object-transform-updated', callback);
 
 // InputManager.js
 this.emitter = mitt();
-this.emitter.on('key-pressed', callback);
-this.emitter.emit('key-pressed', key);
+this.emitter.on('click', callback);
+this.emitter.on('drag-start', callback);
+this.emitter.on('drag', callback);
+this.emitter.on('drag-end', callback);
+this.emitter.on('wheel', callback);
+this.emitter.on('keydown', callback);
+this.emitter.on('keyup', callback);
+
+// AssetLoader.js
+this.emitter = mitt();
+this.emitter.on('load-progress', callback);
+this.emitter.on('load-complete', callback);
+this.emitter.on('load-error', callback);
 ```
 
 **Composables 事件订阅**:
@@ -409,10 +556,27 @@ this.emitter.emit('key-pressed', key);
 ```javascript
 // useObjectSelection.js
 const threeViewer = useThreeViewer();
-threeViewer.emitter.on('object-added', (object) => {
+threeViewer.emitter.on('add-object', (object) => {
   // 处理对象添加
 });
 ```
+
+**关键事件清单**:
+
+| 事件名 | 来源 | 用途 |
+|--------|------|------|
+| `before-render` | ThreeViewer | 渲染前钩子 |
+| `before-add-object` | ObjectManager | 添加对象前拦截 |
+| `add-object` | ObjectManager | 对象已添加 |
+| `remove-object` | ObjectManager | 对象已移除 |
+| `object-transform-updated` | ObjectManager | 变换完成通知 |
+| `click` | InputManager | 鼠标点击 |
+| `drag-start` | InputManager | 拖拽开始 |
+| `drag` | InputManager | 拖拽中 |
+| `drag-end` | InputManager | 拖拽结束 |
+| `wheel` | InputManager | 滚轮滚动 |
+| `keydown` | InputManager | 按键按下 |
+| `keyup` | InputManager | 按键释放 |
 
 ---
 
@@ -447,27 +611,102 @@ const history = ref([]);
 ## 模块依赖关系
 
 ```
-┌────────────────────────────────────────────┐
-│              Editor.vue                    │
-│                                            │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐ │
-│  │ Compo-   │  │ Compo-   │  │ Compo-   │ │
-│  │ nents    │  │ nents    │  │ nents    │ │
-│  └────┬─────┘  └────┬─────┘  └────┬─────┘ │
-│       │             │             │        │
-│  ┌────┴─────────────┴─────────────┴────┐  │
-│  │         Composables Layer            │  │
-│  └────┬─────────────┬─────────────┬────┘  │
-│       │             │             │        │
-│  ┌────┴─────────────┴─────────────┴────┐  │
-│  │          Core Managers               │  │
-│  └────┬─────────────┬─────────────┬────┘  │
-│       │             │             │        │
-│  ┌────┴─────────────┴─────────────┴────┐  │
-│  │           Services                   │  │
-│  └──────────────────────────────────────┘  │
-└────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────┐
+│                      Editor.vue                            │
+│                                                            │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐  │
+│  │ Compo-   │  │ Compo-   │  │ Compo-   │  │ Compo-   │  │
+│  │ nents    │  │ nents    │  │ nents    │  │ nents    │  │
+│  └────┬─────┘  └────┬─────┘  └────┬─────┘  └────┬─────┘  │
+│       │             │             │             │         │
+│  ┌────┴─────────────┴─────────────┴─────────────┴────┐    │
+│  │              Composables Layer                     │    │
+│  │  (useThreeViewer 为中央枢纽)                        │    │
+│  └────┬─────────────┬─────────────┬─────────────┬────┘    │
+│       │             │             │             │         │
+│  ┌────┴─────────────┴─────────────┴─────────────┴────┐    │
+│  │               Core Managers                        │    │
+│  │  (ThreeViewer / ObjectManager / InputManager)      │    │
+│  └────┬─────────────┬─────────────┬─────────────┬────┘    │
+│       │             │             │             │         │
+│  ┌────┴─────────────┴─────────────┴─────────────┴────┐    │
+│  │               Services                             │    │
+│  │  (VFS / Static Drive / FlyControls)                │    │
+│  └────────────────────────────────────────────────────┘    │
+└────────────────────────────────────────────────────────────┘
 ```
+
+---
+
+## 设计模式
+
+### 1. 单例模式 (Singleton)
+
+**应用**: Composable 函数
+
+**说明**: 每个 composable 函数在首次调用时创建实例，后续调用返回同一实例。确保全局状态一致性。
+
+```javascript
+// 单例 composable 模式
+let instance = null;
+export function useThreeViewer() {
+  if (!instance) {
+    instance = createThreeViewer();
+  }
+  return instance;
+}
+```
+
+---
+
+### 2. 观察者模式 (Observer)
+
+**应用**: mitt 事件总线
+
+**说明**: 核心管理器作为事件发布者，composables 作为事件订阅者。实现模块间松耦合通信。
+
+```javascript
+// 发布
+this.emitter.emit('object-added', object);
+
+// 订阅
+manager.emitter.on('object-added', handler);
+```
+
+---
+
+### 3. 管理器模式 (Manager)
+
+**应用**: ThreeViewer、ObjectManager、InputManager、AssetLoader
+
+**说明**: 每个管理器负责单一领域的完整生命周期，提供清晰的 API 接口和事件通知。
+
+---
+
+### 4. 工厂模式 (Factory)
+
+**应用**: ObjectManager.createPrimitive()
+
+**说明**: 根据类型参数创建不同的几何体或灯光对象，封装创建逻辑。
+
+```javascript
+createPrimitive(type, options) {
+  switch (type) {
+    case 'box':     return new THREE.BoxGeometry(...);
+    case 'sphere':  return new THREE.SphereGeometry(...);
+    case 'light':   return new THREE.PointLight(...);
+    // ...
+  }
+}
+```
+
+---
+
+### 5. 适配器模式 (Adapter)
+
+**应用**: VFS 服务层
+
+**说明**: VfsServerApi 和 StaticDriveApi 将不同的后端接口适配为统一的 API 格式，上层无需关心底层实现差异。
 
 ---
 
@@ -541,12 +780,12 @@ const history = ref([]);
 - TransformControls 拖拽时禁用 OrbitControls
 
 ### 内存优化
-- 资源加载缓存机制
+- 资源加载缓存机制（useAssetsManager）
 - 几何体/材质复用
 - 及时清理不需要的对象
 
 ### 代码组织
-- 模块化设计，职责清晰
+- 五层架构，职责清晰
 - composables 提供逻辑复用
 - 事件解耦，减少直接依赖
 
@@ -583,4 +822,4 @@ const history = ref([]);
 
 | 版本 | 日期 | 变更 |
 |------|------|------|
-| 1.0 | 2026-04-07 | 初始架构文档 |
+| 1.0 | 2026-04-14 | 初始架构文档 |

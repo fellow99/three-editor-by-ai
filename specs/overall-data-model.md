@@ -1,13 +1,13 @@
 # Three Editor by AI - 数据模型
 
-**生成日期**: 2026-04-07  
+**生成日期**: 2026-04-14  
 **项目版本**: 0.1.0
 
 ---
 
 ## 概述
 
-本文档定义项目的核心数据模型，包括场景、对象、材质、资源等的数据结构。
+本文档定义项目的核心数据模型，包括场景、对象、材质、灯光、资源、编辑器状态等的数据结构。
 
 ---
 
@@ -15,7 +15,7 @@
 
 ### 1. Scene (场景)
 
-场景是最高层级的容器，包含所有 3D 对象、灯光、相机等。
+场景是最高层级的容器，包含所有 3D 对象、灯光、相机和动画。
 
 ```typescript
 interface Scene {
@@ -23,7 +23,7 @@ interface Scene {
   name: string;                    // 场景名称
   metadata: SceneMetadata;         // 元数据
   background: BackgroundConfig;    // 背景配置
-  objects: SceneObject[];          // 所有对象
+  objects: SceneObject[];          // 所有场景对象
   lights: Light[];                 // 所有灯光
   cameras: Camera[];               // 所有相机
   animations: AnimationClip[];     // 动画剪辑（引用）
@@ -33,8 +33,6 @@ interface SceneMetadata {
   version: string;                 // 场景格式版本
   createdAt: string;               // 创建时间 (ISO 8601)
   modifiedAt: string;              // 最后修改时间
-  author?: string;                 // 作者（可选）
-  description?: string;            // 描述（可选）
 }
 
 interface BackgroundConfig {
@@ -49,7 +47,7 @@ interface BackgroundConfig {
 
 ### 2. SceneObject (场景对象)
 
-场景中的 3D 对象，可以是几何体、模型等。
+场景中的 3D 对象，可以是几何体、模型组、文字等。
 
 ```typescript
 interface SceneObject {
@@ -59,20 +57,32 @@ interface SceneObject {
   geometry: Geometry;              // 几何体数据
   material: Material | Material[]; // 材质（可以是数组）
   transform: Transform;            // 变换数据
-  userData: UserData;              // 自定义数据
   visible: boolean;                // 可见性
   castShadow: boolean;             // 投射阴影
   receiveShadow: boolean;          // 接收阴影
-  locked?: boolean;                // 锁定状态（防止误操作）
-  parent?: string;                 // 父对象 uuid（层级结构）
-  children?: string[];             // 子对象 uuid 列表
+  userData: UserData;              // 自定义数据
+  children: SceneObject[];         // 子对象列表
 }
 
-type ObjectType = 
-  | 'Mesh'                        // 网格对象
-  | 'Group'                       // 对象组
-  | 'Skeleton'                    // 骨骼
-  | 'Bone';                       // 骨头
+type ObjectType =
+  | 'Box'                          // 立方体
+  | 'Sphere'                       // 球体
+  | 'Cylinder'                     // 圆柱体
+  | 'Cone'                         // 圆锥体
+  | 'Plane'                        // 平面
+  | 'Circle'                       // 圆形
+  | 'Ring'                         // 圆环面
+  | 'Torus'                        // 环面
+  | 'Tube'                         // 管状体
+  | 'Dodecahedron'                 // 十二面体
+  | 'Icosahedron'                  // 二十面体
+  | 'Octahedron'                   // 八面体
+  | 'Tetrahedron'                  // 四面体
+  | 'Group'                        // 对象组
+  | 'Text'                         // 文字
+  | 'Sprite'                       // 精灵
+  | 'Camera'                       // 相机对象
+  | 'ImportedModel';               // 导入的外部模型
 ```
 
 ---
@@ -84,7 +94,7 @@ type ObjectType =
 ```typescript
 interface Transform {
   position: Vector3;               // 位置
-  rotation: Euler | Quaternion;    // 旋转（欧拉角或四元数）
+  rotation: Vector3;               // 旋转（欧拉角，弧度）
   scale: Vector3;                  // 缩放
 }
 
@@ -92,20 +102,6 @@ interface Vector3 {
   x: number;
   y: number;
   z: number;
-}
-
-interface Euler {
-  x: number;                       // X 轴旋转 (弧度)
-  y: number;                       // Y 轴旋转 (弧度)
-  z: number;                       // Z 轴旋转 (弧度)
-  order: string;                   // 旋转顺序，如 'XYZ'
-}
-
-interface Quaternion {
-  x: number;
-  y: number;
-  z: number;
-  w: number;
 }
 ```
 
@@ -129,47 +125,16 @@ type GeometryType =
   | 'CylinderGeometry'             // 圆柱体
   | 'ConeGeometry'                 // 圆锥体
   | 'PlaneGeometry'                // 平面
-  | 'TorusGeometry'                // 圆环
-  | 'TorusKnotGeometry'            // 圆环结
+  | 'CircleGeometry'               // 圆形
+  | 'RingGeometry'                 // 圆环面
+  | 'TorusGeometry'                // 环面
+  | 'TubeGeometry'                 // 管状体
   | 'DodecahedronGeometry'         // 十二面体
   | 'IcosahedronGeometry'          // 二十面体
   | 'OctahedronGeometry'           // 八面体
   | 'TetrahedronGeometry'          // 四面体
-  | 'CircleGeometry'               // 圆形
-  | 'TubeGeometry'                 // 管状体
-  | 'GLTF';                        // GLTF 模型
-```
-
-**几何体参数示例**:
-
-```typescript
-// BoxGeometry 参数
-{
-  width: 1,
-  height: 1,
-  depth: 1,
-  widthSegments: 1,
-  heightSegments: 1,
-  depthSegments: 1
-}
-
-// SphereGeometry 参数
-{
-  radius: 1,
-  widthSegments: 32,
-  heightSegments: 16,
-  phiStart: 0,
-  phiLength: Math.PI * 2,
-  thetaStart: 0,
-  thetaLength: Math.PI
-}
-
-// GLTF 模型
-{
-  type: 'GLTF',
-  url: '/vfs/models/gltf/Horse.glb',
-  animations: ['animation1', 'animation2']
-}
+  | 'TextGeometry'                 // 文字
+  | 'GLTF';                        // 导入的 GLTF 模型
 ```
 
 ---
@@ -184,94 +149,38 @@ interface Material {
   name: string;                    // 材质名称
   type: MaterialType;              // 材质类型
   color?: string;                  // 基础颜色 (hex)
-  transparent: boolean;            // 是否透明
-  opacity: number;                 // 不透明度 (0-1)
-  side: string;                    // 渲染面：'front' | 'back' | 'double'
-  
-  // Standard/Physical 材质属性
-  roughness?: number;              // 粗糙度 (0-1)
-  metalness?: number;              // 金属度 (0-1)
-  normalScale?: Vector2;           // 法线贴图强度
-  
-  // 纹理引用
   map?: TextureRef;                // 漫反射贴图
   normalMap?: TextureRef;          // 法线贴图
   roughnessMap?: TextureRef;       // 粗糙度贴图
   metalnessMap?: TextureRef;       // 金属度贴图
-  emissiveMap?: TextureRef;        // 自发光贴图
-  aoMap?: TextureRef;              // 环境光遮蔽贴图
-  
-  // Physical 材质特有
-  clearcoat?: number;              // 清漆强度
-  clearcoatRoughness?: number;     // 清漆粗糙度
-  transmission?: number;           // 透射
-  thickness?: number;              // 厚度
-  sheen?: number;                  // 光泽
-  
-  userData?: Record<string, any>;  // 自定义数据
+  emissive?: string;               // 自发光颜色 (hex)
+  roughness?: number;              // 粗糙度 (0-1)
+  metalness?: number;              // 金属度 (0-1)
+  opacity: number;                 // 不透明度 (0-1)
+  transparent: boolean;            // 是否透明
+  side: string;                    // 渲染面：'front' | 'back' | 'double'
+  wireframe?: boolean;             // 线框模式
 }
 
 type MaterialType =
-  | 'MeshBasicMaterial'            // 基础材质
   | 'MeshStandardMaterial'         // 标准材质
+  | 'MeshBasicMaterial'            // 基础材质
   | 'MeshPhongMaterial'            // Phong 材质
   | 'MeshLambertMaterial'          // Lambert 材质
-  | 'MeshPhysicalMaterial';        // 物理材质
+  | 'MeshPhysicalMaterial'         // 物理材质
+  | 'MeshToonMaterial'             // 卡通材质
+  | 'MeshNormalMaterial';          // 法线材质
 
 interface TextureRef {
   uuid: string;                    // 纹理 uuid
   url: string;                     // 纹理 URL
   type: string;                    // 纹理类型
 }
-
-interface Vector2 {
-  x: number;
-  y: number;
-}
 ```
 
 ---
 
-### 6. Texture (纹理)
-
-纹理资源定义。
-
-```typescript
-interface Texture {
-  uuid: string;                    // 纹理唯一标识
-  name: string;                    // 纹理名称
-  url: string;                     // 纹理 URL
-  type: TextureType;               // 纹理类型
-  format: string;                  // 文件格式 (jpg, png, ktx2)
-  size: number;                    // 文件大小 (字节)
-  width: number;                   // 宽度 (像素)
-  height: number;                  // 高度 (像素)
-  encoding: string;                // 编码 (sRGB, Linear)
-  wrap: {                          // 包裹方式
-    s: string;                     // 'repeat' | 'clamp' | 'mirrored'
-    t: string;
-  };
-  repeat: Vector2;                 // 重复次数
-  offset: Vector2;                 // 偏移
-  rotation: number;                // 旋转 (弧度)
-  center: Vector2;                 // 旋转中心
-}
-
-type TextureType =
-  | 'map'                          // 漫反射贴图
-  | 'normalMap'                    // 法线贴图
-  | 'roughnessMap'                 // 粗糙度贴图
-  | 'metalnessMap'                 // 金属度贴图
-  | 'emissiveMap'                  // 自发光贴图
-  | 'aoMap'                        // 环境光遮蔽贴图
-  | 'bumpMap'                      // 凹凸贴图
-  | 'displacementMap'              // 置换贴图
-  | 'environment';                 // 环境贴图
-```
-
----
-
-### 7. Light (灯光)
+### 6. Light (灯光)
 
 场景中的光源。
 
@@ -282,26 +191,23 @@ interface Light {
   type: LightType;                 // 灯光类型
   color: string;                   // 颜色 (hex)
   intensity: number;               // 强度
-  position?: Vector3;              // 位置（点光源、聚光灯）
-  target?: string;                 // 目标对象 uuid
   castShadow: boolean;             // 投射阴影
   
   // 类型特有属性
   ambient?: Record<string, never>; // 环境光（无额外属性）
   directional?: {                  // 平行光
+    position?: Vector3;
     shadowMapSize?: Vector2;
     shadowCameraNear?: number;
     shadowCameraFar?: number;
-    shadowCameraLeft?: number;
-    shadowCameraRight?: number;
-    shadowCameraTop?: number;
-    shadowCameraBottom?: number;
   };
   point?: {                        // 点光源
+    position?: Vector3;
     distance?: number;
     decay?: number;
   };
   spot?: {                         // 聚光灯
+    position?: Vector3;
     angle?: number;                // 锥形角度 (弧度)
     penumbra?: number;             // 半影 (0-1)
     distance?: number;
@@ -317,17 +223,22 @@ interface Light {
 }
 
 type LightType =
-  | 'AmbientLight'                 // 环境光
-  | 'DirectionalLight'             // 平行光
-  | 'PointLight'                   // 点光源
-  | 'SpotLight'                    // 聚光灯
-  | 'HemisphereLight'              // 半球光
-  | 'RectAreaLight';               // 矩形光
+  | 'Ambient'                      // 环境光
+  | 'Directional'                  // 平行光
+  | 'Point'                        // 点光源
+  | 'Spot'                         // 聚光灯
+  | 'Hemisphere'                   // 半球光
+  | 'RectArea';                    // 矩形光
+
+interface Vector2 {
+  x: number;
+  y: number;
+}
 ```
 
 ---
 
-### 8. Camera (相机)
+### 7. Camera (相机)
 
 场景相机。
 
@@ -356,9 +267,9 @@ interface Camera {
 
 ---
 
-### 9. Animation (动画)
+### 8. Animation (动画)
 
-动画剪辑定义。
+动画剪辑与动画状态定义。
 
 ```typescript
 interface AnimationClip {
@@ -371,60 +282,112 @@ interface AnimationClip {
 interface AnimationTrack {
   type: string;                    // 轨道类型
   target: string;                  // 目标对象 uuid
-  property: string;                // 属性路径 (如 'position', 'rotation')
+  property: string;                // 属性路径（如 'position', 'rotation'）
   times: number[];                 // 时间数组
   values: number[];                // 值数组
 }
 
 interface AnimationState {
-  objectUuid: string;              // 对象 uuid
   animationIndex: number;          // 当前动画索引
-  isPlaying: boolean;              // 是否正在播放
-  time: number;                    // 当前播放时间
-  speed: number;                   // 播放速度
-  loop: string;                    // 循环模式：'once' | 'loop' | 'pingpong'
+  clips: AnimationClip[];          // 可用动画剪辑列表
 }
 ```
 
+**运行时说明**: 动画相关的运行时对象（如 `_mixer`、`_activeAction`）直接挂载在 Object3D 主对象上，不存储在 userData 中，避免序列化污染。
+
 ---
 
-### 10. Resource (资源)
+### 9. EditorConfig (编辑器配置)
 
-资源库中的资源定义。
+编辑器运行时配置。
 
 ```typescript
-interface Resource {
-  uuid: string;                    // 资源唯一标识
-  name: string;                    // 资源名称
-  type: ResourceType;              // 资源类型
-  url: string;                     // 资源 URL
-  thumbnail?: string;              // 缩略图 URL
-  format: string;                  // 文件格式
-  size: number;                    // 文件大小 (字节)
-  createdAt: string;               // 创建时间
-  tags?: string[];                 // 标签
-  metadata?: Record<string, any>;  // 元数据
+interface EditorConfig {
+  controlsType: 'orbit' | 'map' | 'fly';  // 控制器类型
+  targetDistance: number;                  // 目标距离
+  lockY: boolean;                          // Y 轴锁定
+  enableKeyboard: boolean;                 // 启用键盘控制
+  movementSpeed: number;                   // 移动速度
+  rollSpeed: number;                       // 翻滚速度
+  panSpeed: number;                        // 平移速度
+  rotateSpeed: number;                     // 旋转速度
+  zoomSpeed: number;                       // 缩放速度
+  gridSize: number;                        // 网格大小
+  gridDivisions: number;                   // 网格分割数
+  gridColorCenterLine: string;             // 网格中心线颜色
+  gridColorGrid: string;                   // 网格线颜色
+  axesSize: number;                        // 坐标轴大小
 }
-
-type ResourceType =
-  | 'model'                        // 3D 模型
-  | 'texture'                      // 纹理
-  | 'environment'                  // 环境贴图
-  | 'hdr';                         // HDR 贴图
 ```
 
 ---
 
-### 11. UserData (自定义数据)
+### 10. AppState (应用状态)
+
+编辑器 UI 应用状态。
+
+```typescript
+interface AppState {
+  isLoading: boolean;                // 是否正在加载
+  leftPanelCollapsed: boolean;       // 左侧面板是否折叠
+  rightPanelCollapsed: boolean;      // 右侧面板是否折叠
+  bottomPanelCollapsed: boolean;     // 底部面板是否折叠
+  activeLeftTab: string;             // 当前激活的左侧标签
+  panels: PanelSizes;                // 面板尺寸
+}
+
+interface PanelSizes {
+  leftWidth: number;                 // 左侧面板宽度
+  rightWidth: number;                // 右侧面板宽度
+  bottomHeight: number;              // 底部面板高度
+}
+```
+
+---
+
+### 11. ObjectManagerState (对象管理器状态)
+
+对象管理器的运行时状态。
+
+```typescript
+interface ObjectManagerState {
+  objects: Map<string, Object3D>;    // 所有对象映射（UUID -> Object3D）
+  selectedObjects: Set<string>;      // 已选中对象 UUID 集合
+  clipboard: Object3D[] | null;      // 剪贴板中的对象
+}
+```
+
+---
+
+### 12. TransformHistory (变换历史)
+
+变换操作的撤销/重做历史记录。
+
+```typescript
+interface TransformHistory {
+  undoStack: TransformState[];       // 撤销栈
+  redoStack: TransformState[];       // 重做栈
+  maxHistory: number;                // 最大历史记录数（默认 50）
+}
+
+interface TransformState {
+  objectUuid: string;                // 对象 UUID
+  position: Vector3;                 // 变换前位置
+  rotation: Vector3;                 // 变换前旋转
+  scale: Vector3;                    // 变换前缩放
+}
+```
+
+---
+
+### 13. UserData (自定义数据)
 
 对象的自定义数据字段。
 
 ```typescript
 interface UserData {
-  name?: string;                   // 自定义名称
-  description?: string;            // 描述
-  animationIndex?: number;         // 动画索引
-  locked?: boolean;                // 锁定状态
+  locked?: boolean;                  // 锁定状态（防止误操作）
+  animationIndex?: number;           // 动画索引
   
   // 用户自定义字段（任意）
   [key: string]: any;
@@ -433,28 +396,124 @@ interface UserData {
 
 ---
 
+### 14. VFS (虚拟文件系统)
+
+虚拟文件系统相关数据结构。
+
+```typescript
+interface VFSDrive {
+  drive: string;                     // 驱动器标识
+  path: string;                      // 路径
+}
+
+interface VFSFileEntry {
+  path: string;                      // 完整路径
+  name: string;                      // 文件/文件夹名称
+  ext: string;                       // 扩展名
+  type: 'FILE' | 'FOLDER';           // 类型
+  size: number;                      // 文件大小（字节）
+  time: string;                      // 修改时间 (ISO 8601)
+}
+```
+
+---
+
+### 15. AssetEntry (资源条目)
+
+资源库中的资源定义。
+
+```typescript
+interface AssetEntry {
+  name: string;                      // 资源名称
+  type: 'model' | 'texture';         // 资源类型
+  file: File | null;                 // 原始文件对象
+  url: string;                       // 资源 URL
+  preview: string | null;            // 预览图 URL
+  cached: boolean;                   // 是否已缓存
+}
+```
+
+---
+
+### 16. CameraState (相机状态)
+
+相机运行时状态，用于视点记录和恢复。
+
+```typescript
+interface CameraState {
+  position: Vector3;                 // 相机位置
+  rotation: Vector3;                 // 相机旋转（欧拉角）
+  quaternion: Quaternion;            // 四元数
+  spherical: SphericalCoords;        // 球面坐标
+  target: Vector3;                   // 观察目标点
+}
+
+interface Quaternion {
+  x: number;
+  y: number;
+  z: number;
+  w: number;
+}
+
+interface SphericalCoords {
+  radius: number;                    // 半径（到目标点距离）
+  phi: number;                       // 极角（垂直角度）
+  theta: number;                     // 方位角（水平角度）
+}
+```
+
+---
+
 ## 关系图
 
 ```
-┌─────────────┐
-│    Scene    │
-└──────┬──────┘
-       │
-       ├──────────────┐
-       │              │
-  ┌────▼────┐    ┌────▼────┐
-  │ Object  │    │  Light  │
-  └────┬────┘    └─────────┘
-       │
-       ├──────────────┐
-       │              │
-  ┌────▼────┐    ┌────▼────┐
-  │Geometry │    │Material │
-  └─────────┘    └────┬────┘
-                      │
-                 ┌────▼────┐
-                 │ Texture │
-                 └─────────┘
+┌─────────────────┐
+│      Scene      │
+└────────┬────────┘
+         │
+    ┌────┼────────────────────┐
+    │    │                    │
+    ▼    ▼                    ▼
+┌───────┐ ┌───────┐    ┌───────────┐
+│Object │ │ Light │    │ Animation │
+└───┬───┘ └───────┘    └───────────┘
+    │
+    ├──────────────┐
+    │              │
+    ▼              ▼
+┌─────────┐  ┌───────────┐
+│Geometry │  │ Material  │
+└─────────┘  └─────┬─────┘
+                   │
+              ┌────▼────┐
+              │Texture  │
+              └─────────┘
+
+┌──────────────────┐     ┌──────────────────┐
+│ TransformHistory │     │  ObjectManager   │
+│  undo/redo stack │     │  objects map     │
+└──────────────────┘     │  selected set    │
+                         │  clipboard       │
+                         └──────────────────┘
+
+┌──────────────────┐     ┌──────────────────┐
+│   EditorConfig   │     │     AppState     │
+│  controls type   │     │  panel states    │
+│  speeds & sizes  │     │  loading status  │
+└──────────────────┘     └──────────────────┘
+
+┌──────────────────┐     ┌──────────────────┐
+│    VFSDrive      │     │   AssetEntry     │
+│  drive & path    │     │  model/texture   │
+└──────────────────┘     │  file/url/preview│
+                         └──────────────────┘
+
+┌──────────────────┐
+│   CameraState    │
+│  position/rot/   │
+│  quaternion/     │
+│  spherical/target│
+└──────────────────┘
 ```
 
 ---
@@ -467,8 +526,8 @@ interface UserData {
 {
   "version": "1.0",
   "metadata": {
-    "createdAt": "2026-04-07T10:00:00.000Z",
-    "modifiedAt": "2026-04-07T12:00:00.000Z"
+    "createdAt": "2026-04-14T10:00:00.000Z",
+    "modifiedAt": "2026-04-14T12:00:00.000Z"
   },
   "scene": {
     "background": {
@@ -480,7 +539,7 @@ interface UserData {
     {
       "uuid": "obj-001",
       "name": "Box1",
-      "type": "Mesh",
+      "type": "Box",
       "geometry": {
         "type": "BoxGeometry",
         "parameters": {
@@ -499,27 +558,30 @@ interface UserData {
       },
       "transform": {
         "position": { "x": 0, "y": 0, "z": 0 },
-        "rotation": { "x": 0, "y": 0, "z": 0, "order": "XYZ" },
+        "rotation": { "x": 0, "y": 0, "z": 0 },
         "scale": { "x": 1, "y": 1, "z": 1 }
       },
       "userData": {
-        "name": "Box1",
+        "locked": false,
         "animationIndex": 0
       },
       "visible": true,
       "castShadow": true,
-      "receiveShadow": true
+      "receiveShadow": true,
+      "children": []
     }
   ],
   "lights": [
     {
       "uuid": "light-001",
       "name": "DirectionalLight1",
-      "type": "DirectionalLight",
+      "type": "Directional",
       "color": "#ffffff",
       "intensity": 1,
-      "position": { "x": 5, "y": 5, "z": 5 },
-      "castShadow": true
+      "castShadow": true,
+      "directional": {
+        "position": { "x": 5, "y": 5, "z": 5 }
+      }
     }
   ],
   "cameras": [
@@ -552,4 +614,4 @@ interface UserData {
 
 | 版本 | 日期 | 变更 |
 |------|------|------|
-| 1.0 | 2026-04-07 | 初始数据模型文档 |
+| 1.0 | 2026-04-14 | 初始数据模型文档 |

@@ -1,7 +1,8 @@
 # 003-Transform 对象变换模块 - 技术方案
 
 **模块版本**: 1.0.0  
-**生成日期**: 2026-04-07
+**生成日期**: 2026-04-14  
+**最后更新**: 2026-04-14
 
 ---
 
@@ -9,151 +10,255 @@
 
 ### 1.1 模块定位
 
-对象变换模块负责所有 3D 对象的移动、旋转、缩放操作，以及撤销/重做历史记录管理。
+对象变换模块基于 Vue 3 Composition API 和 Three.js TransformControls 实现，提供完整的对象变换、撤销/重做、吸附对齐功能。
 
 ### 1.2 技术约束
 
-- 必须使用 TransformControls
-- 必须实现完整的撤销/重做
-- 必须支持 Y 轴锁定
-- 必须支持多选变换
+- 必须使用 Three.js r182+ 的 TransformControls
+- 必须基于 Vue 3 Composition API 实现响应式状态
+- 必须与 useObjectManager、useObjectSelection 协同工作
+- 必须支持多选批量变换
 
 ### 1.3 技术决策
 
 | 决策 | 选择 | 理由 |
 |------|------|------|
-| 历史记录 | 状态快照 | 简单可靠 |
-| 最大历史数 | 50 | 平衡内存和功能 |
-| 辅助显示 | Box3Helper | 轻量直观 |
+| 状态管理 | Vue 3 reactive/ref | 响应式更新，与 UI 组件无缝集成 |
+| 变换控制 | TransformControls | Three.js 官方控件，功能完整 |
+| 历史栈 | 数组实现 | 简单高效，支持 O(1) 栈操作 |
+| 事件通信 | mitt 事件总线 | 与项目整体架构一致 |
 
 ---
 
-## 2. 撤销/重做实现
+## 2. useTransform 技术设计
 
-### 2.1 历史记录数据结构
+### 2.1 模块结构
 
 ```javascript
-interface HistoryItem {
-  before: TransformedState[];  // 变换前状态
-  after: TransformedState[];   // 变换后状态
-  timestamp: number;            // 时间戳
-  type: 'transform' | 'add' | 'remove' | 'duplicate';
-}
+// src/composables/useTransform.js
+import { reactive, ref } from 'vue';
+import { useObjectManager } from './useObjectManager.js';
+import { useObjectSelection } from './useObjectSelection.js';
 
-interface TransformedState {
-  uuid: string;        // 对象 UUID
-  position: { x, y, z };
-  rotation: { x, y, z, order };
-  scale: { x, y, z };
+const MAX_HISTORY = 50;
+
+export function useTransform() {
+  // 历史栈
+  const undoStack = reactive([]);
+  const redoStack = reactive([]);
+  
+  // 吸附配置
+  const snapConfig = reactive({
+    gridEnabled: false,
+    gridSize: 1.0,
+    rotationEnabled: false,
+    rotationStep: Math.PI / 12,  // 15度
+    scaleEnabled: false,
+    scaleStep: 0.1
+  });
+  
+  // 轴约束
+  const axisLock = reactive({
+    x: false,
+    y: false,
+    z: false
+  });
+  
+  // 坐标空间
+  const coordinateSpace = ref('world');  // 'world' | 'local'
+  
+  // 变换前状态缓存
+  let beforeState = null;
+  
+  // ... 方法实现
 }
 ```
 
-### 2.2 历史记录管理
+### 2.2 撤销/重做实现
+
+#### 2.2.1 状态捕获
 
 ```javascript
-const history = ref([]);
-const historyIndex = ref(-1);
-const maxHistoryLength = 50;
+function captureObjectState(objects) {
+  return objects.map(obj => ({
+    uuid: obj.uuid,
+    position: {
+      x: obj.position.x,
+      y: obj.position.y,
+      z: obj.position.z
+    },
+    rotation: {
+      x: obj.rotation.x,
+      y: obj.rotation.y,
+      z: obj.rotation.z,
+      order: obj.rotation.order
+    },
+    scale: {
+      x: obj.scale.x,
+      y: obj.scale.y,
+      z: obj.scale.z
+    }
+  }));
+}
+```
 
-function addToHistory(transform) {
-  // 如果当前不是历史记录末尾，删除后面的记录
-  if (historyIndex.value < history.value.length - 1) {
-    history.value = history.value.slice(0, historyIndex.value + 1);
-  }
+#### 2.2.2 变换开始
+
+```javascript
+function startTransform() {
+  const selection = useObjectSelection();
+  const selectedObjects = selection.getSelectedObjects();
   
-  // 添加新记录
-  history.value.push({
-    ...transform,
-    timestamp: Date.now()
-  });
-  historyIndex.value++;
+  if (selectedObjects.length === 0) return;
   
-  // 限制历史记录长度
-  if (history.value.length > maxHistoryLength) {
-    history.value.shift();
-    historyIndex.value--;
-  }
+  // 捕获变换前状态
+  beforeState = captureObjectState(selectedObjects);
   
   // 触发事件
-  emitter.emit('history-changed', {
-    canUndo: historyIndex.value >= 0,
-    canRedo: historyIndex.value < history.value.length - 1
-  });
-}
-
-function clearHistory() {
-  history.value = [];
-  historyIndex.value = -1;
-  emitter.emit('history-changed', {
-    canUndo: false,
-    canRedo: false
-  });
+  selection.emitter.emit('transform-start', { objects: selectedObjects });
 }
 ```
 
-### 2.3 撤销实现
+#### 2.2.3 变换结束
+
+```javascript
+function endTransform() {
+  if (!beforeState) return;
+  
+  const selection = useObjectSelection();
+  const selectedObjects = selection.getSelectedObjects();
+  const afterState = captureObjectState(selectedObjects);
+  
+  // 检查是否有实际变化
+  const hasChanges = beforeState.some((before, index) => {
+    const after = afterState[index];
+    return (
+      before.position.x !== after.position.x ||
+      before.position.y !== after.position.y ||
+      before.position.z !== after.position.z ||
+      before.rotation.x !== after.rotation.x ||
+      before.rotation.y !== after.rotation.y ||
+      before.rotation.z !== after.rotation.z ||
+      before.scale.x !== after.scale.x ||
+      before.scale.y !== after.scale.y ||
+      before.scale.z !== after.scale.z
+    );
+  });
+  
+  if (!hasChanges) {
+    beforeState = null;
+    return;
+  }
+  
+  // 生成操作记录
+  const record = {
+    objects: beforeState.map((before, index) => ({
+      uuid: before.uuid,
+      before,
+      after: afterState[index]
+    })),
+    timestamp: Date.now()
+  };
+  
+  // 推入撤销栈
+  undoStack.push(record);
+  
+  // 限制历史栈大小
+  if (undoStack.length > MAX_HISTORY) {
+    undoStack.shift();
+  }
+  
+  // 清空重做栈
+  redoStack.length = 0;
+  
+  beforeState = null;
+  
+  // 触发事件
+  selection.emitter.emit('transform-end', { objects: selectedObjects });
+}
+```
+
+#### 2.2.4 撤销操作
 
 ```javascript
 function undo() {
-  if (historyIndex.value < 0) {
-    console.warn('没有可撤销的操作');
-    return false;
-  }
+  if (undoStack.length === 0) return false;
   
-  const state = history.value[historyIndex.value];
+  const record = undoStack.pop();
+  const objectManager = useObjectManager();
   
-  // 恢复到变换前状态
-  state.before.forEach(item => {
-    const obj = scene.getObjectByUuid(item.uuid);
-    if (obj) {
-      // 保存当前状态用于下一次重做
-      obj.position.copy(item.position);
-      obj.rotation.copy(item.rotation);
-      obj.scale.copy(item.scale);
-    }
+  // 恢复变换前状态
+  record.objects.forEach(objRecord => {
+    const obj = objectManager.getObjectByUuid(objRecord.uuid);
+    if (!obj) return;
+    
+    obj.position.set(
+      objRecord.before.position.x,
+      objRecord.before.position.y,
+      objRecord.before.position.z
+    );
+    obj.rotation.set(
+      objRecord.before.rotation.x,
+      objRecord.before.rotation.y,
+      objRecord.before.rotation.z
+    );
+    obj.scale.set(
+      objRecord.before.scale.x,
+      objRecord.before.scale.y,
+      objRecord.before.scale.z
+    );
+    
+    // 触发变换更新事件
+    objectManager.emitter.emit('object-transform-updated', { object: obj });
   });
   
-  historyIndex.value--;
+  // 推入重做栈
+  redoStack.push(record);
   
   // 触发事件
-  emitter.emit('undo-performed', { state });
-  emitter.emit('history-changed', {
-    canUndo: historyIndex.value >= 0,
-    canRedo: historyIndex.value < history.value.length - 1
-  });
+  objectManager.emitter.emit('transform-undo', { record });
   
   return true;
 }
 ```
 
-### 2.4 重做实现
+#### 2.2.5 重做操作
 
 ```javascript
 function redo() {
-  if (historyIndex.value >= history.value.length - 1) {
-    console.warn('没有可重做的操作');
-    return false;
-  }
+  if (redoStack.length === 0) return false;
   
-  historyIndex.value++;
-  const state = history.value[historyIndex.value];
+  const record = redoStack.pop();
+  const objectManager = useObjectManager();
   
-  // 恢复到变换后状态
-  state.after.forEach(item => {
-    const obj = scene.getObjectByUuid(item.uuid);
-    if (obj) {
-      obj.position.copy(item.position);
-      obj.rotation.copy(item.rotation);
-      obj.scale.copy(item.scale);
-    }
+  // 恢复变换后状态
+  record.objects.forEach(objRecord => {
+    const obj = objectManager.getObjectByUuid(objRecord.uuid);
+    if (!obj) return;
+    
+    obj.position.set(
+      objRecord.after.position.x,
+      objRecord.after.position.y,
+      objRecord.after.position.z
+    );
+    obj.rotation.set(
+      objRecord.after.rotation.x,
+      objRecord.after.rotation.y,
+      objRecord.after.rotation.z
+    );
+    obj.scale.set(
+      objRecord.after.scale.x,
+      objRecord.after.scale.y,
+      objRecord.after.scale.z
+    );
+    
+    objectManager.emitter.emit('object-transform-updated', { object: obj });
   });
   
-  // 触发事件
-  emitter.emit('redo-performed', { state });
-  emitter.emit('history-changed', {
-    canUndo: historyIndex.value >= 0,
-    canRedo: historyIndex.value < history.value.length - 1
-  });
+  // 推回撤销栈
+  undoStack.push(record);
+  
+  objectManager.emitter.emit('transform-redo', { record });
   
   return true;
 }
@@ -161,432 +266,679 @@ function redo() {
 
 ---
 
-## 3. TransformControls 集成
+### 2.3 吸附算法实现
 
-### 3.1 初始化
+#### 2.3.1 网格吸附
 
 ```javascript
-function initTransformControls(camera, renderer) {
-  const controls = new TransformControls(camera, renderer.domElement);
+function snapToGrid(value) {
+  if (!snapConfig.gridEnabled) return value;
+  return Math.round(value / snapConfig.gridSize) * snapConfig.gridSize;
+}
+
+function applySnapToPosition(position) {
+  return {
+    x: snapToGrid(position.x),
+    y: snapToGrid(position.y),
+    z: snapToGrid(position.z)
+  };
+}
+```
+
+#### 2.3.2 旋转吸附
+
+```javascript
+function snapToRotation(value) {
+  if (!snapConfig.rotationEnabled) return value;
+  return Math.round(value / snapConfig.rotationStep) * snapConfig.rotationStep;
+}
+
+function applySnapToRotation(rotation) {
+  return {
+    x: snapToRotation(rotation.x),
+    y: snapToRotation(rotation.y),
+    z: snapToRotation(rotation.z)
+  };
+}
+```
+
+#### 2.3.3 缩放吸附
+
+```javascript
+function snapToScale(value) {
+  if (!snapConfig.scaleEnabled) return value;
+  return Math.round(value / snapConfig.scaleStep) * snapConfig.scaleStep;
+}
+
+function applySnapToScale(scale) {
+  return {
+    x: snapToScale(scale.x),
+    y: snapToScale(scale.y),
+    z: snapToScale(scale.z)
+  };
+}
+```
+
+---
+
+### 2.4 轴约束实现
+
+```javascript
+function applyAxisLock(position, rotation, scale) {
+  const axesState = useAxesLockState();
+  
+  // 位置锁定
+  if (axisLock.x) position.x = 0;  // 相对增量为0
+  if (axisLock.y) position.y = 0;
+  if (axisLock.z) position.z = 0;
+  
+  // Y 轴专用锁定（固定绝对值）
+  if (axesState.locked) {
+    position.y = axesState.yValue - originalY;  // 恢复到锁定值
+  }
+  
+  // 旋转锁定
+  if (axisLock.x) rotation.x = 0;
+  if (axisLock.y) rotation.y = 0;
+  if (axisLock.z) rotation.z = 0;
+  
+  // 缩放锁定
+  if (axisLock.x) scale.x = 1;  // 相对缩放为1（无变化）
+  if (axisLock.y) scale.y = 1;
+  if (axisLock.z) scale.z = 1;
+  
+  return { position, rotation, scale };
+}
+```
+
+---
+
+## 3. useObjectSelection 技术设计
+
+### 3.1 模块结构
+
+```javascript
+// src/composables/useObjectSelection.js
+import { ref, reactive } from 'vue';
+import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js';
+import { BoxHelper } from 'three';
+import { useAxesLockState } from './useAxesLockState.js';
+import { useThreeViewer } from './useThreeViewer.js';
+import { useControls } from './useControls.js';
+import { useInputManager } from './useInputManager.js';
+
+export function useObjectSelection() {
+  // 选中对象集合
+  const selectedObjects = reactive(new Set());
+  
+  // 辅助显示对象
+  const currentHelpers = reactive(new Map());
+  
+  // 临时材质存储
+  const selectionStore = reactive({});
+  
+  // TransformControls 实例
+  let transformControls = null;
+  
+  // 变换模式
+  const transformMode = ref('translate');  // 'translate' | 'rotate' | 'scale'
+  
+  // ... 方法实现
+}
+```
+
+### 3.2 TransformControls 集成
+
+#### 3.2.1 初始化
+
+```javascript
+function initTransformControls(renderer, camera) {
+  transformControls = new TransformControls(camera, renderer.domElement);
   
   // 拖拽开始时禁用 OrbitControls
-  controls.addEventListener('dragging-changed', (event) => {
-    if (orbitControls) {
-      orbitControls.enabled = !event.value;
-    }
+  transformControls.addEventListener('dragging-changed', (event) => {
+    const controls = useControls();
+    controls.orbitControls.enabled = !event.value;
   });
   
-  // 变换开始 - 记录撤销点
-  controls.addEventListener('mouseDown', () => {
-    startTransform();
+  // 拖拽开始
+  transformControls.addEventListener('mouseDown', () => {
+    const transform = useTransform();
+    transform.startTransform();
   });
   
-  // 变换结束 - 记录到历史
-  controls.addEventListener('mouseUp', () => {
-    endTransform();
+  // 拖拽结束
+  transformControls.addEventListener('mouseUp', () => {
+    const transform = useTransform();
+    transform.endTransform();
   });
   
-  // 变换中 - 实时更新
-  controls.addEventListener('change', () => {
-    onTransformChange();
+  // 变换过程中应用吸附
+  transformControls.addEventListener('change', () => {
+    applySnapAndLock();
   });
   
-  scene.add(controls);
-  return controls;
+  return transformControls;
 }
 ```
 
-### 3.2 变换开始/结束
+#### 3.2.2 附加对象
 
 ```javascript
-let historyState = {
-  before: null,
-  objects: []
-};
-
-function startTransform() {
-  if (isTransforming.value) return;
+function attachToObject(object) {
+  if (!transformControls) return;
   
-  isTransforming.value = true;
+  // 分离当前对象
+  transformControls.detach();
   
-  // 记录变换前状态
-  historyState.before = selectedObjects.value.map(obj => ({
-    uuid: obj.uuid,
-    position: obj.position.clone(),
-    rotation: obj.rotation.clone(),
-    scale: obj.scale.clone()
-  }));
-  historyState.objects = [...selectedObjects.value];
+  // 附加新对象
+  transformControls.attach(object);
   
-  // 触发事件
-  emitter.emit('transform-started', {
-    objects: selectedObjects.value
-  });
+  // 设置变换模式
+  transformControls.setMode(transformMode.value);
+  
+  // 设置坐标空间
+  transformControls.setSpace(coordinateSpace.value);
 }
+```
 
-function endTransform() {
-  if (!isTransforming.value) return;
-  
-  isTransforming.value = false;
-  
-  // 记录变换后状态
-  const after = historyState.objects.map(obj => ({
-    uuid: obj.uuid,
-    position: obj.position.clone(),
-    rotation: obj.rotation.clone(),
-    scale: obj.scale.clone()
-  }));
-  
-  // 检查是否有实际变化
-  const hasChanged = after.some((item, i) => {
-    const before = historyState.before[i];
-    return !item.position.equals(before.position) ||
-           !item.rotation.equals(before.rotation) ||
-           !item.scale.equals(before.scale);
-  });
-  
-  if (hasChanged) {
-    // 添加到历史记录
-    addToHistory({
-      before: historyState.before,
-      after,
-      type: 'transform'
-    });
+#### 3.2.3 多选处理
+
+```javascript
+function attachToMultipleObjects() {
+  if (selectedObjects.size === 0) {
+    transformControls.detach();
+    return;
   }
   
-  // 触发事件
-  emitter.emit('transform-ended', {
-    objects: historyState.objects
-  });
+  // 选择第一个对象作为主控对象
+  const primaryObject = Array.from(selectedObjects)[0];
+  attachToObject(primaryObject);
   
-  // 重置状态
-  historyState = { before: null, objects: [] };
+  // 为其他对象创建辅助显示
+  selectedObjects.forEach(obj => {
+    if (obj !== primaryObject) {
+      createHelper(obj);
+    }
+  });
 }
 ```
 
 ---
 
-## 4. Y 轴锁定实现
+### 3.3 辅助显示管理
 
-### 4.1 锁定状态管理
-
-```javascript
-const yAxisLocked = ref(false);
-
-function lockYAxis(lock) {
-  yAxisLocked.value = lock;
-  
-  if (transformControls.value) {
-    transformControls.value.setYAxisLock(lock);
-  }
-  
-  emitter.emit('y-axis-lock-changed', { locked: lock });
-}
-```
-
-### 4.2 TransformControls Y 轴锁定
+#### 3.3.1 类型专属辅助
 
 ```javascript
-// TransformControls 扩展
-class TransformControlsYLock extends TransformControls {
-  setYAxisLock(locked) {
-    this.yAxisLock = locked;
-    
-    if (locked) {
-      // 禁用 Y 轴变换
-      this.showY = false;
+function createHelper(object) {
+  let helper;
+  
+  switch (object.type) {
+    case 'DirectionalLight':
+    case 'PointLight':
+    case 'SpotLight':
+      // 灯光辅助
+      helper = new THREE.DirectionalLightHelper(object, 1);
+      break;
       
-      // 根据模式锁定相应轴
-      switch (this.getMode()) {
-        case 'translate':
-          this.translationSnap = null;
-          break;
-        case 'rotate':
-          this.rotationSnap = null;
-          break;
-        case 'scale':
-          this.scaleSnap = null;
-          break;
-      }
-    } else {
-      this.showY = true;
-    }
+    case 'PerspectiveCamera':
+    case 'OrthographicCamera':
+      // 相机辅助
+      helper = new THREE.CameraHelper(object);
+      break;
+      
+    default:
+      // 默认包围盒
+      helper = new BoxHelper(object, 0xffff00);
+      break;
   }
+  
+  if (helper) {
+    currentHelpers.set(object.uuid, helper);
+    useThreeViewer().scene.add(helper);
+  }
+}
+```
+
+#### 3.3.2 清理辅助
+
+```javascript
+function disposeHelpers() {
+  currentHelpers.forEach((helper, uuid) => {
+    helper.dispose();
+    useThreeViewer().scene.remove(helper);
+  });
+  currentHelpers.clear();
 }
 ```
 
 ---
 
-## 5. 多选变换
+### 3.4 选择管理
 
-### 5.1 多选状态管理
+#### 3.4.1 选择对象
 
 ```javascript
-const selectedObjects = ref([]);
-
-function toggleSelectObject(object) {
-  const index = selectedObjects.value.findIndex(
-    obj => obj.uuid === object.uuid
-  );
+function selectObject(object) {
+  // 检查是否锁定
+  if (object.userData.locked === true) return;
   
-  if (index >= 0) {
-    // 取消选择
+  // 清除之前的选择
+  deselectAll();
+  
+  // 添加新选择
+  selectedObjects.add(object);
+  
+  // 高亮材质
+  highlightObject(object, true);
+  
+  // 附加 TransformControls
+  attachToObject(object);
+  
+  // 创建辅助显示
+  createHelper(object);
+}
+```
+
+#### 3.4.2 多选切换
+
+```javascript
+function toggleSelect(object) {
+  if (object.userData.locked === true) return;
+  
+  if (selectedObjects.has(object)) {
     deselectObject(object);
   } else {
-    // 添加选择
-    selectedObjects.value.push(object);
-    createSelectionHelper(object);
+    selectedObjects.add(object);
+    highlightObject(object, true);
+    selectionStore[object.id] = object.material;
   }
-}
-
-function deselectAll() {
-  const objects = [...selectedObjects.value];
-  objects.forEach(obj => deselectObject(obj));
+  
+  // 更新 TransformControls
+  attachToMultipleObjects();
 }
 ```
 
-### 5.2 多选变换
+#### 3.4.3 高亮处理
 
 ```javascript
-function attachTransformControls(object) {
-  if (!transformControls.value) return;
-  
-  if (selectedObjects.value.length === 1) {
-    // 单选 - 附加到对象
-    transformControls.value.attach(object);
-  } else if (selectedObjects.value.length > 1) {
-    // 多选 - 创建临时组
-    const group = new THREE.Group();
+function highlightObject(object, highlight) {
+  if (highlight) {
+    // 保存原始材质
+    selectionStore[object.id] = object.material;
     
-    // 计算包围盒中心
-    const box = new THREE.Box3();
-    selectedObjects.value.forEach(obj => {
-      box.expandByObject(obj);
-    });
-    
-    const center = box.getCenter(new THREE.Vector3());
-    group.position.copy(center);
-    scene.add(group);
-    
-    // 附加到组
-    transformControls.value.attach(group);
-    
-    // 记录组与对象的关系
-    multiSelectGroup = {
-      group,
-      objects: [...selectedObjects.value]
-    };
-  }
-}
-
-function onTransformChange() {
-  if (multiSelectGroup) {
-    // 多选变换 - 同步到所有对象
-    const { group, objects } = multiSelectGroup;
-    
-    objects.forEach(obj => {
-      // 应用相对变换
-      // ... 变换逻辑
-    });
-  }
-}
-```
-
----
-
-## 6. 辅助显示
-
-### 6.1 选择辅助
-
-```javascript
-function createSelectionHelper(object) {
-  // 创建包围盒
-  const box = new THREE.Box3().setFromObject(object);
-  
-  // 创建辅助线
-  const helper = new THREE.Box3Helper(box, 0xffff00);
-  scene.add(helper);
-  
-  // 存储辅助对象
-  currentHelpers.value.push({
-    object,
-    helper,
-    type: 'selection'
-  });
-  
-  return helper;
-}
-
-function removeSelectionHelpers() {
-  currentHelpers.value.forEach(item => {
-    scene.remove(item.helper);
-    item.helper.dispose();
-  });
-  currentHelpers.value = [];
-}
-```
-
-### 6.2 高亮显示
-
-```javascript
-const selectionStore = reactive({});
-
-function highlightObject(object) {
-  // 存储原始材质
-  selectionStore[object.id] = {
-    originalMaterial: object.material.clone()
-  };
-  
-  // 应用高亮
-  if (Array.isArray(object.material)) {
-    object.material.forEach(mat => {
-      mat.emissive = new THREE.Color(0x333333);
-    });
-  } else {
+    // 应用高亮材质
+    object.material = object.material.clone();
     object.material.emissive = new THREE.Color(0x333333);
-  }
-}
-
-function restoreObjectMaterial(object) {
-  const store = selectionStore[object.id];
-  if (!store) return;
-  
-  // 恢复原始材质
-  object.material.dispose();
-  object.material = store.originalMaterial;
-  
-  delete selectionStore[object.id];
-}
-```
-
----
-
-## 7. 快捷键绑定
-
-```javascript
-function setupShortcuts() {
-  const { registerShortcut } = useInputManager();
-  
-  // 变换模式切换
-  registerShortcut(['KeyW'], () => {
-    setTransformMode('translate');
-  });
-  
-  registerShortcut(['KeyE'], () => {
-    setTransformMode('rotate');
-  });
-  
-  registerShortcut(['KeyR'], () => {
-    setTransformMode('scale');
-  });
-  
-  // 撤销/重做
-  registerShortcut(['Control', 'KeyZ'], () => {
-    undo();
-  });
-  
-  registerShortcut(['Control', 'KeyY'], () => {
-    redo();
-  });
-  
-  // Y 轴锁定
-  registerShortcut(['KeyL'], () => {
-    lockYAxis(!yAxisLocked.value);
-  });
-  
-  // 取消选择
-  registerShortcut(['Escape'], () => {
-    deselectAll();
-  });
-}
-```
-
----
-
-## 8. 性能优化
-
-### 8.1 历史记录优化
-
-```javascript
-// 合并连续的变换操作
-let lastTransformTime = 0;
-const MERGE_THRESHOLD = 100; // ms
-
-function addToHistory(transform) {
-  const now = Date.now();
-  
-  // 如果距离上次变换时间很短，合并记录
-  if (now - lastTransformTime < MERGE_THRESHOLD) {
-    const lastItem = history.value[historyIndex.value];
-    if (lastItem && lastItem.type === 'transform') {
-      // 合并到上一条记录
-      lastItem.after = transform.after;
-      lastItem.timestamp = now;
-      lastTransformTime = now;
-      return;
+  } else {
+    // 恢复原始材质
+    if (selectionStore[object.id]) {
+      object.material.dispose();
+      object.material = selectionStore[object.id];
+      delete selectionStore[object.id];
     }
   }
-  
-  // 添加新记录
-  // ... 正常逻辑
-  
-  lastTransformTime = now;
-}
-```
-
-### 8.2 辅助对象优化
-
-```javascript
-// 辅助对象池
-const helperPool = [];
-
-function getHelper() {
-  if (helperPool.length > 0) {
-    return helperPool.pop();
-  }
-  return new THREE.Box3Helper(new THREE.Box3(), 0xffff00);
-}
-
-function releaseHelper(helper) {
-  helper.visible = false;
-  helperPool.push(helper);
 }
 ```
 
 ---
 
-## 9. 错误处理
+## 4. useAxesLockState 技术设计
+
+### 4.1 模块实现
+
+```javascript
+// src/composables/useAxesLockState.js
+import { reactive } from 'vue';
+
+const state = reactive({
+  locked: false,
+  yValue: 0
+});
+
+export function useAxesLockState() {
+  function lock(yValue) {
+    state.locked = true;
+    state.yValue = yValue;
+  }
+  
+  function unlock() {
+    state.locked = false;
+    state.yValue = 0;
+  }
+  
+  return {
+    state,
+    lock,
+    unlock
+  };
+}
+```
+
+---
+
+## 5. TransformPropertyPane 技术设计
+
+### 5.1 组件结构
+
+```vue
+<!-- src/components/property/TransformPropertyPane.vue -->
+<template>
+  <div class="transform-property-pane">
+    <!-- 位置 -->
+    <div class="property-group">
+      <h4>位置</h4>
+      <div class="axis-inputs">
+        <el-input-number v-model="position.x" :precision="3" :step="0.1" @change="onPositionChange" />
+        <el-input-number v-model="position.y" :precision="3" :step="0.1" @change="onPositionChange" />
+        <el-input-number v-model="position.z" :precision="3" :step="0.1" @change="onPositionChange" />
+      </div>
+    </div>
+    
+    <!-- 旋转 -->
+    <div class="property-group">
+      <h4>旋转</h4>
+      <div class="axis-inputs">
+        <el-input-number v-model="rotation.x" :precision="3" :step="0.1" @change="onRotationChange" />
+        <el-input-number v-model="rotation.y" :precision="3" :step="0.1" @change="onRotationChange" />
+        <el-input-number v-model="rotation.z" :precision="3" :step="0.1" @change="onRotationChange" />
+      </div>
+    </div>
+    
+    <!-- 缩放 -->
+    <div class="property-group">
+      <h4>缩放</h4>
+      <div class="axis-inputs">
+        <el-input-number v-model="scale.x" :precision="3" :step="0.1" @change="onScaleChange" />
+        <el-input-number v-model="scale.y" :precision="3" :step="0.1" @change="onScaleChange" />
+        <el-input-number v-model="scale.z" :precision="3" :step="0.1" @change="onScaleChange" />
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref, watch, onMounted, onUnmounted } from 'vue';
+import { useObjectSelection } from '@/composables/useObjectSelection.js';
+
+const position = ref({ x: 0, y: 0, z: 0 });
+const rotation = ref({ x: 0, y: 0, z: 0 });
+const scale = ref({ x: 1, y: 1, z: 1 });
+
+const selection = useObjectSelection();
+
+function updateFromSelected() {
+  const objects = selection.getSelectedObjects();
+  if (objects.length === 0) return;
+  
+  const obj = Array.from(objects)[0];
+  position.value = { x: obj.position.x, y: obj.position.y, z: obj.position.z };
+  rotation.value = { x: obj.rotation.x, y: obj.rotation.y, z: obj.rotation.z };
+  scale.value = { x: obj.scale.x, y: obj.scale.y, z: obj.scale.z };
+}
+
+function onPositionChange() {
+  const objects = selection.getSelectedObjects();
+  objects.forEach(obj => {
+    obj.position.set(position.value.x, position.value.y, position.value.z);
+  });
+}
+
+function onRotationChange() {
+  const objects = selection.getSelectedObjects();
+  objects.forEach(obj => {
+    obj.rotation.set(rotation.value.x, rotation.value.y, rotation.value.z);
+  });
+}
+
+function onScaleChange() {
+  const objects = selection.getSelectedObjects();
+  objects.forEach(obj => {
+    obj.scale.set(scale.value.x, scale.value.y, scale.value.z);
+  });
+}
+
+// 监听选择变化
+onMounted(() => {
+  selection.emitter.on('selection-changed', updateFromSelected);
+  selection.emitter.on('transform-end', updateFromSelected);
+});
+
+onUnmounted(() => {
+  selection.emitter.off('selection-changed', updateFromSelected);
+  selection.emitter.off('transform-end', updateFromSelected);
+});
+</script>
+```
+
+---
+
+## 6. 多选变换处理
+
+### 6.1 批量状态捕获
+
+```javascript
+function captureBatchState(objects) {
+  return objects.map(obj => ({
+    uuid: obj.uuid,
+    position: obj.position.clone(),
+    rotation: {
+      x: obj.rotation.x,
+      y: obj.rotation.y,
+      z: obj.rotation.z,
+      order: obj.rotation.order
+    },
+    scale: obj.scale.clone()
+  }));
+}
+```
+
+### 6.2 批量状态恢复
+
+```javascript
+function restoreBatchState(stateArray) {
+  const objectManager = useObjectManager();
+  
+  stateArray.forEach(record => {
+    const obj = objectManager.getObjectByUuid(record.uuid);
+    if (!obj) return;
+    
+    obj.position.copy(record.position);
+    obj.rotation.set(record.rotation.x, record.rotation.y, record.rotation.z);
+    obj.scale.copy(record.scale);
+    
+    objectManager.emitter.emit('object-transform-updated', { object: obj });
+  });
+}
+```
+
+---
+
+## 7. 性能优化
+
+### 7.1 历史栈优化
+
+```javascript
+// 使用固定大小数组避免内存增长
+function pushToUndoStack(record) {
+  if (undoStack.length >= MAX_HISTORY) {
+    undoStack.shift();  // 移除最旧记录
+  }
+  undoStack.push(record);
+}
+```
+
+### 7.2 状态对比优化
+
+```javascript
+// 使用阈值避免浮点误差导致的误判
+const EPSILON = 0.0001;
+
+function isTransformChanged(before, after) {
+  return (
+    Math.abs(before.position.x - after.position.x) > EPSILON ||
+    Math.abs(before.position.y - after.position.y) > EPSILON ||
+    Math.abs(before.position.z - after.position.z) > EPSILON ||
+    Math.abs(before.rotation.x - after.rotation.x) > EPSILON ||
+    Math.abs(before.rotation.y - after.rotation.y) > EPSILON ||
+    Math.abs(before.rotation.z - after.rotation.z) > EPSILON ||
+    Math.abs(before.scale.x - after.scale.x) > EPSILON ||
+    Math.abs(before.scale.y - after.scale.y) > EPSILON ||
+    Math.abs(before.scale.z - after.scale.z) > EPSILON
+  );
+}
+```
+
+---
+
+## 8. 错误处理
+
+### 8.1 空选择保护
+
+```javascript
+function startTransform() {
+  const selectedObjects = useObjectSelection().getSelectedObjects();
+  
+  if (selectedObjects.length === 0) {
+    console.warn('No objects selected for transform');
+    return;
+  }
+  
+  beforeState = captureObjectState(selectedObjects);
+}
+```
+
+### 8.2 对象不存在处理
 
 ```javascript
 function undo() {
-  try {
-    if (historyIndex.value < 0) {
-      throw new Error('没有可撤销的操作');
+  const record = undoStack.pop();
+  
+  record.objects.forEach(objRecord => {
+    const obj = objectManager.getObjectByUuid(objRecord.uuid);
+    if (!obj) {
+      console.warn(`Object not found for undo: ${objRecord.uuid}`);
+      return;
+    }
+    // ... 恢复状态
+  });
+}
+```
+
+---
+
+## 9. 测试策略
+
+### 9.1 单元测试
+
+```javascript
+describe('useTransform', () => {
+  test('undo/redo 基本流程', () => {
+    const transform = useTransform();
+    
+    // 模拟变换
+    transform.startTransform();
+    // ... 修改对象
+    transform.endTransform();
+    
+    // 撤销
+    expect(transform.canUndo()).toBe(true);
+    transform.undo();
+    expect(transform.canUndo()).toBe(false);
+    
+    // 重做
+    expect(transform.canRedo()).toBe(true);
+    transform.redo();
+    expect(transform.canRedo()).toBe(false);
+  });
+  
+  test('历史栈容量限制', () => {
+    const transform = useTransform();
+    
+    // 执行超过 MAX_HISTORY 次变换
+    for (let i = 0; i < 60; i++) {
+      transform.startTransform();
+      transform.endTransform();
     }
     
-    // ... 撤销逻辑
+    expect(transform.undoStack.length).toBe(50);
+  });
+  
+  test('网格吸附计算', () => {
+    const transform = useTransform();
+    transform.setSnapGrid(0.5);
     
-  } catch (error) {
-    console.error('撤销失败:', error);
-    emitter.emit('transform-error', {
-      type: 'undo',
-      error
-    });
-    throw error;
-  }
-}
+    expect(snapToGrid(0.3)).toBe(0.5);
+    expect(snapToGrid(0.7)).toBe(0.5);
+    expect(snapToGrid(1.2)).toBe(1.0);
+  });
+});
+```
 
-function attachTransformControls(object) {
-  if (!object) {
-    throw new Error('无效的对象');
-  }
+### 9.2 集成测试
+
+```javascript
+describe('TransformControls 集成', () => {
+  test('拖拽时 OrbitControls 禁用', async () => {
+    const selection = useObjectSelection();
+    const controls = useControls();
+    
+    // 模拟拖拽开始
+    transformControls.dispatchEvent({ type: 'dragging-changed', value: true });
+    expect(controls.orbitControls.enabled).toBe(false);
+    
+    // 模拟拖拽结束
+    transformControls.dispatchEvent({ type: 'dragging-changed', value: false });
+    expect(controls.orbitControls.enabled).toBe(true);
+  });
   
-  if (!object.parent) {
-    throw new Error('对象不在场景中');
+  test('多选变换同步', () => {
+    const transform = useTransform();
+    const selection = useObjectSelection();
+    
+    // 选择多个对象
+    selection.selectObject(obj1);
+    selection.toggleSelect(obj2);
+    
+    // 变换
+    transform.startTransform();
+    // ... 拖拽
+    transform.endTransform();
+    
+    // 验证两个对象都被记录
+    const record = transform.undoStack[transform.undoStack.length - 1];
+    expect(record.objects).toHaveLength(2);
+  });
+});
+```
+
+---
+
+## 10. 依赖关系
+
+### 10.1 NPM 依赖
+
+```json
+{
+  "dependencies": {
+    "three": "^0.182.0",
+    "vue": "^3.5.17"
   }
-  
-  // ... 附加逻辑
 }
+```
+
+### 10.2 内部依赖
+
+```
+useTransform → useObjectManager
+useTransform → useObjectSelection
+useObjectSelection → useAxesLockState
+useObjectSelection → useThreeViewer
+useObjectSelection → useControls
+useObjectSelection → useInputManager
+TransformPropertyPane → useObjectSelection
+TransformPropertyPane → useTransform
 ```
 
 ---
@@ -594,8 +946,14 @@ function attachTransformControls(object) {
 ## 相关文档
 
 - [模块规格](./spec.md)
-- [核心引擎模块](../001-core/plan.md)
+- [架构设计](../ARCHITECTURE.md)
+- [数据模型](../overall-data-model.md)
+- [001-Core 核心引擎模块](../001-core/plan.md)
 
 ---
 
-**版本**: 1.0 | **日期**: 2026-04-07
+## 更新日志
+
+| 版本 | 日期 | 变更 |
+|------|------|------|
+| 1.0 | 2026-04-14 | 初始技术方案 |

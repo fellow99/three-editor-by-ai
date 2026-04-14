@@ -1,8 +1,8 @@
 # 003-Transform 对象变换模块 - 规格文档
 
 **模块版本**: 1.0.0  
-**生成日期**: 2026-04-07  
-**最后更新**: 2026-04-07
+**生成日期**: 2026-04-14  
+**最后更新**: 2026-04-14
 
 ---
 
@@ -10,607 +10,395 @@
 
 ### 1.1 模块定位
 
-对象变换模块负责 3D 对象的移动、旋转、缩放操作，提供完整的变换控制系统，包括撤销/重做历史记录和 Y 轴锁定功能。
+对象变换模块负责 Three.js 场景中 3D 对象的移动、旋转、缩放操作，提供完整的撤销/重做历史记录、吸附对齐、轴约束等高级变换功能。
 
 ### 1.2 模块职责
 
-- **变换操作**: 移动、旋转、缩放
-- **变换控制器**: TransformControls 集成
-- **对象选择**: 单选、多选、辅助显示
-- **历史记录**: 撤销/重做系统
-- **Y 轴锁定**: 限制 Y 轴变换
-- **批量操作**: 多对象同时变换
+- **变换操作**: 对象的位置、旋转、缩放变换
+- **撤销/重做**: 完整的 undo/redo 历史栈管理
+- **吸附对齐**: 网格吸附、旋转吸附、缩放吸附
+- **轴约束**: X/Y/Z 轴独立锁定
+- **坐标空间**: 世界坐标与局部坐标切换
+- **多选支持**: 批量变换多个选中对象
+- **选择集成**: TransformControls 生命周期管理
 
 ### 1.3 核心价值
 
-- 直观的变换交互
-- 精确的数值控制
-- 完整的撤销/重做
-- 灵活的轴锁定
+- 精确可控的对象变换操作
+- 完整的操作历史追溯能力
+- 灵活的吸附与约束机制
+- 与选择系统无缝集成
 
 ---
 
-## 2. useTransform 组合式函数
+## 2. useTransform 变换操作规格
 
 ### 2.1 组件概述
 
-**函数名**: `useTransform`  
-**文件**: `src/composables/useTransform.js`  
-**大小**: 约 600 行  
-**职责**: 变换操作管理，撤销/重做历史记录
+**文件名**: `useTransform.js`  
+**路径**: `src/composables/useTransform.js`  
+**大小**: 559 行  
+**职责**: 对象变换操作的核心逻辑，包含撤销/重做、吸附、轴约束等功能
 
-### 2.2 核心状态
+### 2.2 核心功能
 
-```javascript
-const transformMode = ref('translate'); // 'translate' | 'rotate' | 'scale'
-const isTransforming = ref(false);
-const history = ref([]);
-const historyIndex = ref(-1);
-const maxHistoryLength = 50;
-const yAxisLocked = ref(false);
+#### 2.2.1 撤销/重做系统
+
+**功能描述**: 维护变换操作的历史记录，支持撤销和重做
+
+**历史栈配置**:
+- `undoStack`: 撤销栈，存储可撤销的操作
+- `redoStack`: 重做栈，存储可重做的操作
+- `maxHistory`: 最大历史记录数，默认 50
+
+**操作流程**:
+
+**撤销 (undo)**:
+1. 检查 undoStack 是否为空
+2. 弹出栈顶操作记录
+3. 恢复对象到操作前状态
+4. 将操作记录推入 redoStack
+5. 触发更新事件
+
+**重做 (redo)**:
+1. 检查 redoStack 是否为空
+2. 弹出栈顶操作记录
+3. 恢复对象到操作后状态
+4. 将操作记录推入 undoStack
+5. 触发更新事件
+
+**变换开始 (startTransform)**:
+1. 捕获当前所有选中对象的状态快照
+2. 记录位置、旋转、缩放值
+3. 存储为变换前状态
+
+**变换结束 (endTransform)**:
+1. 捕获变换后所有选中对象的状态
+2. 与变换前状态对比
+3. 若有变化，生成操作记录推入 undoStack
+4. 清空 redoStack（新操作使重做历史失效）
+
+**操作记录结构**:
 ```
-
----
-
-### 2.3 核心功能
-
-#### 2.3.1 变换模式切换
-
-**设置变换模式**:
-```javascript
-function setTransformMode(mode) {
-  if (!['translate', 'rotate', 'scale'].includes(mode)) {
-    throw new Error('Invalid transform mode');
-  }
-  transformMode.value = mode;
-  transformControls.setMode(mode);
-}
-```
-
-**变换模式说明**:
-
-| 模式 | 用途 | 快捷键 |
-|------|------|--------|
-| translate | 移动对象 | W |
-| rotate | 旋转对象 | E |
-| scale | 缩放对象 | R |
-
----
-
-#### 2.3.2 变换开始/结束
-
-**开始变换**:
-```javascript
-function startTransform() {
-  if (isTransforming.value) return;
-  
-  isTransforming.value = true;
-  
-  // 记录变换前状态（用于撤销）
-  const beforeState = selectedObjects.value.map(obj => ({
-    uuid: obj.uuid,
-    position: obj.position.clone(),
-    rotation: obj.rotation.clone(),
-    scale: obj.scale.clone()
-  }));
-  
-  historyState.before = beforeState;
-}
-```
-
-**结束变换**:
-```javascript
-function endTransform() {
-  if (!isTransforming.value) return;
-  
-  isTransforming.value = false;
-  
-  // 记录变换后状态
-  const afterState = selectedObjects.value.map(obj => ({
-    uuid: obj.uuid,
-    position: obj.position.clone(),
-    rotation: obj.rotation.clone(),
-    scale: obj.scale.clone()
-  }));
-  
-  // 添加到历史记录
-  addToHistory({
-    before: historyState.before,
-    after: afterState,
-    timestamp: Date.now()
-  });
-  
-  // 分发事件
-  objectManager.emit('object-transform-updated', {
-    objects: selectedObjects.value
-  });
-}
-```
-
----
-
-#### 2.3.3 撤销/重做系统
-
-**撤销**:
-```javascript
-function undo() {
-  if (historyIndex.value < 0) return;
-  
-  const state = history.value[historyIndex.value];
-  
-  // 恢复到变换前状态
-  state.before.forEach(item => {
-    const obj = scene.getObjectByUuid(item.uuid);
-    if (obj) {
-      obj.position.copy(item.position);
-      obj.rotation.copy(item.rotation);
-      obj.scale.copy(item.scale);
+{
+  objects: [
+    {
+      uuid: string,
+      before: { position, rotation, scale },
+      after: { position, rotation, scale }
     }
-  });
-  
-  historyIndex.value--;
-}
-```
-
-**重做**:
-```javascript
-function redo() {
-  if (historyIndex.value >= history.value.length - 1) return;
-  
-  historyIndex.value++;
-  const state = history.value[historyIndex.value];
-  
-  // 恢复到变换后状态
-  state.after.forEach(item => {
-    const obj = scene.getObjectByUuid(item.uuid);
-    if (obj) {
-      obj.position.copy(item.position);
-      obj.rotation.copy(item.rotation);
-      obj.scale.copy(item.scale);
-    }
-  });
-}
-```
-
-**添加到历史记录**:
-```javascript
-function addToHistory(transform) {
-  // 如果当前不是历史记录末尾，删除后面的记录
-  if (historyIndex.value < history.value.length - 1) {
-    history.value = history.value.slice(0, historyIndex.value + 1);
-  }
-  
-  // 添加新记录
-  history.value.push(transform);
-  historyIndex.value++;
-  
-  // 限制历史记录长度
-  if (history.value.length > maxHistoryLength) {
-    history.value.shift();
-    historyIndex.value--;
-  }
+  ],
+  timestamp: number
 }
 ```
 
 ---
 
-#### 2.3.4 Y 轴锁定
+#### 2.2.2 吸附对齐
 
-**启用 Y 轴锁定**:
-```javascript
-function lockYAxis(lock) {
-  yAxisLocked.value = lock;
-  transformControls.setYAxisLock(lock);
-}
-```
+**网格吸附 (Snap-to-Grid)**:
+- 可配置网格大小（如 0.5、1.0、2.0 单位）
+- 位置值自动对齐到最近的网格点
+- 计算公式: `snapped = Math.round(value / gridSize) * gridSize`
 
-**Y 轴锁定效果**:
-- 移动模式：仅允许 XZ 平面移动
-- 旋转模式：仅允许 XZ 轴旋转
-- 缩放模式：仅允许 XZ 轴缩放
+**旋转吸附 (Snap-to-Rotation)**:
+- 可配置角度步长（如 15°、30°、45°）
+- 旋转值自动对齐到最近的角度步长
+- 计算公式: `snapped = Math.round(value / angleStep) * angleStep`
 
-**使用场景**:
-- 建筑建模（保持楼层高度）
-- 地形编辑（保持海拔）
-- 角色放置（保持站立）
+**缩放吸附 (Snap-to-Scale)**:
+- 可配置缩放步长（如 0.1、0.25、0.5）
+- 缩放值自动对齐到最近的步长值
+- 计算公式: `snapped = Math.round(value / scaleStep) * scaleStep`
 
----
-
-## 3. useObjectSelection 组合式函数
-
-### 3.1 组件概述
-
-**函数名**: `useObjectSelection`  
-**文件**: `src/composables/useObjectSelection.js`  
-**大小**: 约 700 行  
-**职责**: 对象选择、TransformControls 管理、选中对象辅助显示
-
-### 3.2 核心状态
-
-```javascript
-const selectedObjects = ref([]);
-const currentHelpers = ref([]);
-const selectionStore = reactive({}); // 临时材质信息
-const transformControls = ref(null);
-```
+**吸附开关**:
+- 各吸附功能可独立启用/禁用
+- 吸附参数可动态调整
 
 ---
 
-### 3.3 核心功能
+#### 2.2.3 轴约束
 
-#### 3.3.1 对象选择
+**功能描述**: 限制变换操作仅在指定轴向上生效
 
-**选择单个对象**:
-```javascript
-function selectObject(object) {
-  // 清除之前的选择
-  deselectAll();
-  
-  // 添加新选择
-  selectedObjects.value.push(object);
-  
-  // 创建辅助对象
-  const helper = createSelectionHelper(object);
-  currentHelpers.value.push(helper);
-  
-  // 附加 TransformControls
-  attachTransformControls(object);
-  
-  // 存储临时材质信息
-  selectionStore[object.id] = {
-    originalMaterial: object.material.clone()
-  };
-  
-  // 高亮显示
-  highlightObject(object);
-}
-```
+**支持的约束**:
+- X 轴锁定: 仅允许 X 方向变换
+- Y 轴锁定: 仅允许 Y 方向变换
+- Z 轴锁定: 仅允许 Z 方向变换
 
-**多选支持**:
-```javascript
-function toggleSelectObject(object) {
-  const index = selectedObjects.value.findIndex(
-    obj => obj.uuid === object.uuid
-  );
-  
-  if (index >= 0) {
-    // 取消选择
-    deselectObject(object);
-  } else {
-    // 添加选择
-    selectedObjects.value.push(object);
-    const helper = createSelectionHelper(object);
-    currentHelpers.value.push(helper);
-    selectionStore[object.id] = {
-      originalMaterial: object.material.clone()
-    };
-    highlightObject(object);
-  }
-}
-```
+**约束行为**:
+- 位置变换: 锁定轴的值保持不变
+- 旋转变换: 锁定轴的旋转角度保持不变
+- 缩放变换: 锁定轴的缩放比例保持不变
 
-**取消选择**:
-```javascript
-function deselectObject(object) {
-  const index = selectedObjects.value.findIndex(
-    obj => obj.uuid === object.uuid
-  );
-  
-  if (index < 0) return;
-  
-  // 移除选择
-  selectedObjects.value.splice(index, 1);
-  
-  // 移除辅助对象
-  const helper = currentHelpers.value[index];
-  if (helper) {
-    scene.remove(helper);
-    currentHelpers.value.splice(index, 1);
-  }
-  
-  // 恢复原始材质
-  const store = selectionStore[object.id];
-  if (store && store.originalMaterial) {
-    object.material.dispose();
-    object.material = store.originalMaterial;
-    delete selectionStore[object.id];
-  }
-}
-```
-
-**取消所有选择**:
-```javascript
-function deselectAll() {
-  // 复制数组避免遍历时修改
-  const objects = [...selectedObjects.value];
-  objects.forEach(obj => deselectObject(obj));
-}
-```
+**Y 轴专用锁定**:
+- 通过 `useAxesLockState` 提供独立的 Y 轴锁定状态
+- 状态包含: `{ locked: boolean, yValue: number }`
+- 锁定后 Y 位置固定为锁定时的值
 
 ---
 
-#### 3.3.2 TransformControls 集成
+#### 2.2.4 坐标空间
 
-**初始化**:
-```javascript
-function initTransformControls(camera, renderer) {
-  transformControls.value = new TransformControls(
-    camera,
-    renderer.domElement
-  );
-  
-  // 拖拽开始时禁用 OrbitControls
-  transformControls.value.addEventListener('dragging-changed', (event) => {
-    orbitControls.enabled = !event.value;
-  });
-  
-  // 变换开始
-  transformControls.value.addEventListener('mouseDown', () => {
-    startTransform();
-  });
-  
-  // 变换结束
-  transformControls.value.addEventListener('mouseUp', () => {
-    endTransform();
-  });
-  
-  scene.add(transformControls.value);
-}
-```
+**世界坐标 (World Space)**:
+- 变换基于全局坐标系
+- 所有对象使用统一的方向参考
 
-**附加到对象**:
-```javascript
-function attachTransformControls(object) {
-  if (!transformControls.value) return;
-  transformControls.value.attach(object);
-}
-```
+**局部坐标 (Local Space)**:
+- 变换基于对象自身的坐标系
+- 考虑对象的父级变换和旋转
 
-**分离**:
-```javascript
-function detachTransformControls() {
-  if (!transformControls.value) return;
-  transformControls.value.detach();
-}
-```
+**切换机制**:
+- 通过配置项切换坐标空间模式
+- 切换时 TransformControls 自动更新显示
 
 ---
 
-#### 3.3.3 选中对象辅助显示
+#### 2.2.5 多选变换
 
-**创建辅助对象**:
-```javascript
-function createSelectionHelper(object) {
-  // 创建包围盒辅助线
-  const box = new THREE.Box3().setFromObject(object);
-  const helper = new THREE.Box3Helper(box, 0xffff00);
-  scene.add(helper);
-  return helper;
-}
-```
+**功能描述**: 同时对多个选中对象执行变换操作
 
-**高亮显示**:
-```javascript
-function highlightObject(object) {
-  if (Array.isArray(object.material)) {
-    object.material.forEach(mat => {
-      mat.emissive = new THREE.Color(0x333333);
-    });
-  } else {
-    object.material.emissive = new THREE.Color(0x333333);
-  }
-}
-```
+**行为规则**:
+- 所有选中对象同步应用相同的变换增量
+- 每个对象保持自身的相对位置关系
+- 撤销/重做时批量恢复所有对象状态
 
-**恢复原始材质**:
-```javascript
-function restoreObjectMaterial(object) {
-  const store = selectionStore[object.id];
-  if (!store) return;
-  
-  if (Array.isArray(object.material)) {
-    object.material.forEach((mat, i) => {
-      if (store.originalMaterials && store.originalMaterials[i]) {
-        mat.emissive = store.originalMaterials[i].emissive;
-      }
-    });
-  } else {
-    object.material.emissive = store.originalMaterial.emissive;
-  }
-}
-```
+**处理流程**:
+1. 获取当前所有选中对象列表
+2. 变换开始时捕获所有对象状态
+3. 变换过程中同步更新所有对象
+4. 变换结束时记录所有对象的变化
 
 ---
 
-#### 3.3.4 射线检测选择
+### 2.3 API 接口
 
-**鼠标点击选择**:
-```javascript
-function handleMouseClick(event) {
-  // 转换鼠标坐标
-  mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-  mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-  
-  // 创建射线
-  raycaster.setFromCamera(mouse, camera);
-  
-  // 获取相交对象（仅未锁定）
-  const intersects = objectManager.getIntersectedObjects(raycaster);
-  
-  if (intersects.length > 0) {
-    // 选择第一个相交对象
-    const object = intersects[0].object;
-    
-    if (event.shiftKey) {
-      // 多选
-      toggleSelectObject(object);
-    } else {
-      // 单选
-      selectObject(object);
-    }
-  } else {
-    // 点击空白处取消选择
-    deselectAll();
-  }
-}
-```
-
----
-
-### 3.4 API 接口
-
-#### useTransform 公共方法
+#### 公共方法
 
 | 方法 | 参数 | 返回值 | 说明 |
 |------|------|--------|------|
-| `setTransformMode(mode)` | mode: string | void | 设置变换模式 |
-| `startTransform()` | - | void | 开始变换 |
-| `endTransform()` | - | void | 结束变换 |
-| `undo()` | - | void | 撤销 |
-| `redo()` | - | void | 重做 |
-| `lockYAxis(lock)` | lock: boolean | void | Y 轴锁定 |
-| `clearHistory()` | - | void | 清空历史 |
-
-#### useObjectSelection 公共方法
-
-| 方法 | 参数 | 返回值 | 说明 |
-|------|------|--------|------|
-| `selectObject(object)` | object: Object3D | void | 选择对象 |
-| `deselectObject(object)` | object: Object3D | void | 取消选择 |
-| `deselectAll()` | - | void | 取消所有选择 |
-| `toggleSelectObject(object)` | object: Object3D | void | 切换选择 |
-| `attachTransformControls(object)` | object: Object3D | void | 附加控制器 |
-| `detachTransformControls()` | - | void | 分离控制器 |
-| `getSelectedObjects()` | - | Object3D[] | 获取选中对象 |
+| `startTransform()` | - | void | 开始变换，捕获对象当前状态 |
+| `endTransform()` | - | void | 结束变换，记录操作到历史栈 |
+| `undo()` | - | boolean | 撤销上一步操作，成功返回 true |
+| `redo()` | - | boolean | 重做上一步撤销，成功返回 true |
+| `canUndo()` | - | boolean | 检查是否可以撤销 |
+| `canRedo()` | - | boolean | 检查是否可以重做 |
+| `clearHistory()` | - | void | 清空所有历史记录 |
+| `setSnapGrid(size)` | size: number | void | 设置网格吸附大小 |
+| `setSnapRotation(angle)` | angle: number | void | 设置旋转吸附角度 |
+| `setSnapScale(step)` | step: number | void | 设置缩放吸附步长 |
+| `setAxisLock(axis, locked)` | axis: string, locked: boolean | void | 设置轴约束 |
+| `setCoordinateSpace(space)` | space: 'world' \| 'local' | void | 设置坐标空间模式 |
 
 ---
 
-### 3.5 事件系统
+### 2.4 事件系统
 
 #### 触发的事件
 
 | 事件名 | 触发时机 | 数据 |
 |--------|----------|------|
-| `selection-changed` | 选择变化 | `{ objects: Object3D[] }` |
-| `transform-started` | 变换开始 | `{ objects: Object3D[] }` |
-| `transform-ended` | 变换结束 | `{ objects: Object3D[] }` |
-| `transform-updated` | 变换更新 | `{ object: Object3D }` |
-| `undo-performed` | 撤销执行 | `{ state: HistoryState }` |
-| `redo-performed` | 重做执行 | `{ state: HistoryState }` |
+| `transform-start` | 变换开始 | `{ objects: Object3D[] }` |
+| `transform-end` | 变换结束 | `{ objects: Object3D[] }` |
+| `transform-undo` | 撤销操作 | `{ record: TransformRecord }` |
+| `transform-redo` | 重做操作 | `{ record: TransformRecord }` |
+| `history-cleared` | 历史清空 | - |
+
+#### 监听的事件
+
+| 事件名 | 来源 | 响应动作 |
+|--------|------|----------|
+| `object-selected` | useObjectSelection | 更新变换目标对象 |
+| `object-deselected` | useObjectSelection | 更新变换目标对象 |
+| `axes-lock-changed` | useAxesLockState | 更新轴约束状态 |
 
 ---
 
-## 4. 撤销/重做数据结构
+## 3. useObjectSelection 选择与变换控制规格
 
-### 4.1 历史记录项
+### 3.1 组件概述
 
-```javascript
-interface HistoryItem {
-  before: TransformedState[];  // 变换前状态
-  after: TransformedState[];   // 变换后状态
-  timestamp: number;            // 时间戳
-  type: 'transform' | 'add' | 'remove'; // 操作类型
+**文件名**: `useObjectSelection.js`  
+**路径**: `src/composables/useObjectSelection.js`  
+**大小**: 605 行  
+**职责**: 对象选择管理、TransformControls 生命周期管理、选中状态维护
+
+### 3.2 核心功能
+
+#### 3.2.1 TransformControls 生命周期
+
+**创建**:
+- 初始化 TransformControls 实例
+- 绑定到 Three.js 渲染器 DOM 元素
+- 配置变换模式（移动/旋转/缩放）
+
+**附加对象**:
+- 将 TransformControls 附加到选中对象
+- 自动处理多选时的主控对象
+
+**分离对象**:
+- 从当前对象分离 TransformControls
+- 清理辅助显示对象
+
+**销毁**:
+- 释放 TransformControls 资源
+- 移除所有事件监听器
+
+---
+
+#### 3.2.2 拖拽交互
+
+**拖拽开始**:
+1. 自动禁用 OrbitControls（防止镜头跟随）
+2. 调用 `useTransform.startTransform()` 捕获状态
+3. 触发 `transform-start` 事件
+
+**拖拽进行中**:
+- TransformControls 实时更新对象变换
+- 应用吸附对齐规则
+- 应用轴约束限制
+
+**拖拽结束**:
+1. 调用 `useTransform.endTransform()` 记录历史
+2. 重新启用 OrbitControls
+3. 触发 `transform-end` 事件
+
+---
+
+#### 3.2.3 类型专属辅助显示
+
+**灯光对象 (Light)**:
+- 显示灯光辅助几何体
+- 可视化灯光方向和范围
+
+**相机对象 (Camera)**:
+- 显示相机辅助线框
+- 可视化视锥体范围
+
+**普通对象**:
+- 使用 BoxHelper 显示包围盒
+- 高亮选中状态
+
+---
+
+#### 3.2.4 多选管理
+
+**选择存储**:
+- `selectedObjects`: Set 类型，存储当前选中对象
+- `currentHelpers`: Map 类型，存储每个对象的辅助显示
+
+**选择规则**:
+- 锁定对象（`userData.locked=true`）不可选中
+- 单选时清除之前的选择
+- 多选时累加选择集合
+
+**selectionStore**:
+- 响应式对象，存储选中对象的临时材质信息
+- Key 为对象 ID，Value 为原始材质引用
+- 生命周期与 useObjectSelection 一致
+
+---
+
+### 3.3 API 接口
+
+#### 公共方法
+
+| 方法 | 参数 | 返回值 | 说明 |
+|------|------|--------|------|
+| `selectObject(object)` | object: Object3D | void | 选择单个对象 |
+| `deselectObject(object)` | object: Object3D | void | 取消选择对象 |
+| `deselectAll()` | - | void | 取消所有选择 |
+| `toggleSelect(object)` | object: Object3D | void | 切换选择状态 |
+| `getSelectedObjects()` | - | Object3D[] | 获取所有选中对象 |
+| `setTransformMode(mode)` | mode: 'translate' \| 'rotate' \| 'scale' | void | 设置变换模式 |
+| `setCoordinateSpace(space)` | space: 'world' \| 'local' | void | 设置坐标空间 |
+| `dispose()` | - | void | 销毁所有资源 |
+
+---
+
+## 4. useAxesLockState 轴锁定状态规格
+
+### 4.1 组件概述
+
+**文件名**: `useAxesLockState.js`  
+**路径**: `src/composables/useAxesLockState.js`  
+**大小**: 27 行  
+**职责**: Y 轴锁定状态管理
+
+### 4.2 状态结构
+
+```
+{
+  locked: boolean,    // Y 轴是否锁定
+  yValue: number      // 锁定时的 Y 值
 }
-
-interface TransformedState {
-  uuid: string;        // 对象 UUID
-  position: Vector3;   // 位置
-  rotation: Euler;     // 旋转
-  scale: Vector3;      // 缩放
-}
 ```
 
-### 4.2 历史记录管理
+### 4.3 行为规则
 
-**最大历史记录数**: 50  
-**内存优化**: 超出限制时自动删除最早记录  
-**性能考虑**: 仅存储变换数据，不存储完整对象
+- 锁定时记录当前 Y 位置值
+- 变换过程中强制恢复 Y 值为锁定值
+- 解锁后恢复正常变换
 
 ---
 
-## 5. 性能优化
+## 5. TransformPropertyPane 变换属性面板规格
 
-### 5.1 已实现优化
+### 5.1 组件概述
 
-1. **辅助对象复用**
-   - 避免重复创建/销毁
-   - 缓存辅助对象实例
+**文件名**: `TransformPropertyPane.vue`  
+**路径**: `src/components/property/TransformPropertyPane.vue`  
+**职责**: 显示和编辑选中对象的变换属性
 
-2. **材质克隆优化**
-   - 仅克隆必要属性
-   - 及时释放不需要的材质
+### 5.2 核心功能
 
-3. **历史记录限制**
-   - 限制最大历史记录数（50）
-   - 自动清理过期记录
+#### 5.2.1 属性显示
 
-### 5.2 性能指标
+**位置 (Position)**:
+- X、Y、Z 三个数值输入框
+- 实时显示当前对象位置
+- 支持手动输入精确值
 
-| 指标 | 目标值 | 当前值 |
-|------|--------|--------|
-| 撤销响应时间 | < 50ms | 待测试 |
-| 辅助对象数量 | < 100 | 待测试 |
-| 历史记录内存 | < 10MB | 待测试 |
+**旋转 (Rotation)**:
+- X、Y、Z 三个数值输入框
+- 支持角度/弧度显示切换
+- 实时显示当前对象旋转
+
+**缩放 (Scale)**:
+- X、Y、Z 三个数值输入框
+- 默认值为 1.0
+- 支持等比缩放锁定
+
+#### 5.2.2 实时更新
+
+- 拖拽变换过程中实时更新显示值
+- 多选时显示首个选中对象的值
+- 手动输入后应用到对象并触发渲染
 
 ---
 
-## 6. 使用示例
+## 6. 依赖关系
 
-### 6.1 基本变换操作
+### 6.1 内部依赖
 
-```javascript
-import { useTransform } from './composables/useTransform.js';
-import { useObjectSelection } from './composables/useObjectSelection.js';
-
-const { setTransformMode, undo, redo, lockYAxis } = useTransform();
-const { selectObject, deselectAll } = useObjectSelection();
-
-// 切换到移动模式
-setTransformMode('translate');
-
-// 选择对象
-selectObject(mesh);
-
-// 启用 Y 轴锁定
-lockYAxis(true);
-
-// 用户拖拽变换...
-
-// 撤销
-undo();
-
-// 重做
-redo();
+```
+useTransform → useObjectManager
+useTransform → useObjectSelection
+useObjectSelection → useAxesLockState
+useObjectSelection → useThreeViewer
+useObjectSelection → useControls
+useObjectSelection → useInputManager
+TransformPropertyPane → useObjectSelection
+TransformPropertyPane → useTransform
 ```
 
-### 6.2 多选变换
+### 6.2 外部依赖
 
-```javascript
-const { toggleSelectObject } = useObjectSelection();
-
-// 多选对象
-toggleSelectObject(mesh1);
-toggleSelectObject(mesh2);
-toggleSelectObject(mesh3);
-
-// 所有选中对象将同时变换
-```
-
-### 6.3 快捷键绑定
-
-```javascript
-import { useInputManager } from './composables/useInputManager.js';
-
-const { registerShortcut } = useInputManager();
-const { undo, redo, setTransformMode } = useTransform();
-
-// 注册快捷键
-registerShortcut(['Control', 'KeyZ'], () => undo());
-registerShortcut(['Control', 'KeyY'], () => redo());
-registerShortcut(['KeyW'], () => setTransformMode('translate'));
-registerShortcut(['KeyE'], () => setTransformMode('rotate'));
-registerShortcut(['KeyR'], () => setTransformMode('scale'));
-```
+| 依赖 | 用途 |
+|------|------|
+| three | Three.js 核心库 |
+| three/examples/jsm/controls/TransformControls.js | 变换控制器 |
+| vue | Vue 3 响应式系统 |
 
 ---
 
@@ -618,34 +406,49 @@ registerShortcut(['KeyR'], () => setTransformMode('scale'));
 
 ### 7.1 单元测试
 
-- [ ] 变换模式切换
-- [ ] 对象选择/取消选择
-- [ ] 多选功能
-- [ ] 撤销功能
-- [ ] 重做功能
-- [ ] Y 轴锁定
-- [ ] TransformControls 附加/分离
+- [ ] 撤销/重做基本功能
+- [ ] 历史栈容量限制（maxHistory=50）
+- [ ] 网格吸附计算准确性
+- [ ] 旋转吸附计算准确性
+- [ ] 缩放吸附计算准确性
+- [ ] X/Y/Z 轴独立约束
+- [ ] Y 轴专用锁定功能
+- [ ] 世界/局部坐标空间切换
+- [ ] 多选变换同步性
 
 ### 7.2 集成测试
 
-- [ ] 完整变换流程
-- [ ] 撤销/重做链
-- [ ] 多选变换
-- [ ] 射线检测选择
+- [ ] TransformControls 拖拽完整流程
+- [ ] 拖拽时 OrbitControls 自动禁用/启用
+- [ ] 撤销后重做栈正确性
+- [ ] 新操作后重做栈清空
+- [ ] 锁定对象不可选中
+- [ ] 辅助显示对象正确创建/销毁
+- [ ] selectionStore 生命周期管理
 
-### 7.3 性能测试
+### 7.3 UI 测试
 
-- [ ] 大量对象选择
-- [ ] 长历史记录链
-- [ ] 内存泄漏检测
+- [ ] TransformPropertyPane 实时值更新
+- [ ] 手动输入值应用到对象
+- [ ] 多选时面板显示正确
+- [ ] 无选中对象时面板状态
+
+### 7.4 边界测试
+
+- [ ] 空场景变换操作
+- [ ] 历史栈满后旧记录丢弃
+- [ ] 连续快速撤销/重做
+- [ ] 超大/超小吸附网格值
+- [ ] 嵌套对象局部坐标变换
 
 ---
 
 ## 相关文档
 
 - [架构设计](../ARCHITECTURE.md)
-- [核心引擎模块](../001-core/spec.md)
 - [数据模型](../overall-data-model.md)
+- [API 清单](../API.md)
+- [001-Core 核心引擎模块](../001-core/spec.md)
 
 ---
 
@@ -653,4 +456,4 @@ registerShortcut(['KeyR'], () => setTransformMode('scale'));
 
 | 版本 | 日期 | 变更 |
 |------|------|------|
-| 1.0 | 2026-04-07 | 初始模块规格文档 |
+| 1.0 | 2026-04-14 | 初始模块规格文档 |

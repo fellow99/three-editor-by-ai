@@ -1,8 +1,8 @@
 # 002-Assets 资源管理模块 - 规格文档
 
 **模块版本**: 1.0.0  
-**生成日期**: 2026-04-07  
-**最后更新**: 2026-04-07
+**生成日期**: 2026-04-14  
+**最后更新**: 2026-04-14
 
 ---
 
@@ -10,546 +10,483 @@
 
 ### 1.1 模块定位
 
-资源管理模块负责 3D 模型、纹理、材质等资源的加载、缓存、浏览和管理，提供统一的资源访问接口。
+资源管理模块负责 Three Editor by AI 中所有外部资源（3D 模型、纹理贴图）的加载、缓存、预览生成和浏览展示。它是连接外部资源文件与场景对象的桥梁。
 
 ### 1.2 模块职责
 
-- **资源加载**: 支持多种 3D 格式和纹理格式
-- **资源缓存**: 避免重复加载，提升性能
-- **资源浏览**: 提供资源浏览器 UI 组件
-- **拖拽上传**: 支持拖拽上传资源
-- **分类管理**: 资源分类和标签管理
+- **useAssetsManager**: 资源加载、缓存管理、预览生成的单例组合式函数
+- **AssetBrowser**: 已加载资源的可视化浏览与拖拽入口
+- **PrimitiveBrowser**: 基础几何体与灯光类型的浏览与拖拽入口
 
 ### 1.3 核心价值
 
-- 统一的资源加载 API
-- 智能缓存机制，减少内存占用
-- 直观的资源浏览界面
-- 便捷的拖拽上传体验
+- 基于文件名的去重缓存机制，避免重复加载相同资源
+- 异步生成 256x256 预览缩略图，提供直观的视觉反馈
+- 统一的拖拽添加工作流，简化用户操作路径
+- 队列式批量加载，确保资源加载的有序性和可控性
 
 ---
 
-## 2. useAssetsManager 组合式函数
+## 2. useAssetsManager 规格
 
 ### 2.1 组件概述
 
-**函数名**: `useAssetsManager`  
-**文件**: `src/composables/useAssetsManager.js`  
+**文件名**: `useAssetsManager.js`  
+**路径**: `src/composables/useAssetsManager.js`  
 **大小**: 634 行  
-**职责**: 资源加载和管理的响应式状态和操作方法
+**类型**: 单例组合式函数（Singleton Composable）  
+**职责**: 资源加载、缓存管理、预览生成、批量队列处理
 
-### 2.2 单例模式
+### 2.2 核心功能
 
-**设计目的**: 确保所有组件共享同一个资源库
+#### 2.2.1 资源加载
 
-**实现方式**:
-```javascript
-let _assetsInstance = null;
+**功能描述**: 加载 3D 模型和纹理资源到编辑器中
 
-export function useAssetsManager() {
-  if (_assetsInstance) return _assetsInstance;
-  // ... 初始化代码
-  _assetsInstance = { ... };
-  return _assetsInstance;
-}
-```
+**支持的资源类型**:
 
----
+| 类型 | 格式 | 说明 |
+|------|------|------|
+| 模型 | GLTF/GLB | 标准 3D 模型格式，支持动画 |
+| 模型 | OBJ | Wavefront 对象格式 |
+| 模型 | FBX | Autodesk 交换格式 |
+| 纹理 | JPG/PNG | 标准图像格式 |
+| 纹理 | KTX2 | GPU 压缩纹理格式 |
 
-### 2.3 核心状态
+**输入**:
+- `url`: string - 资源文件路径或 URL
+- `onProgress`: function (可选) - 加载进度回调
 
-#### 2.3.1 资源库状态
+**输出**:
+- 加载完成的模型对象（THREE.Group）或纹理对象（THREE.Texture）
 
-```javascript
-const assetLibrary = reactive({
-  models: new Map(),      // 模型资源
-  textures: new Map(),    // 纹理资源
-  materials: new Map(),   // 材质资源
-  favorites: new Set(),   // 收藏资源
-  categories: new Map()   // 分类信息
-});
-```
-
-#### 2.3.2 加载状态
-
-```javascript
-const loadState = reactive({
-  isLoading: false,       // 是否正在加载
-  loadProgress: 0,        // 加载进度 (0-100)
-  loadQueue: [],          // 加载队列
-  failedLoads: []         // 失败记录
-});
-```
-
-#### 2.3.3 拖拽状态
-
-```javascript
-const dragState = reactive({
-  isDragOver: false,      // 是否拖拽中
-  draggedFiles: []        // 拖拽的文件
-});
-```
+**处理流程**:
+1. 检查缓存中是否已存在同名且大小一致的资源
+2. 若存在缓存，直接返回缓存对象
+3. 若不存在，将加载任务加入队列
+4. 队列按顺序处理加载任务
+5. 加载完成后存入缓存
+6. 触发预览生成任务
 
 ---
 
-### 2.4 核心功能
+#### 2.2.2 文件名缓存机制
 
-#### 2.4.1 模型加载
+**功能描述**: 基于文件名和大小的去重缓存，防止重复加载相同资源
 
-**加载方法**:
-```javascript
-async function loadModel(url, options = {}) {
-  // 1. 检查缓存
-  const cached = assetLibrary.models.get(url);
-  if (cached && cached.size === getFileSize(url)) {
-    return cached;
-  }
-  
-  // 2. 加载新资源
-  loadState.isLoading = true;
-  const model = await assetLoader.loadGLTF(url, (progress) => {
-    loadState.loadProgress = progress;
-  });
-  
-  // 3. 缓存资源
-  assetLibrary.models.set(url, {
-    ...model,
-    loadedAt: new Date().toISOString(),
-    size: getFileSize(url)
-  });
-  
-  loadState.isLoading = false;
-  return model;
-}
+**缓存键生成规则**:
+```
+缓存键 = `${文件名}_${文件大小}`
 ```
 
-**缓存机制**:
-- 检查同名资源
-- 比较文件大小
-- 相同则返回缓存
-- 不同则重新加载
+**缓存命中条件**:
+- 文件名完全相同（含扩展名）
+- 文件大小（字节数）完全相同
+
+**缓存行为**:
+- 命中缓存时，跳过网络请求，直接返回已加载的资源引用
+- 未命中缓存时，执行完整加载流程并写入缓存
+
+**缓存清理**:
+- 提供 `clearCache()` 方法清空所有缓存
+- 清理后释放对应的内存和 GPU 资源
 
 ---
 
-#### 2.4.2 纹理加载
+#### 2.2.3 预览缩略图生成
 
-```javascript
-async function loadTexture(url) {
-  // 类似模型加载，包含缓存检查
-  const texture = await assetLoader.loadTexture(url);
-  assetLibrary.textures.set(url, texture);
-  return texture;
-}
-```
+**功能描述**: 为已加载的模型资源异步生成 256x256 预览缩略图
 
----
+**渲染规格**:
+- 画布尺寸: 256 x 256 像素
+- 渲染方式: 离屏 WebGL 渲染（OffscreenCanvas）
+- 渲染内容: 模型完整包围盒，自动适配相机距离
 
-#### 2.4.3 资源过滤与搜索
+**生成时机**:
+- 模型加载完成后自动触发
+- 异步执行，不阻塞主加载流程
 
-**搜索功能**:
-```javascript
-const searchQuery = ref('');
+**输出**:
+- Base64 编码的 PNG 图像数据 URL
 
-const filteredModels = computed(() => {
-  let models = Array.from(assetLibrary.models.values());
-  
-  // 搜索过滤
-  if (searchQuery.value) {
-    const query = searchQuery.value.toLowerCase();
-    models = models.filter(model => 
-      model.name.toLowerCase().includes(query) ||
-      model.filename.toLowerCase().includes(query) ||
-      (model.tags && model.tags.some(tag => tag.toLowerCase().includes(query)))
-    );
-  }
-  
-  return models;
-});
-```
-
-**分类过滤**:
-```javascript
-const selectedCategory = ref('all');
-
-// 只选择特定分类
-if (selectedCategory.value !== 'all') {
-  models = models.filter(model => 
-    model.category === selectedCategory.value
-  );
-}
-```
-
-**排序功能**:
-```javascript
-const sortBy = ref('name'); // 'name', 'date', 'size', 'type'
-const sortOrder = ref('asc'); // 'asc', 'desc'
-
-models.sort((a, b) => {
-  let aValue, bValue;
-  switch (sortBy.value) {
-    case 'name':
-      aValue = a.name.toLowerCase();
-      bValue = b.name.toLowerCase();
-      break;
-    case 'date':
-      aValue = new Date(a.loadedAt);
-      bValue = new Date(b.loadedAt);
-      break;
-    // ...
-  }
-  return sortOrder.value === 'asc' 
-    ? aValue.localeCompare(bValue)
-    : bValue - aValue;
-});
-```
+**处理流程**:
+1. 创建离屏渲染上下文
+2. 创建临时场景和相机
+3. 计算模型包围盒，调整相机位置
+4. 渲染单帧图像
+5. 导出为 Base64 PNG 数据
+6. 清理临时资源
+7. 将预览数据关联到对应资源
 
 ---
 
-#### 2.4.4 拖拽上传
+#### 2.2.4 队列式批量加载
 
-**拖拽处理**:
-```javascript
-async function handleDragOver(event) {
-  event.preventDefault();
-  dragState.isDragOver = true;
-}
+**功能描述**: 使用队列机制按顺序处理多个资源加载任务
 
-async function handleDrop(event) {
-  event.preventDefault();
-  dragState.isDragOver = false;
-  
-  const files = Array.from(event.dataTransfer.files);
-  await processFiles(files);
-}
-```
+**队列行为**:
+- 加载任务按加入顺序依次执行
+- 同一时刻仅处理一个加载任务
+- 当前任务完成后自动处理下一个任务
+- 支持加载进度追踪
 
-**文件处理**:
-```javascript
-async function processFiles(files) {
-  for (const file of files) {
-    if (isSupported3DFormat(file.name)) {
-      await loadModelFromFile(file);
-    } else if (isTextureFormat(file.name)) {
-      await loadTextureFromFile(file);
-    }
-  }
-}
-```
+**优势**:
+- 避免并发加载导致的网络拥塞
+- 确保加载顺序可预测
+- 便于实现加载进度 UI
 
 ---
 
-#### 2.4.5 资源管理
+#### 2.2.5 模型自动缩放与居中
 
-**添加资源到库**:
-```javascript
-function addToLibrary(resource) {
-  if (resource.type === 'model') {
-    assetLibrary.models.set(resource.url, resource);
-  } else if (resource.type === 'texture') {
-    assetLibrary.textures.set(resource.url, resource);
-  }
-}
-```
+**功能描述**: 加载完成的模型自动进行缩放和居中处理
 
-**移除资源**:
-```javascript
-function removeFromLibrary(url, type) {
-  if (type === 'model') {
-    assetLibrary.models.delete(url);
-  } else if (type === 'texture') {
-    assetLibrary.textures.delete(url);
-  }
-}
-```
-
-**收藏资源**:
-```javascript
-function toggleFavorite(url) {
-  if (assetLibrary.favorites.has(url)) {
-    assetLibrary.favorites.delete(url);
-  } else {
-    assetLibrary.favorites.add(url);
-  }
-}
-```
-
-**分类管理**:
-```javascript
-function addCategory(name, resources) {
-  assetLibrary.categories.set(name, resources);
-}
-
-function getResourcesByCategory(name) {
-  return assetLibrary.categories.get(name) || [];
-}
-```
+**处理规则**:
+- 计算模型包围盒尺寸
+- 按目标尺寸等比缩放模型
+- 将模型中心移动到原点 (0, 0, 0)
 
 ---
 
-### 2.5 API 接口
+### 2.3 API 接口
 
 #### 公共方法
 
 | 方法 | 参数 | 返回值 | 说明 |
 |------|------|--------|------|
-| `loadModel(url, options)` | url: string, options: Object | Promise<Model> | 加载模型 |
-| `loadTexture(url)` | url: string | Promise<Texture> | 加载纹理 |
-| `loadModelFromFile(file)` | file: File | Promise<Model> | 从文件加载模型 |
-| `loadTextureFromFile(file)` | file: File | Promise<Texture> | 从文件加载纹理 |
-| `clearCache()` | - | void | 清空缓存 |
-| `getAssetByUrl(url)` | url: string | Asset | 根据 URL 获取资源 |
-| `getAllModels()` | - | Model[] | 获取所有模型 |
-| `getAllTextures()` | - | Texture[] | 获取所有纹理 |
-| `toggleFavorite(url)` | url: string | void | 切换收藏状态 |
-| `addToLibrary(resource)` | resource: Asset | void | 添加到资源库 |
-| `removeFromLibrary(url, type)` | url: string, type: string | void | 移除资源 |
-| `handleDragOver(event)` | event: DragEvent | void | 处理拖拽进入 |
-| `handleDrop(event)` | event: DragEvent | void | 处理拖拽放下 |
+| `loadModel(url, onProgress)` | url: string, onProgress: function | Promise<THREE.Group> | 加载 3D 模型 |
+| `loadTexture(url)` | url: string | Promise<THREE.Texture> | 加载纹理 |
+| `getPreview(assetId)` | assetId: string | string \| null | 获取资源预览图（Base64 数据 URL） |
+| `clearCache()` | - | void | 清空所有资源缓存 |
+
+#### 响应式状态
+
+| 状态名 | 类型 | 说明 |
+|--------|------|------|
+| `assetLibrary` | Ref\<Array\> | 已加载资源列表，包含名称、类型、预览等信息 |
+| `loadingQueue` | Ref\<Array\> | 当前加载队列中的任务列表 |
+| `isLoading` | Ref\<boolean\> | 是否正在加载资源 |
 
 ---
 
-### 2.6 计算属性
+### 2.4 事件系统
 
-| 属性 | 类型 | 说明 |
-|------|------|------|
-| `isLoading` | Computed<boolean> | 是否正在加载 |
-| `loadingProgress` | Computed<number> | 加载进度 |
-| `filteredModels` | Computed<Model[]> | 过滤后的模型列表 |
-| `filteredTextures` | Computed<Texture[]> | 过滤后的纹理列表 |
-| `favoriteModels` | Computed<Model[]> | 收藏的模型 |
-| `recentModels` | Computed<Model[]> | 最近加载的模型 |
+#### 触发的事件
 
----
+| 事件名 | 触发时机 | 数据 |
+|--------|----------|------|
+| `asset-loaded` | 资源加载完成 | `{ asset: AssetInfo }` |
+| `asset-load-error` | 资源加载失败 | `{ url: string, error: Error }` |
+| `preview-generated` | 预览图生成完成 | `{ assetId: string, previewUrl: string }` |
+| `cache-cleared` | 缓存被清空 | `{ clearedCount: number }` |
 
-### 2.7 文件格式支持
+#### 监听的事件
 
-#### 3D 模型格式
-
-| 格式 | 扩展名 | 支持度 | 备注 |
-|------|--------|--------|------|
-| GLTF | .gltf | ✅ 完全支持 | 推荐格式 |
-| GLB | .glb | ✅ 完全支持 | 二进制 GLTF |
-| OBJ | .obj | ✅ 支持 | 需配合 MTL |
-| FBX | .fbx | ⚠️ 部分支持 | 功能有限 |
-| 3D Tiles | .tileset | ✅ 支持 | 基于 3d-tiles-renderer |
-
-#### 纹理格式
-
-| 格式 | 扩展名 | 支持度 | 备注 |
-|------|--------|--------|------|
-| JPEG | .jpg, .jpeg | ✅ 完全支持 | 常用格式 |
-| PNG | .png | ✅ 完全支持 | 支持透明 |
-| KTX2 | .ktx2 | ✅ 支持 | 压缩纹理 |
-| HDR | .hdr | ⚠️ 未来支持 | 环境贴图 |
+| 事件名 | 来源 | 响应动作 |
+|--------|------|----------|
+| `asset-drop-requested` | AssetBrowser / SceneViewer | 将资源添加到场景 |
 
 ---
 
-### 2.8 性能优化
+### 2.5 数据结构
 
-#### 缓存策略
+#### AssetInfo 资源信息
 
-**缓存检查流程**:
-```
-1. 请求资源 URL
-   ↓
-2. 检查 assetLibrary 是否存在
-   ↓ 是
-3. 比较文件大小是否一致
-   ↓ 是
-4. 返回缓存资源
-   ↓ 否
-5. 重新加载并更新缓存
-```
-
-**缓存清理**:
 ```javascript
-function clearCache() {
-  assetLibrary.models.clear();
-  assetLibrary.textures.clear();
-  assetLibrary.materials.clear();
-}
-```
-
-#### 内存管理
-
-**资源释放**:
-```javascript
-function disposeAsset(asset) {
-  if (asset.geometry) {
-    asset.geometry.dispose();
-  }
-  if (asset.material) {
-    if (Array.isArray(asset.material)) {
-      asset.material.forEach(m => m.dispose());
-    } else {
-      asset.material.dispose();
-    }
-  }
-  if (asset.texture) {
-    asset.texture.dispose();
-  }
+{
+  id: string,           // 唯一标识
+  name: string,         // 文件名（含扩展名）
+  type: 'model' | 'texture',  // 资源类型
+  size: number,         // 文件大小（字节）
+  url: string,          // 资源路径
+  object: THREE.Object3D | THREE.Texture,  // 加载后的对象
+  preview: string | null,  // 预览图 Base64 数据 URL
+  loadedAt: Date        // 加载时间
 }
 ```
 
 ---
 
-## 3. AssetBrowser 组件
+## 3. AssetBrowser 规格
 
 ### 3.1 组件概述
 
-**组件名**: `AssetBrowser`  
-**文件**: `src/components/editor/AssetBrowser.vue`  
-**职责**: 资源浏览和管理 UI
+**文件名**: `AssetBrowser.vue`  
+**路径**: `src/components/editor/AssetBrowser.vue`  
+**大小**: 655 行  
+**类型**: Vue 3 组件  
+**职责**: 已加载资源的可视化浏览、搜索过滤、拖拽添加
 
-### 3.2 功能特性
+### 3.2 核心功能
 
-- 资源缩略图预览
-- 搜索和过滤
-- 分类浏览
-- 拖拽上传
-- 收藏管理
-- 最近使用
+#### 3.2.1 资源卡片展示
 
-### 3.3 UI 布局
+**功能描述**: 以卡片形式展示已加载的资源，包含预览缩略图和基本信息
 
-```
-┌─────────────────────────────────────┐
-│  🔍 搜索框          [分类下拉] [排序]│
-├─────────────────────────────────────┤
-│ ┌─────┐ ┌─────┐ ┌─────┐ ┌─────┐   │
-│ │ 📦  │ │ 📦  │ │ 📦  │ │ 📦  │   │
-│ │模型 │ │模型 │ │模型 │ │模型 │   │
-│ └─────┘ └─────┘ └─────┘ └─────┘   │
-│ ┌─────┐ ┌─────┐ ┌─────┐ ┌─────┐   │
-│ │ 📦  │ │ 📦  │ │ 📦  │ │ 📦  │   │
-│ │模型 │ │模型 │ │模型 │ │模型 │   │
-│ └─────┘ └─────┘ └─────┘ └─────┘   │
-├─────────────────────────────────────┤
-│ 拖拽文件到此处上传                    │
-└─────────────────────────────────────┘
+**卡片内容**:
+- 预览缩略图（模型使用生成的预览图，纹理使用自身图像）
+- 资源名称（文件名）
+- 资源类型标识
+- 加载状态指示器
+
+**布局**:
+- 网格布局，自适应容器宽度
+- 卡片尺寸统一，保持视觉一致性
+
+---
+
+#### 3.2.2 搜索与过滤
+
+**功能描述**: 在已加载资源中进行搜索和类型过滤
+
+**搜索规则**:
+- 按资源名称模糊匹配
+- 实时过滤，输入即搜
+
+**过滤选项**:
+- 全部资源
+- 仅模型
+- 仅纹理
+
+---
+
+#### 3.2.3 拖拽添加资源
+
+**功能描述**: 支持从资源浏览器拖拽资源到场景视口
+
+**拖拽源**:
+- AssetBrowser 中的资源卡片
+- 文件系统文件（通过 File API）
+
+**拖拽目标**:
+- 场景视口（SceneViewer）
+
+**拖拽行为**:
+1. 用户按住资源卡片开始拖拽
+2. 拖拽过程中显示拖拽 ghost 图像
+3. 释放到场景视口时触发资源添加
+4. 资源自动放置到当前视点位置
+
+**拖拽数据**:
+```javascript
+{
+  type: 'asset' | 'file',
+  assetId: string,      // 资源 ID（asset 类型）
+  file: File,           // 文件对象（file 类型）
+  name: string          // 资源/文件名称
+}
 ```
 
 ---
 
-## 4. 依赖关系
+#### 3.2.4 加载状态展示
 
-### 4.1 内部依赖
+**功能描述**: 在资源加载过程中显示加载状态
+
+**状态类型**:
+- 加载中: 显示进度指示器
+- 加载完成: 显示预览缩略图
+- 加载失败: 显示错误标识
+
+---
+
+### 3.3 API 接口
+
+#### Props
+
+| 属性名 | 类型 | 默认值 | 说明 |
+|--------|------|--------|------|
+| `visible` | boolean | false | 是否显示组件 |
+
+#### 暴露的方法
+
+| 方法名 | 参数 | 返回值 | 说明 |
+|--------|------|--------|------|
+| `refresh()` | - | void | 刷新资源列表显示 |
+
+---
+
+## 4. PrimitiveBrowser 规格
+
+### 4.1 组件概述
+
+**文件名**: `PrimitiveBrowser.vue`  
+**路径**: `src/components/editor/PrimitiveBrowser.vue`  
+**大小**: 160 行  
+**类型**: Vue 3 组件  
+**职责**: 基础几何体与灯光类型的浏览和拖拽创建
+
+### 4.2 核心功能
+
+#### 4.2.1 数据类型
+
+**数据来源**: `src/constants/PRIMITIVES.json`
+
+**支持的类型**:
+- 几何体: Box, Sphere, Cylinder, Cone, Plane, Torus, TorusKnot, Dodecahedron, Icosahedron, Octahedron, Tetrahedron, Ring, Tube, Circle
+- 灯光: DirectionalLight, PointLight, SpotLight, AmbientLight, HemisphereLight
+
+#### 4.2.2 拖拽创建
+
+**功能描述**: 拖拽基础类型到场景视口创建对应对象
+
+**拖拽行为**:
+1. 用户按住类型图标开始拖拽
+2. 拖拽过程中显示类型名称
+3. 释放到场景视口时创建对应对象
+4. 对象自动放置到当前视点位置
+
+**拖拽数据**:
+```javascript
+{
+  type: 'primitive',
+  primitiveType: string,  // 类型标识（如 'box', 'sphere'）
+  category: 'geometry' | 'light',  // 分类
+  name: string            // 显示名称
+}
+```
+
+---
+
+## 5. 拖拽工作流规格
+
+### 5.1 整体拖拽流程
 
 ```
-useAssetsManager → AssetLoader
-useAssetsManager → fileUtils
-AssetBrowser → useAssetsManager
+用户操作                    系统响应
+────────                    ────────
+1. 按住资源/类型卡片         开始拖拽，设置拖拽数据
+2. 拖拽到场景视口上方        视口高亮，显示放置提示
+3. 释放鼠标                 解析拖拽数据
+4.                         根据类型执行对应操作:
+                           - asset: 从缓存获取对象，添加到场景
+                           - file: 加载文件，添加到场景和缓存
+                           - primitive: 创建几何体/灯光，添加到场景
+5.                         对象放置到当前视点位置
+6.                         触发 object-added 事件
 ```
 
-### 4.2 外部依赖
+### 5.2 拖拽数据格式
 
-| 依赖 | 用途 |
+| 拖拽类型 | 数据字段 | 说明 |
+|----------|----------|------|
+| 资源库资源 | `type: 'asset'`, `assetId`, `name` | 从 AssetBrowser 拖拽 |
+| 文件系统文件 | `type: 'file'`, `file`, `name` | 从操作系统拖入 |
+| 基础类型 | `type: 'primitive'`, `primitiveType`, `category`, `name` | 从 PrimitiveBrowser 拖拽 |
+
+### 5.3 放置规则
+
+- 所有拖拽添加的对象自动放置到当前相机视点位置
+- 模型类对象自动缩放至合适尺寸
+- 几何体使用默认尺寸
+- 灯光使用默认参数
+
+---
+
+## 6. 缓存行为规格
+
+### 6.1 缓存策略
+
+| 维度 | 规则 |
 |------|------|
-| three | 3D 资源类型 |
-| uuid | 资源 ID 生成 |
+| 缓存键 | 文件名 + 文件大小 |
+| 缓存命中 | 跳过加载，返回缓存引用 |
+| 缓存未命中 | 执行加载，写入缓存 |
+| 缓存清理 | 手动调用 clearCache() |
+| 缓存范围 | 当前会话（页面刷新后清空） |
 
----
+### 6.2 缓存生命周期
 
-## 5. 使用示例
-
-### 5.1 基本使用
-
-```javascript
-import { useAssetsManager } from './composables/useAssetsManager.js';
-
-const { 
-  loadModel, 
-  loadTexture, 
-  filteredModels,
-  isLoading,
-  loadingProgress 
-} = useAssetsManager();
-
-// 加载模型
-const model = await loadModel('/vfs/models/Horse.glb');
-
-// 加载纹理
-const texture = await loadTexture('/vfs/textures/brick.jpg');
-
-// 访问过滤后的模型列表
-console.log(filteredModels.value);
 ```
-
-### 5.2 拖拽上传
-
-```vue
-<template>
-  <div 
-    @dragover.prevent="handleDragOver"
-    @dragleave.prevent="handleDragLeave"
-    @drop.prevent="handleDrop"
-    :class="{ 'drag-over': dragState.isDragOver }"
-  >
-    <AssetBrowser />
-  </div>
-</template>
-
-<script setup>
-import { useAssetsManager } from './composables/useAssetsManager.js';
-
-const { handleDragOver, handleDrop, dragState } = useAssetsManager();
-</script>
-```
-
-### 5.3 搜索和过滤
-
-```javascript
-const { 
-  searchQuery, 
-  selectedCategory, 
-  sortBy, 
-  sortOrder,
-  filteredModels 
-} = useAssetsManager();
-
-// 设置搜索关键词
-searchQuery.value = 'horse';
-
-// 选择分类
-selectedCategory.value = 'animals';
-
-// 设置排序
-sortBy.value = 'date';
-sortOrder.value = 'desc';
+加载请求 → 检查缓存 → 命中? → 是 → 返回缓存对象
+                        ↓ 否
+                     执行加载 → 写入缓存 → 返回新对象
+                        ↓
+                     生成预览 → 关联到缓存条目
 ```
 
 ---
 
-## 6. 测试要点
+## 7. 预览生成规格
 
-### 6.1 单元测试
+### 7.1 预览渲染参数
 
-- [ ] 资源加载功能
-- [ ] 缓存机制
-- [ ] 搜索过滤
-- [ ] 排序功能
-- [ ] 拖拽处理
-- [ ] 收藏管理
+| 参数 | 值 | 说明 |
+|------|-----|------|
+| 画布宽度 | 256px | 固定宽度 |
+| 画布高度 | 256px | 固定高度 |
+| 渲染方式 | 离屏 WebGL | 不影响主场景 |
+| 输出格式 | PNG (Base64) | 数据 URL |
+| 背景色 | 透明 | Alpha 通道保留 |
 
-### 6.2 集成测试
+### 7.2 预览生成流程
 
-- [ ] 完整上传流程
-- [ ] 资源浏览 UI
-- [ ] 缓存命中场景
+```
+模型加载完成
+    ↓
+创建离屏渲染上下文
+    ↓
+创建临时场景，添加模型
+    ↓
+计算包围盒，调整相机
+    ↓
+渲染单帧
+    ↓
+导出 Base64 PNG
+    ↓
+清理临时资源
+    ↓
+关联预览到资源条目
+```
 
-### 6.3 性能测试
+---
 
-- [ ] 大量资源加载
-- [ ] 缓存命中率
-- [ ] 内存使用稳定性
+## 8. 测试要点
+
+### 8.1 单元测试
+
+- [ ] 缓存命中时跳过加载
+- [ ] 缓存未命中时执行加载
+- [ ] 缓存键生成正确（文件名 + 大小）
+- [ ] clearCache() 清空所有缓存
+- [ ] 预览图生成成功
+- [ ] 预览图尺寸为 256x256
+- [ ] 队列按顺序处理加载任务
+- [ ] 模型自动缩放和居中
+
+### 8.2 组件测试
+
+- [ ] AssetBrowser 正确显示资源卡片
+- [ ] 搜索过滤功能正常
+- [ ] 拖拽资源到场景成功添加
+- [ ] 拖拽文件到场景成功加载
+- [ ] PrimitiveBrowser 正确显示类型列表
+- [ ] 拖拽基础类型到场景成功创建
+- [ ] 加载状态正确显示
+
+### 8.3 集成测试
+
+- [ ] 完整拖拽工作流（从 AssetBrowser 到场景）
+- [ ] 完整拖拽工作流（从文件系统到场景）
+- [ ] 完整拖拽工作流（从 PrimitiveBrowser 到场景）
+- [ ] 重复拖拽同一文件时命中缓存
+- [ ] 预览图异步生成不影响主流程
+
+### 8.4 性能测试
+
+- [ ] 大模型加载和预览生成时间
+- [ ] 多资源批量加载的队列处理
+- [ ] 缓存命中时的响应时间
+- [ ] 内存占用随缓存增长情况
 
 ---
 
 ## 相关文档
 
 - [架构设计](../ARCHITECTURE.md)
-- [核心引擎模块](../001-core/spec.md)
+- [数据模型](../overall-data-model.md)
 - [API 清单](../API.md)
+- [001-Core 核心引擎模块](../001-core/spec.md)
 
 ---
 
@@ -557,4 +494,4 @@ sortOrder.value = 'desc';
 
 | 版本 | 日期 | 变更 |
 |------|------|------|
-| 1.0 | 2026-04-07 | 初始模块规格文档 |
+| 1.0 | 2026-04-14 | 初始模块规格文档 |

@@ -1,6 +1,6 @@
 # Three Editor by AI - 对外接口模型
 
-**生成日期**: 2026-04-07  
+**生成日期**: 2026-04-14  
 **项目版本**: 0.1.0
 
 ---
@@ -23,7 +23,173 @@
 
 ### API 列表
 
-详见 [API.md](./API.md)
+#### GET /api/list/:drive
+
+列出指定 drive 下的文件目录结构。
+
+**路径参数**:
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| drive | string | 是 | 驱动器名称（如 vfs、static） |
+
+**查询参数**:
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| path | string | 否 | 子目录路径，默认为根目录 |
+
+**响应**:
+
+```json
+{
+  "code": 0,
+  "data": {
+    "path": "/some/path",
+    "files": [
+      { "name": "file.glb", "type": "file", "size": 1024 }
+    ],
+    "folders": [
+      { "name": "subdir", "type": "folder" }
+    ]
+  }
+}
+```
+
+---
+
+#### GET /file/:drive/*
+
+获取指定文件内容。
+
+**路径参数**:
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| drive | string | 是 | 驱动器名称 |
+| * | string | 是 | 文件路径（通配符匹配剩余路径） |
+
+**响应**: 文件二进制流或文本内容。
+
+---
+
+#### GET /exists/:drive/*
+
+检查指定路径的文件或目录是否存在。
+
+**路径参数**:
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| drive | string | 是 | 驱动器名称 |
+| * | string | 是 | 文件或目录路径 |
+
+**响应**:
+
+```json
+{
+  "code": 0,
+  "data": {
+    "exists": true,
+    "isFile": true,
+    "isDirectory": false
+  }
+}
+```
+
+---
+
+#### POST /save/:drive/*
+
+保存文本内容到指定路径。
+
+**路径参数**:
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| drive | string | 是 | 驱动器名称 |
+| * | string | 是 | 文件保存路径 |
+
+**请求体**:
+
+```json
+{
+  "content": "文件文本内容"
+}
+```
+
+**响应**:
+
+```json
+{
+  "code": 0,
+  "data": {
+    "success": true,
+    "path": "/saved/path/file.txt"
+  }
+}
+```
+
+---
+
+#### POST /save-base64/:drive/*
+
+保存 Base64 编码的内容到指定路径。
+
+**路径参数**:
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| drive | string | 是 | 驱动器名称 |
+| * | string | 是 | 文件保存路径 |
+
+**请求体**:
+
+```json
+{
+  "base64": "base64编码的字符串"
+}
+```
+
+**响应**:
+
+```json
+{
+  "code": 0,
+  "data": {
+    "success": true,
+    "path": "/saved/path/file.bin"
+  }
+}
+```
+
+---
+
+#### POST /upload/:drive/*
+
+上传文件到指定路径。
+
+**路径参数**:
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| drive | string | 是 | 驱动器名称 |
+| * | string | 是 | 文件保存路径 |
+
+**请求体**: `multipart/form-data`，包含 `file` 字段。
+
+**响应**:
+
+```json
+{
+  "code": 0,
+  "data": {
+    "success": true,
+    "path": "/saved/path/uploaded.glb",
+    "size": 2048576
+  }
+}
+```
 
 ---
 
@@ -40,23 +206,30 @@
 interface ThreeViewer {
   // 初始化
   init(container: HTMLElement): void
-  
+
   // 渲染
   render(): void
-  
+
   // 场景管理
   loadScene(json: object): Promise<void>
   exportScene(): object
-  addObject(object: THREE.Object3D): void
-  removeObject(object: THREE.Object3D): void
-  
+  addObject(obj: THREE.Object3D): void
+  removeObject(obj: THREE.Object3D): void
+  clearScene(): void
+
+  // 控制器
+  switchControls(type: string): void
+
+  // 动画
+  updateAllMixers(delta: number): void
+
+  // 3DTiles
+  add3DTiles(url: string): void
+
   // 对象查找
   findObjectsByUserData(key: string, value: any): THREE.Object3D[]
   getObjectByUuid(uuid: string): THREE.Object3D | null
-  
-  // 动画
-  driveAnimations(): void
-  
+
   // 事件
   on(event: string, callback: Function): void
   off(event: string, callback: Function): void
@@ -68,9 +241,11 @@ interface ThreeViewer {
 
 | 事件名 | 触发时机 | 数据 |
 |--------|----------|------|
-| `scene-loaded` | 场景加载完成 | `{ scene: Scene }` |
-| `object-added` | 对象添加 | `{ object: Object3D }` |
-| `object-removed` | 对象移除 | `{ object: Object3D }` |
+| `before-render` | 每帧渲染前 | 无 |
+| `before-add-object` | 对象添加前 | `{ object: THREE.Object3D }` |
+| `add-object` | 对象添加后 | `{ object: THREE.Object3D }` |
+| `remove-object` | 对象移除后 | `{ object: THREE.Object3D }` |
+| `scene-loaded` | 场景加载完成 | `{ scene: THREE.Scene }` |
 
 ---
 
@@ -84,22 +259,30 @@ interface ThreeViewer {
 ```typescript
 interface ObjectManager {
   // 对象创建
-  createPrimitive(type: string, options: object): THREE.Object3D
-  loadModel(url: string): Promise<THREE.Group>
-  
+  createPrimitive(type: string, options?: object): THREE.Object3D
+
   // 对象管理
-  add(object: THREE.Object3D): void
-  remove(object: THREE.Object3D): void
-  
+  addObject(obj: THREE.Object3D): void
+  removeObject(uuid: string): void
+
   // 对象查询
+  getObject(uuid: string): THREE.Object3D | null
+  getAllObjects(): Map<string, THREE.Object3D>
+  getUnlockedObjects(): THREE.Object3D[]
   getIntersectedObjects(raycaster: THREE.Raycaster): THREE.Object3D[]
   getIntersectedFirstObject(raycaster: THREE.Raycaster): THREE.Object3D | null
-  getUnlockedObjects(): THREE.Object3D[]
-  
-  // 对象导出
-  exportObject(object: THREE.Object3D): object
-  importObject(json: object): THREE.Object3D
-  
+
+  // 选择管理
+  selectObject(uuid: string): void
+  deselectObject(uuid: string): void
+  clearSelection(): void
+  getSelectedObjects(): THREE.Object3D[]
+
+  // 剪贴板操作
+  copySelected(): void
+  paste(): THREE.Object3D[]
+  deleteSelected(): void
+
   // 事件
   on(event: string, callback: Function): void
   off(event: string, callback: Function): void
@@ -111,53 +294,11 @@ interface ObjectManager {
 
 | 事件名 | 触发时机 | 数据 |
 |--------|----------|------|
-| `object-added` | 对象添加 | `{ object: Object3D }` |
-| `object-removed` | 对象移除 | `{ object: Object3D }` |
-| `object-transform-updated` | 变换更新 | `{ object: Object3D }` |
-
----
-
-### AssetLoader API
-
-**类**: `AssetLoader`  
-**文件**: `src/core/AssetLoader.js`
-
-#### 公共方法
-
-```typescript
-interface AssetLoader {
-  // GLTF 加载
-  loadGLTF(
-    url: string,
-    onProgress?: (progress: number) => void
-  ): Promise<THREE.Group>
-  
-  // OBJ 加载
-  loadOBJ(
-    url: string,
-    onProgress?: (progress: number) => void
-  ): Promise<THREE.Group>
-  
-  // 纹理加载
-  loadTexture(
-    url: string,
-    onProgress?: (progress: number) => void
-  ): Promise<THREE.Texture>
-  
-  // 事件
-  on(event: string, callback: Function): void
-  off(event: string, callback: Function): void
-  emit(event: string, data?: any): void
-}
-```
-
-#### 事件
-
-| 事件名 | 触发时机 | 数据 |
-|--------|----------|------|
-| `load-progress` | 加载进度 | `{ url, progress }` |
-| `load-complete` | 加载完成 | `{ url, object }` |
-| `load-error` | 加载错误 | `{ url, error }` |
+| `add-object` | 对象添加 | `{ object: THREE.Object3D }` |
+| `remove-object` | 对象移除 | `{ uuid: string }` |
+| `clear-objects` | 场景清空 | 无 |
+| `object-transform-updated` | 变换更新 | `{ object: THREE.Object3D }` |
+| `selection-changed` | 选择变化 | `{ selected: THREE.Object3D[] }` |
 
 ---
 
@@ -171,18 +312,12 @@ interface AssetLoader {
 ```typescript
 interface InputManager {
   // 初始化
-  init(): void
+  init(domElement: HTMLElement): void
   dispose(): void
-  
-  // 按键状态
-  isKeyPressed(key: string): boolean
-  
-  // 快捷键
-  registerShortcut(
-    keys: string[],
-    callback: () => void
-  ): void
-  
+
+  // 坐标获取
+  getNormalizedCoords(): { x: number; y: number }
+
   // 事件
   on(event: string, callback: Function): void
   off(event: string, callback: Function): void
@@ -194,9 +329,62 @@ interface InputManager {
 
 | 事件名 | 触发时机 | 数据 |
 |--------|----------|------|
-| `key-pressed` | 按键按下 | `{ key: string }` |
-| `key-released` | 按键释放 | `{ key: string }` |
-| `mouse-click` | 鼠标点击 | `{ x, y, button }` |
+| `click` | 鼠标点击 | `{ event: MouseEvent; normalizedCoords: { x: number; y: number } }` |
+| `dblclick` | 鼠标双击 | `{ event: MouseEvent }` |
+| `drag-start` | 拖拽开始 | `{ event: MouseEvent }` |
+| `drag` | 拖拽中 | `{ event: MouseEvent }` |
+| `drag-end` | 拖拽结束 | `{ event: MouseEvent }` |
+| `mouse-move` | 鼠标移动 | `{ event: MouseEvent }` |
+| `mouse-down` | 鼠标按下 | `{ event: MouseEvent }` |
+| `mouse-up` | 鼠标释放 | `{ event: MouseEvent }` |
+| `keydown` | 按键按下 | `{ key: string; event: KeyboardEvent }` |
+| `keyup` | 按键释放 | `{ key: string; event: KeyboardEvent }` |
+| `wheel` | 滚轮滚动 | `{ delta: number; event: WheelEvent }` |
+
+---
+
+### AssetLoader API
+
+**类**: `AssetLoader`  
+**文件**: `src/core/AssetLoader.js`
+
+#### 公共方法
+
+```typescript
+interface AssetLoader {
+  // GLTF 加载
+  loadGLTF(url: string): Promise<THREE.Group>
+
+  // OBJ 加载
+  loadOBJ(url: string): Promise<THREE.Group>
+
+  // FBX 加载
+  loadFBX(url: string): Promise<THREE.Group>
+
+  // 纹理加载
+  loadTexture(url: string): Promise<THREE.Texture>
+
+  // 文件加载
+  loadFromFile(file: File): Promise<THREE.Object3D>
+
+  // 批量加载
+  loadBatch(urls: string[]): Promise<THREE.Object3D[]>
+
+  // 事件
+  on(event: string, callback: Function): void
+  off(event: string, callback: Function): void
+  emit(event: string, data?: any): void
+}
+```
+
+#### 事件
+
+| 事件名 | 触发时机 | 数据 |
+|--------|----------|------|
+| `loading-start` | 加载开始 | `{ url: string }` |
+| `loading-progress` | 加载进度 | `{ url: string; loaded: number; total: number }` |
+| `loading-complete` | 加载完成 | `{ url: string; object: THREE.Object3D }` |
+| `loading-error` | 加载错误 | `{ url: string; error: Error }` |
 
 ---
 
@@ -208,14 +396,9 @@ interface InputManager {
 
 ```typescript
 function useThreeViewer(): {
-  scene: Ref<THREE.Scene>
-  camera: Ref<THREE.Camera>
-  renderer: Ref<THREE.WebGLRenderer>
+  viewer: Ref<THREE.WebGLRenderer | null>
   init: (container: HTMLElement) => void
-  loadScene: (json: object) => Promise<void>
-  exportScene: () => object
-  addObject: (object: THREE.Object3D) => void
-  removeObject: (object: THREE.Object3D) => void
+  dispose: () => void
 }
 ```
 
@@ -228,12 +411,9 @@ function useThreeViewer(): {
 ```typescript
 function useObjectSelection(): {
   selectedObjects: Ref<THREE.Object3D[]>
-  currentHelpers: Ref<THREE.Object3D[]>
-  selectObject: (object: THREE.Object3D) => void
-  deselectObject: (object: THREE.Object3D) => void
-  deselectAll: () => void
-  attachTransformControls: (object: THREE.Object3D) => void
-  detachTransformControls: () => void
+  selectObject: (uuid: string) => void
+  deselectObject: (uuid: string) => void
+  clearSelection: () => void
 }
 ```
 
@@ -245,13 +425,17 @@ function useObjectSelection(): {
 
 ```typescript
 function useTransform(): {
-  transformMode: Ref<string>
-  isTransforming: Ref<boolean>
-  setTransformMode: (mode: string) => void
-  startTransform: () => void
-  endTransform: () => void
   undo: () => void
   redo: () => void
+  canUndo: Ref<boolean>
+  canRedo: Ref<boolean>
+  startTransform: () => void
+  endTransform: () => void
+  snapSettings: Ref<{
+    translate: number
+    rotate: number
+    scale: number
+  }>
 }
 ```
 
@@ -263,9 +447,10 @@ function useTransform(): {
 
 ```typescript
 function useAssetsManager(): {
-  assetLibrary: Reactive<Record<string, any>>
+  assets: Reactive<Record<string, any>>
   loadModel: (url: string) => Promise<THREE.Group>
   loadTexture: (url: string) => Promise<THREE.Texture>
+  getPreview: (url: string) => string | null
   clearCache: () => void
 }
 ```
@@ -278,10 +463,29 @@ function useAssetsManager(): {
 
 ```typescript
 function useMaterial(): {
-  materialLibrary: Reactive<Record<string, THREE.Material>>
-  createMaterial: (type: string, params: object) => THREE.Material
   updateMaterial: (material: THREE.Material, params: object) => void
-  cloneMaterial: (material: THREE.Material) => THREE.Material
+  getMaterialState: () => Record<string, any>
+  resetMaterial: () => void
+}
+```
+
+---
+
+### useCameraPosState
+
+**文件**: `src/composables/useCameraPosState.js`
+
+```typescript
+function useCameraPosState(): {
+  cameraState: Ref<{
+    position: THREE.Vector3
+    target: THREE.Vector3
+    rotation: THREE.Euler
+  }>
+  zoomToPos: (pos: object) => void
+  flyToPos: (pos: object) => void
+  savePosition: (name: string) => void
+  restorePosition: (name: string) => void
 }
 ```
 
@@ -293,11 +497,24 @@ function useMaterial(): {
 
 ```typescript
 function useControls(): {
-  currentControls: Ref<string>
-  setControls: (type: string) => void
-  enable: () => void
-  disable: () => void
-  update: () => void
+  currentType: Ref<string>
+  switchControls: (type: string) => void
+  lockControls: () => void
+  unlockControls: () => void
+}
+```
+
+---
+
+### useEditorConfig
+
+**文件**: `src/composables/useEditorConfig.js`
+
+```typescript
+function useEditorConfig(): {
+  config: Ref<Record<string, any>>
+  updateConfig: (key: string, value: any) => void
+  resetConfig: () => void
 }
 ```
 
@@ -317,14 +534,13 @@ class VfsServerApi {
     baseURL: string
     root: string
   })
-  
-  list(path: string): Promise<object>
-  url(path: string): string
-  content(path: string): Promise<string>
-  json(path: string): Promise<object>
-  blob(path: string): Promise<Blob>
+
+  listFiles(path: string): Promise<object>
+  getFile(path: string): Promise<string | Blob>
   exists(path: string): Promise<boolean>
-  save(path: string, text: string): Promise<boolean>
+  saveFile(path: string, content: string): Promise<boolean>
+  saveBase64(path: string, base64: string): Promise<boolean>
+  uploadFile(path: string, file: File): Promise<boolean>
 }
 ```
 
@@ -342,13 +558,30 @@ class StaticDriveApi {
     baseURL: string
     root: string
   })
-  
-  list(path: string): Promise<object>
-  url(path: string): string
-  content(path: string): Promise<string>
-  json(path: string): Promise<object>
-  blob(path: string): Promise<Blob>
+
+  listFiles(path: string): Promise<object>
+  getFileUrl(path: string): string
   exists(path: string): Promise<boolean>
+}
+```
+
+---
+
+### VfsService
+
+**类**: `VfsService`  
+**文件**: `src/services/vfs-service.js`
+
+```typescript
+class VfsService {
+  // 统一 VFS 接口，内部封装 VfsServerApi 和 StaticDriveApi
+
+  listFiles(drive: string, path: string): Promise<object>
+  getFile(drive: string, path: string): Promise<string | Blob>
+  exists(drive: string, path: string): Promise<boolean>
+  saveFile(drive: string, path: string, content: string): Promise<boolean>
+  saveBase64(drive: string, path: string, base64: string): Promise<boolean>
+  uploadFile(drive: string, path: string, file: File): Promise<boolean>
 }
 ```
 
@@ -363,22 +596,37 @@ class StaticDriveApi {
 ```typescript
 interface Events {
   // ThreeViewer 事件
+  'before-render': void
+  'before-add-object': { object: THREE.Object3D }
+  'add-object': { object: THREE.Object3D }
+  'remove-object': { object: THREE.Object3D }
   'scene-loaded': { scene: THREE.Scene }
-  'object-added': { object: THREE.Object3D }
-  'object-removed': { object: THREE.Object3D }
-  
+
   // ObjectManager 事件
+  'add-object': { object: THREE.Object3D }
+  'remove-object': { uuid: string }
+  'clear-objects': void
   'object-transform-updated': { object: THREE.Object3D }
-  
-  // AssetLoader 事件
-  'load-progress': { url: string; progress: number }
-  'load-complete': { url: string; object: THREE.Object3D }
-  'load-error': { url: string; error: Error }
-  
+  'selection-changed': { selected: THREE.Object3D[] }
+
   // InputManager 事件
-  'key-pressed': { key: string }
-  'key-released': { key: string }
-  'mouse-click': { x: number; y: number; button: number }
+  'click': { event: MouseEvent; normalizedCoords: { x: number; y: number } }
+  'dblclick': { event: MouseEvent }
+  'drag-start': { event: MouseEvent }
+  'drag': { event: MouseEvent }
+  'drag-end': { event: MouseEvent }
+  'mouse-move': { event: MouseEvent }
+  'mouse-down': { event: MouseEvent }
+  'mouse-up': { event: MouseEvent }
+  'keydown': { key: string; event: KeyboardEvent }
+  'keyup': { key: string; event: KeyboardEvent }
+  'wheel': { delta: number; event: WheelEvent }
+
+  // AssetLoader 事件
+  'loading-start': { url: string }
+  'loading-progress': { url: string; loaded: number; total: number }
+  'loading-complete': { url: string; object: THREE.Object3D }
+  'loading-error': { url: string; error: Error }
 }
 ```
 
@@ -420,10 +668,10 @@ try {
 } catch (error) {
   // 日志记录
   console.error('操作失败:', error);
-  
+
   // 用户提示
   ElMessage.error('操作失败：' + error.message);
-  
+
   // 事件上报（未来）
   emitter.emit('error', { error, context: 'loadModel' });
 }
@@ -465,4 +713,4 @@ try {
 
 | 版本 | 日期 | 变更 |
 |------|------|------|
-| 1.0 | 2026-04-07 | 初始接口文档 |
+| 1.0 | 2026-04-14 | 初始接口文档 |

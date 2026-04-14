@@ -2,8 +2,8 @@
 
 **项目版本**: 0.1.0  
 **文档版本**: 1.0  
-**生成日期**: 2026-04-07  
-**最后更新**: 2026-04-07
+**生成日期**: 2026-04-14  
+**最后更新**: 2026-04-14
 
 ---
 
@@ -58,16 +58,16 @@ Three Editor by AI 是一个基于 Vue 3 + Three.js 的现代化 3D 场景编辑
 
 | 模块 | 路径 | 说明 | 状态 |
 |------|------|------|------|
-| 核心引擎 | `001-core/` | ThreeViewer、ObjectManager 等 | ⏳ 待开始 |
-| 资源管理 | `002-assets/` | 资源加载、缓存、管理 | ⏳ 待开始 |
-| 对象变换 | `003-transform/` | 变换操作、撤销重做 | ⏳ 待开始 |
-| 材质系统 | `004-material/` | 材质创建、编辑 | ⏳ 待开始 |
-| 相机控制 | `005-camera/` | 相机控制器、预设视角 | ⏳ 待开始 |
-| 虚拟文件系统 | `006-vfs/` | VFS 服务与客户端 | ⏳ 待开始 |
-| 场景序列化 | `007-serialization/` | 场景导出/导入 | ⏳ 待开始 |
-| 后处理 | `008-postprocessing/` | EffectComposer、Pass 管理 | ⏳ 待开始 |
-| 动画系统 | `009-animation/` | 动画加载、播放 | ⏳ 待开始 |
-| UI 组件 | `010-ui/` | 编辑器 UI 组件 | ⏳ 待开始 |
+| 核心引擎 | `001-core/` | ThreeViewer、ObjectManager 等 | ✅ 完成 |
+| 资源管理 | `002-assets/` | 资源加载、缓存、管理 | ✅ 完成 |
+| 对象变换 | `003-transform/` | 变换操作、撤销重做 | ✅ 完成 |
+| 材质系统 | `004-material/` | 材质创建、编辑 | ✅ 完成 |
+| 相机控制 | `005-camera/` | 相机控制器、预设视角 | ✅ 完成 |
+| 虚拟文件系统 | `006-vfs/` | VFS 服务与客户端 | ✅ 完成 |
+| 场景序列化 | `007-serialization/` | 场景导出/导入 | ✅ 完成 |
+| 后处理 | `008-postprocessing/` | EffectComposer、Pass 管理 | ✅ 完成 |
+| 动画系统 | `009-animation/` | 动画加载、播放 | ✅ 完成 |
+| UI 组件 | `010-ui/` | 编辑器 UI 组件 | ✅ 完成 |
 
 ---
 
@@ -85,7 +85,37 @@ specs/
 ├── overall-spec.md              # 整体规格
 ├── overall-plan.md              # 技术方案
 ├── overall-data-model.md        # 数据模型
-└── overall-api.md               # 接口模型
+├── overall-api.md               # 接口模型
+├── 001-core/                    # 核心引擎模块
+│   ├── spec.md                  # 模块规格
+│   └── plan.md                  # 技术方案
+├── 002-assets/                  # 资源管理模块
+│   ├── spec.md
+│   └── plan.md
+├── 003-transform/               # 对象变换模块
+│   ├── spec.md
+│   └── plan.md
+├── 004-material/                # 材质系统模块
+│   ├── spec.md
+│   └── plan.md
+├── 005-camera/                  # 相机控制模块
+│   ├── spec.md
+│   └── plan.md
+├── 006-vfs/                     # 虚拟文件系统模块
+│   ├── spec.md
+│   └── plan.md
+├── 007-serialization/           # 场景序列化模块
+│   ├── spec.md
+│   └── plan.md
+├── 008-postprocessing/          # 后处理模块
+│   ├── spec.md
+│   └── plan.md
+├── 009-animation/               # 动画系统模块
+│   ├── spec.md
+│   └── plan.md
+└── 010-ui/                      # UI 组件模块
+    ├── spec.md
+    └── plan.md
 ```
 
 ---
@@ -227,8 +257,8 @@ specs/
 
 | 版本 | 日期 | 变更 |
 |------|------|------|
-| 1.0 | 2026-04-07 | 初始规范文档创建 |
+| 1.0 | 2026-04-14 | 初始规范文档创建（specs） |
 
 ---
 
-**最后更新**: 2026-04-07
+**最后更新**: 2026-04-14
